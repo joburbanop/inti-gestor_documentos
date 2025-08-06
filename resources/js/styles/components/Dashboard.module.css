@@ -335,3 +335,145 @@
 .dashboardContainer {
     animation: fadeInUp 0.6s ease-out;
 } 
+
+/* Estilos para estados vacíos */
+.emptyState {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 3rem;
+    text-align: center;
+}
+
+.emptyMessage {
+    color: #6b7280;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+/* Estilos para búsqueda de documentos */
+.documentSearchSection {
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.searchHeader {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: center;
+}
+
+.searchTitle {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+}
+
+.searchSubtitle {
+    font-size: 0.95rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+.searchForm {
+    padding: 1.5rem;
+}
+
+.searchInputContainer {
+    display: flex;
+    gap: 0.75rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.searchInput {
+    flex: 1;
+    padding: 0.875rem 1.25rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.searchInput:focus {
+    border-color: #1f448b;
+    box-shadow: 0 0 0 3px rgba(31, 68, 139, 0.1);
+}
+
+.searchButton {
+    padding: 0.875rem 1.25rem;
+    background: linear-gradient(135deg, #1f448b, #667eea);
+    color: white;
+    border: none;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.searchButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(31, 68, 139, 0.3);
+}
+
+.filtersContainer {
+    padding: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+    background: #f8fafc;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.filterGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 150px;
+}
+
+.filterLabel {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.filterSelect {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    background: white;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.filterSelect:focus {
+    border-color: #1f448b;
+    box-shadow: 0 0 0 2px rgba(31, 68, 139, 0.1);
+}
+
+/* Responsive para búsqueda */
+@media (max-width: 768px) {
+    .searchInputContainer {
+        flex-direction: column;
+    }
+    
+    .filtersContainer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .filterGroup {
+        min-width: auto;
+    }
+} 
