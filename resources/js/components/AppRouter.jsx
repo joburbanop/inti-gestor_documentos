@@ -1,23 +1,35 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Dashboard from './Dashboard';
 import UserDashboard from './UserDashboard';
 import Direcciones from './Direcciones';
+import CreateDireccion from './crud/CreateDireccion';
 import { INTILED_COLORS } from '../config/colors';
 
-const AppRouter = () => {
+// Componente interno para manejar la navegación hash
+const HashRouter = () => {
     const { user } = useAuth();
+    const location = useLocation();
+    const navigate = useNavigate();
     const [currentView, setCurrentView] = useState('dashboard');
 
-    // Detectar la vista actual basada en el hash de la URL
     useEffect(() => {
         const handleHashChange = () => {
             const hash = window.location.hash.replace('#', '');
-            if (hash) {
-                setCurrentView(hash);
-            } else {
+            
+            // Si no hay hash o el hash está vacío, ir al dashboard
+            if (!hash || hash === '') {
                 setCurrentView('dashboard');
+                // Limpiar cualquier hash residual
+                if (window.location.hash) {
+                    window.history.replaceState(null, null, window.location.pathname);
+                }
+                return;
             }
+            
+            // Si hay un hash válido, establecer esa vista
+            setCurrentView(hash);
         };
 
         // Establecer vista inicial
@@ -28,13 +40,7 @@ const AppRouter = () => {
         return () => window.removeEventListener('hashchange', handleHashChange);
     }, []);
 
-    // Función para cambiar de vista
-    const changeView = (view) => {
-        setCurrentView(view);
-        window.location.hash = view;
-    };
-
-    // Renderizar la vista actual
+    // Renderizar la vista actual basada en hash
     const renderCurrentView = () => {
         switch (currentView) {
             case 'direcciones':
@@ -74,16 +80,52 @@ const AppRouter = () => {
                     </h2>
                     <p className="text-gray-600">Componente en desarrollo...</p>
                 </div>;
+            case 'dashboard':
             default:
                 // Mostrar UserDashboard para usuarios regulares, Dashboard para administradores
                 return user?.is_admin ? <Dashboard /> : <UserDashboard />;
         }
     };
 
+    // Para rutas hash, usar el sistema actual
     return (
         <div>
             {renderCurrentView()}
         </div>
+    );
+};
+
+// Componente wrapper para manejar la navegación desde rutas React Router
+const CreateDireccionWrapper = () => {
+    const { user } = useAuth();
+    
+    // Función para manejar la navegación desde el navbar
+    useEffect(() => {
+        const handleHashNavigation = () => {
+            const hash = window.location.hash.replace('#', '');
+            if (hash && hash !== 'direcciones') {
+                // Si hay un hash diferente a 'direcciones', navegar a la página principal
+                window.location.href = '/#' + hash;
+            }
+        };
+
+        // Escuchar cambios en el hash
+        window.addEventListener('hashchange', handleHashNavigation);
+        return () => window.removeEventListener('hashchange', handleHashNavigation);
+    }, []);
+
+    return <CreateDireccion />;
+};
+
+const AppRouter = () => {
+    return (
+        <Router>
+            <Routes>
+                <Route path="/" element={<HashRouter />} />
+                <Route path="/direcciones/crear" element={<CreateDireccionWrapper />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+        </Router>
     );
 };
 

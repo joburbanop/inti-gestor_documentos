@@ -104,7 +104,7 @@ const Navbar = ({ title = "Intranet Inti" }) => {
 
                     {/* Sección de Navegación - Desktop */}
                     <div className={styles.navigationSection}>
-                        {navItems.map((item) => {
+                        {user?.is_admin && navItems.map((item) => {
                             const IconComponent = item.icon;
                             return (
                                 <button 
@@ -178,7 +178,7 @@ const Navbar = ({ title = "Intranet Inti" }) => {
                 {isMobileMenuOpen && (
                     <div className={styles.mobileMenu}>
                         <div className={styles.mobileMenuContent}>
-                            {navItems.map((item) => {
+                            {user?.is_admin && navItems.map((item) => {
                                 const IconComponent = item.icon;
                                 return (
                                     <button

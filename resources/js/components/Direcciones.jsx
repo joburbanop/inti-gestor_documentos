@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import styles from '../styles/components/Direcciones.module.css';
 
 // Componentes modulares
@@ -12,11 +13,12 @@ import { BuildingIcon, PlusIcon } from './icons/DireccionesIcons';
 
 const Direcciones = () => {
     const { user, apiRequest } = useAuth();
+    const navigate = useNavigate();
     const [direcciones, setDirecciones] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedDireccion, setSelectedDireccion] = useState(null);
     const [showModal, setShowModal] = useState(false);
-    const [modalMode, setModalMode] = useState('create');
+    const [modalMode, setModalMode] = useState('edit');
     const [formData, setFormData] = useState({
         nombre: '',
         descripcion: '',
@@ -45,26 +47,14 @@ const Direcciones = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            if (modalMode === 'create') {
-                const response = await apiRequest('/api/direcciones', {
-                    method: 'POST',
-                    body: JSON.stringify(formData)
-                });
-                if (response.success) {
-                    setShowModal(false);
-                    fetchDirecciones();
-                    resetForm();
-                }
-            } else {
-                const response = await apiRequest(`/api/direcciones/${selectedDireccion.id}`, {
-                    method: 'PUT',
-                    body: JSON.stringify(formData)
-                });
-                if (response.success) {
-                    setShowModal(false);
-                    fetchDirecciones();
-                    resetForm();
-                }
+            const response = await apiRequest(`/api/direcciones/${selectedDireccion.id}`, {
+                method: 'PUT',
+                body: JSON.stringify(formData)
+            });
+            if (response.success) {
+                setShowModal(false);
+                fetchDirecciones();
+                resetForm();
             }
         } catch (error) {
             console.error('Error al guardar dirección:', error);
@@ -109,13 +99,10 @@ const Direcciones = () => {
             codigo: '',
             color: '#1F448B'
         });
-        setSelectedDireccion(null);
     };
 
-    const openCreateModal = () => {
-        setModalMode('create');
-        resetForm();
-        setShowModal(true);
+    const openCreatePage = () => {
+        navigate('/direcciones/crear');
     };
 
     const closeModal = () => {
@@ -153,7 +140,7 @@ const Direcciones = () => {
                 </div>
                 {user?.is_admin && (
                     <button
-                        onClick={openCreateModal}
+                        onClick={openCreatePage}
                         className={styles.newButton}
                         title="Crear nueva dirección"
                     >
@@ -189,7 +176,7 @@ const Direcciones = () => {
                     </p>
                     {user?.is_admin && (
                         <button
-                            onClick={openCreateModal}
+                            onClick={openCreatePage}
                             className={styles.newButton}
                         >
                             <PlusIcon />
@@ -199,7 +186,7 @@ const Direcciones = () => {
                 </div>
             )}
 
-            {/* Modal para Crear/Editar */}
+            {/* Modal para Editar */}
             <DireccionModal
                 show={showModal}
                 mode={modalMode}
