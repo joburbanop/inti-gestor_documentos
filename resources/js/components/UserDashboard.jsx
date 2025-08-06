@@ -1,51 +1,51 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import styles from '../styles/components/Dashboard.module.css';
+import userStyles from '../styles/components/UserDashboard.module.css';
 
 // Componentes modulares
-import StatsSection from './dashboard/StatsSection';
-import QuickActionsSection from './dashboard/QuickActionsSection';
-import DocumentSearchSection from './dashboard/DocumentSearchSection';
+import HierarchicalFilters from './dashboard/HierarchicalFilters';
 
 // Iconos SVG
-import { MyDocumentsIcon, StarIcon, PdfIcon, ExcelIcon, WordIcon } from './icons/DashboardIcons';
+import { PdfIcon, ExcelIcon, WordIcon, SearchIcon } from './icons/DashboardIcons';
 
 const UserDashboard = () => {
     const { user, apiRequest } = useAuth();
-    const [stats, setStats] = useState(null);
     const [searchResults, setSearchResults] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [searchLoading, setSearchLoading] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filters, setFilters] = useState({});
 
-    useEffect(() => {
-        const fetchUserDashboardData = async () => {
-            try {
-                setLoading(true);
-                
-                // Obtener estadísticas básicas para usuario
-                const statsResponse = await apiRequest('/api/documentos/estadisticas');
-                if (statsResponse.success) {
-                    setStats(statsResponse.data);
-                }
-            } catch (error) {
-                console.error('Error al cargar datos del dashboard de usuario:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
+    const handleSearch = async (e) => {
+        e.preventDefault();
+        await performSearch();
+    };
 
-        fetchUserDashboardData();
-    }, [apiRequest]);
-
-    const handleSearch = async (searchTerm, filters) => {
+    const performSearch = async () => {
         try {
             setSearchLoading(true);
             
             // Construir parámetros de búsqueda
-            const params = new URLSearchParams({
-                search: searchTerm,
-                ...filters
-            });
+            const params = new URLSearchParams();
+            
+            if (searchTerm) {
+                params.append('search', searchTerm);
+            }
+            
+            if (filters.direccionId) {
+                params.append('direccion_id', filters.direccionId);
+            }
+            
+            if (filters.procesoId) {
+                params.append('proceso_id', filters.procesoId);
+            }
+            
+            if (filters.tipoArchivo) {
+                params.append('tipo_archivo', filters.tipoArchivo);
+            }
+            
+            if (filters.sortBy) {
+                params.append('sort_by', filters.sortBy);
+            }
 
             const response = await apiRequest(`/api/documentos/buscar?${params}`);
             if (response.success) {
@@ -58,6 +58,14 @@ const UserDashboard = () => {
         }
     };
 
+    const handleFilterChange = (newFilters) => {
+        setFilters(newFilters);
+        // Realizar búsqueda automática cuando cambien los filtros
+        if (newFilters.direccionId || newFilters.procesoId || newFilters.tipoArchivo) {
+            setTimeout(() => performSearch(), 500); // Pequeño delay para evitar muchas llamadas
+        }
+    };
+
     const handleDocumentClick = (document) => {
         // Para usuarios, solo pueden ver/descargar documentos
         if (document.url) {
@@ -66,11 +74,6 @@ const UserDashboard = () => {
             // Si no hay URL, mostrar información del documento
             alert(`Documento: ${document.titulo}\nDirección: ${document.direccion?.nombre}\nProceso: ${document.proceso_apoyo?.nombre}`);
         }
-    };
-
-    const handleFilterChange = (filters) => {
-        // Los filtros se aplican automáticamente en la búsqueda
-        console.log('Filtros aplicados:', filters);
     };
 
     const getDocumentIcon = (fileType) => {
@@ -88,64 +91,77 @@ const UserDashboard = () => {
         }
     };
 
-    if (loading) {
-        return (
-            <div className={styles.loadingSpinner}>
-                <div className={styles.spinner}></div>
-                <p className="text-gray-600 text-lg font-medium mt-4">Cargando dashboard de usuario...</p>
-            </div>
-        );
-    }
-
     return (
-        <div className={styles.dashboardContainer}>
-            {/* Header */}
-            <div className={styles.header}>
-                <h1 className={styles.title}>Panel de Usuario</h1>
-                <p className={styles.subtitle}>
-                    Bienvenido, {user?.name}. Aquí puedes buscar y consultar documentos.
+        <div className={userStyles.userDashboardContainer}>
+            {/* Header Simple */}
+            <div className={userStyles.userHeader}>
+                <h1 className={userStyles.userTitle}>Portal Documental</h1>
+                <p className={userStyles.userSubtitle}>
+                    Bienvenido, {user?.name}. Busca y encuentra los documentos que necesitas organizados por dirección y proceso.
                 </p>
             </div>
 
-            {/* Estadísticas básicas para usuario */}
-            <StatsSection 
-                stats={stats}
-                showDownloads={false} // Usuarios no ven estadísticas de descargas
-                showDirections={true}
-            />
+            {/* Búsqueda de documentos - Sección principal */}
+            <div className={userStyles.userSearchSection}>
+                <div className={userStyles.searchHeader}>
+                    <h2 className={userStyles.searchTitle}>Buscar Documentos</h2>
+                    <p className={userStyles.searchSubtitle}>
+                        Encuentra la información que necesitas usando los filtros jerárquicos
+                    </p>
+                </div>
 
-            {/* Búsqueda de documentos */}
-            <DocumentSearchSection 
-                onSearch={handleSearch}
-                onFilterChange={handleFilterChange}
-                searchPlaceholder="Buscar documentos por título, dirección o proceso..."
-                showFilters={true}
-            />
+                {/* Barra de búsqueda */}
+                <form onSubmit={handleSearch} className={userStyles.searchForm}>
+                    <div className={userStyles.searchInputContainer}>
+                        <input
+                            type="text"
+                            placeholder="¿Qué documento buscas? Escribe el título..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className={userStyles.searchInput}
+                        />
+                        <button type="submit" className={userStyles.searchButton}>
+                            <SearchIcon className="w-5 h-5" />
+                        </button>
+                    </div>
+                </form>
+
+                {/* Filtros Jerárquicos */}
+                <HierarchicalFilters 
+                    onFilterChange={handleFilterChange}
+                    filters={filters}
+                    styles={userStyles}
+                />
+            </div>
 
             {/* Resultados de búsqueda */}
             {searchResults.length > 0 && (
-                <div className={styles.recentDocumentsSection}>
-                    <div className={styles.recentDocumentsHeader}>
-                        <h2 className={styles.recentDocumentsTitle}>Resultados de Búsqueda</h2>
+                <div className={userStyles.userDocumentResults}>
+                    <div className={userStyles.userDocumentResultsHeader}>
+                        <h2 className={userStyles.userDocumentResultsTitle}>
+                            Documentos Encontrados ({searchResults.length})
+                        </h2>
                     </div>
-                    <div className={styles.recentDocumentsList}>
-                        {searchResults.slice(0, 10).map((doc) => (
+                    <div className={userStyles.userDocumentResultsList}>
+                        {searchResults.map((doc) => (
                             <div 
                                 key={doc.id} 
-                                className={styles.documentItem}
+                                className={userStyles.userDocumentItem}
                                 onClick={() => handleDocumentClick(doc)}
                                 style={{ cursor: 'pointer' }}
                             >
-                                <div className={`${styles.documentIcon} ${styles[`documentIcon${doc.tipo_archivo?.toUpperCase()}`] || styles.documentIconDoc}`}>
+                                <div className={`${userStyles.userDocumentIcon} ${userStyles[`userDocumentIcon${doc.tipo_archivo?.toUpperCase()}`] || userStyles.userDocumentIconDoc}`}>
                                     {getDocumentIcon(doc.tipo_archivo)}
                                 </div>
-                                <div className={styles.documentInfo}>
-                                    <div className={styles.documentTitle}>{doc.titulo}</div>
-                                    <div className={styles.documentMeta}>
-                                        {doc.direccion?.nombre} • {doc.proceso_apoyo?.nombre}
+                                <div className={userStyles.userDocumentInfo}>
+                                    <div className={userStyles.userDocumentTitle}>{doc.titulo}</div>
+                                    <div className={userStyles.userDocumentMeta}>
+                                        <span className={userStyles.userDocumentDirection}>{doc.direccion?.nombre}</span>
+                                        <span className={userStyles.userDocumentSeparator}>•</span>
+                                        <span className={userStyles.userDocumentProcess}>{doc.proceso_apoyo?.nombre}</span>
                                     </div>
                                 </div>
-                                <div className={styles.documentDate}>
+                                <div className={userStyles.userDocumentDate}>
                                     {new Date(doc.created_at).toLocaleDateString()}
                                 </div>
                             </div>
@@ -154,39 +170,15 @@ const UserDashboard = () => {
                 </div>
             )}
 
-            {/* Acciones rápidas para usuario */}
-            <QuickActionsSection 
-                user={user}
-                showAdmin={false} // Usuarios no ven administración
-                showDirections={false} // Usuarios no gestionan direcciones
-                showProcesses={false} // Usuarios no gestionan procesos
-                showDocuments={true} // Solo pueden acceder a documentos
-                customActions={[
-                    {
-                        title: "Mis Documentos",
-                        description: "Ver documentos que he consultado recientemente",
-                        icon: <MyDocumentsIcon className="w-8 h-8" />,
-                        hash: "mis-documentos",
-                        colorClass: "quickActionIconAzul"
-                    },
-                    {
-                        title: "Favoritos",
-                        description: "Documentos marcados como favoritos",
-                        icon: <StarIcon className="w-8 h-8" />,
-                        hash: "favoritos",
-                        colorClass: "quickActionIconNaranja"
-                    }
-                ]}
-                onActionClick={(hash) => {
-                    if (hash === 'documentos') {
-                        // Redirigir a la vista de documentos
-                        window.location.hash = 'documentos';
-                    } else {
-                        // Para otras acciones, mostrar mensaje
-                        alert('Funcionalidad en desarrollo');
-                    }
-                }}
-            />
+            {/* Loading state */}
+            {searchLoading && (
+                <div className={userStyles.userLoadingContainer}>
+                    <div className={userStyles.userLoadingSpinner}></div>
+                    <p className="text-gray-600 text-lg font-medium mt-4">
+                        Buscando documentos...
+                    </p>
+                </div>
+            )}
         </div>
     );
 };

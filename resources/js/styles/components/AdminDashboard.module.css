@@ -1,0 +1,242 @@
+/* AdminDashboard.module.css - Estilos específicos para el panel de administración */
+
+.adminDashboardContainer {
+    padding: 2rem 0;
+}
+
+.adminHeader {
+    margin-bottom: 2rem;
+}
+
+.adminTitle {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #1F448B 0%, #667eea 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.adminSubtitle {
+    font-size: 1.1rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* Stats Section para Admin */
+.adminStatsSection {
+    margin-bottom: 3rem;
+}
+
+.adminStatsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.adminStatCard {
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    color: white;
+}
+
+.adminStatCard:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.adminStatCardAzul {
+    background: linear-gradient(135deg, #1F448B 0%, #667eea 100%);
+}
+
+.adminStatCardVerde {
+    background: linear-gradient(135deg, #B1CC34 0%, #9CAF88 100%);
+}
+
+.adminStatCardNaranja {
+    background: linear-gradient(135deg, #FF7D09 0%, #FF9A3C 100%);
+}
+
+.adminStatCardMorado {
+    background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+}
+
+.adminStatContent {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.adminStatInfo h3 {
+    font-size: 0.875rem;
+    opacity: 0.9;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.adminStatValue {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.adminStatDivider {
+    width: 3rem;
+    height: 0.25rem;
+    border-radius: 0.125rem;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.adminStatIcon {
+    font-size: 3rem;
+    opacity: 0.8;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+/* Quick Actions Section para Admin */
+.adminQuickActionsSection {
+    margin-bottom: 3rem;
+}
+
+.adminQuickActionsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.adminQuickActionCard {
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
+    background: white;
+    cursor: pointer;
+    text-align: left;
+}
+
+.adminQuickActionCard:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+}
+
+.adminQuickActionContent {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.adminQuickActionIcon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.adminQuickActionIconAzul {
+    background: linear-gradient(135deg, #1F448B 0%, #667eea 100%);
+}
+
+.adminQuickActionIconVerde {
+    background: linear-gradient(135deg, #B1CC34 0%, #9CAF88 100%);
+}
+
+.adminQuickActionIconNaranja {
+    background: linear-gradient(135deg, #FF7D09 0%, #FF9A3C 100%);
+}
+
+.adminQuickActionIconMorado {
+    background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+}
+
+.adminQuickActionText h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+}
+
+.adminQuickActionText p {
+    font-size: 0.875rem;
+    color: #6b7280;
+    line-height: 1.5;
+}
+
+/* Loading para Admin */
+.adminLoadingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+}
+
+.adminLoadingSpinner {
+    width: 2rem;
+    height: 2rem;
+    border: 3px solid #e5e7eb;
+    border-top: 3px solid #1F448B;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive para Admin */
+@media (max-width: 768px) {
+    .adminStatsGrid {
+        grid-template-columns: 1fr;
+    }
+    
+    .adminQuickActionsGrid {
+        grid-template-columns: 1fr;
+    }
+    
+    .adminTitle {
+        font-size: 2rem;
+    }
+    
+    .adminSubtitle {
+        font-size: 1rem;
+    }
+    
+    .adminStatValue {
+        font-size: 2rem;
+    }
+    
+    .adminStatIcon {
+        font-size: 2.5rem;
+    }
+}
+
+/* Animaciones para Admin */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.adminDashboardContainer {
+    animation: fadeInUp 0.6s ease-out;
+} 

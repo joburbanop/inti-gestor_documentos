@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import Dashboard from './Dashboard';
+import UserDashboard from './UserDashboard';
 import Direcciones from './Direcciones';
 import { INTILED_COLORS } from '../config/colors';
 
@@ -74,7 +75,8 @@ const AppRouter = () => {
                     <p className="text-gray-600">Componente en desarrollo...</p>
                 </div>;
             default:
-                return <Dashboard />;
+                // Mostrar UserDashboard para usuarios regulares, Dashboard para administradores
+                return user?.is_admin ? <Dashboard /> : <UserDashboard />;
         }
     };
 

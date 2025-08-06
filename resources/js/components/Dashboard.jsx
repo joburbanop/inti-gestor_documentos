@@ -16,7 +16,7 @@ const Dashboard = () => {
             try {
                 setLoading(true);
                 
-                // Obtener estadísticas
+                // Obtener estadísticas del sistema
                 const statsResponse = await apiRequest('/api/documentos/estadisticas');
                 if (statsResponse.success) {
                     setStats(statsResponse.data);
@@ -31,15 +31,13 @@ const Dashboard = () => {
         fetchDashboardData();
     }, [apiRequest]);
 
-    const handleNavigation = (hash) => {
-        window.location.hash = hash;
-    };
-
     if (loading) {
         return (
-            <div className={styles.loadingSpinner}>
-                <div className={styles.spinner}></div>
-                <p className="text-gray-600 text-lg font-medium mt-4">Cargando dashboard...</p>
+            <div className={styles.loadingContainer}>
+                <div className={styles.loadingSpinner}></div>
+                <p className="text-gray-600 text-lg font-medium mt-4">
+                    Cargando panel de administración...
+                </p>
             </div>
         );
     }
@@ -48,27 +46,37 @@ const Dashboard = () => {
         <div className={styles.dashboardContainer}>
             {/* Header */}
             <div className={styles.header}>
-                <h1 className={styles.title}>Dashboard</h1>
+                <h1 className={styles.title}>Panel de Administración</h1>
                 <p className={styles.subtitle}>
-                    Bienvenido de vuelta, {user?.name}. Aquí tienes un resumen de tu actividad.
+                    Bienvenido, {user?.name}. Gestiona la estructura organizacional y la información documental de la empresa.
                 </p>
             </div>
 
-            {/* Estadísticas */}
+            {/* Estadísticas del sistema */}
             <StatsSection 
                 stats={stats}
-                showDownloads={true}
+                showDownloads={false}
                 showDirections={true}
+                showDocuments={true}
+                showProcesses={true}
+                title=""
+                subtitle=""
+                styles={styles}
             />
 
-            {/* Acciones Rápidas */}
+            {/* Acciones rápidas para administradores */}
             <QuickActionsSection 
                 user={user}
                 showAdmin={true}
                 showDirections={true}
                 showProcesses={true}
                 showDocuments={true}
-                onActionClick={handleNavigation}
+                isUserDashboard={false}
+                styles={styles}
+                onActionClick={(hash) => {
+                    // Navegar a la sección correspondiente
+                    window.location.hash = hash;
+                }}
             />
         </div>
     );

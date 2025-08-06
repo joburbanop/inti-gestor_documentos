@@ -24,6 +24,83 @@
     font-weight: 500;
 }
 
+/* Search Section */
+.searchSection {
+    margin-bottom: 2rem;
+}
+
+/* Empty State */
+.emptyState {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.emptyStateIcon {
+    margin-bottom: 1.5rem;
+}
+
+.emptyStateTitle {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 1rem;
+}
+
+.emptyStateDescription {
+    font-size: 1rem;
+    color: #6b7280;
+    line-height: 1.6;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+/* Document Meta Styles */
+.documentDirection {
+    font-weight: 600;
+    color: #1e40af;
+}
+
+.documentSeparator {
+    margin: 0 0.5rem;
+    color: #9ca3af;
+}
+
+.documentProcess {
+    color: #059669;
+    font-weight: 500;
+}
+
+/* Loading Container */
+.loadingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+}
+
+.loadingSpinner {
+    width: 2rem;
+    height: 2rem;
+    border: 3px solid #e5e7eb;
+    border-top: 3px solid #1F448B;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Stats Section */
+.statsSection {
+    margin-bottom: 3rem;
+}
+
 .statsGrid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -92,6 +169,11 @@
     font-size: 3rem;
     opacity: 0.8;
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+/* Quick Actions Section */
+.quickActionsSection {
+    margin-bottom: 3rem;
 }
 
 .quickActionsGrid {
@@ -165,6 +247,7 @@
     line-height: 1.5;
 }
 
+/* Recent Documents Section */
 .recentDocumentsSection {
     background: white;
     border-radius: 1rem;
@@ -309,6 +392,10 @@
     
     .title {
         font-size: 2rem;
+    }
+    
+    .subtitle {
+        font-size: 1rem;
     }
     
     .statValue {
