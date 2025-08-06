@@ -1,0 +1,26 @@
+/* Layout.module.css - Estilos modulares para el componente Layout */
+
+.layoutContainer {
+    min-height: 100vh;
+    background-color: #f8fafc;
+    padding-top: 4rem; /* Espacio para el navbar fijo */
+}
+
+.mainContent {
+    max-width: 80rem;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .mainContent {
+        padding: 1rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .mainContent {
+        padding: 2rem 1.5rem;
+    }
+} 

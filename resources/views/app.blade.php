@@ -7,7 +7,8 @@
     <title>{{ config('app.name', 'Intranet Inti') }}</title>
     
     <!-- Compiled Assets -->
-    <link rel="stylesheet" href="{{ asset('build/assets/app-Bg2KdW6k.css') }}">
+    <link rel="stylesheet" href="{{ asset('build/assets/app-usG40wBd.css') }}">
+    <link rel="stylesheet" href="{{ asset('build/assets/app-BvvCxTce.css') }}">
     
     <!-- Preload fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -48,6 +49,6 @@
     <div id="app"></div>
     
     <!-- Compiled JavaScript -->
-    <script type="module" src="{{ asset('build/assets/app-VH4pzwXc.js') }}"></script>
+    <script type="module" src="{{ asset('build/assets/app-CQhdfgjE.js') }}"></script>
 </body>
 </html> 

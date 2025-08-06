@@ -1,0 +1,337 @@
+/* Dashboard.module.css - Estilos modulares para el componente Dashboard */
+
+.dashboardContainer {
+    padding: 2rem 0;
+}
+
+.header {
+    margin-bottom: 2rem;
+}
+
+.title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #1F448B 0%, #667eea 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.subtitle {
+    font-size: 1.1rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.statCard {
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    color: white;
+}
+
+.statCard:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.statCardAzul {
+    background: linear-gradient(135deg, #1F448B 0%, #667eea 100%);
+}
+
+.statCardVerde {
+    background: linear-gradient(135deg, #B1CC34 0%, #9CAF88 100%);
+}
+
+.statCardNaranja {
+    background: linear-gradient(135deg, #FF7D09 0%, #FF9A3C 100%);
+}
+
+.statCardMorado {
+    background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+}
+
+.statContent {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.statInfo h3 {
+    font-size: 0.875rem;
+    opacity: 0.9;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.statValue {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.statDivider {
+    width: 3rem;
+    height: 0.25rem;
+    border-radius: 0.125rem;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.statIcon {
+    font-size: 3rem;
+    opacity: 0.8;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+.quickActionsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.quickActionCard {
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
+    background: white;
+    cursor: pointer;
+    text-align: left;
+}
+
+.quickActionCard:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+}
+
+.quickActionContent {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.quickActionIcon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.quickActionIconAzul {
+    background: linear-gradient(135deg, #1F448B 0%, #667eea 100%);
+}
+
+.quickActionIconVerde {
+    background: linear-gradient(135deg, #B1CC34 0%, #9CAF88 100%);
+}
+
+.quickActionIconNaranja {
+    background: linear-gradient(135deg, #FF7D09 0%, #FF9A3C 100%);
+}
+
+.quickActionIconMorado {
+    background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+}
+
+.quickActionText h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+}
+
+.quickActionText p {
+    font-size: 0.875rem;
+    color: #6b7280;
+    line-height: 1.5;
+}
+
+.recentDocumentsSection {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.recentDocumentsHeader {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.recentDocumentsTitle {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.viewAllButton {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    background: linear-gradient(135deg, #1F448B 0%, #667eea 100%);
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.viewAllButton:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(31, 68, 139, 0.3);
+}
+
+.recentDocumentsList {
+    padding: 1rem;
+}
+
+.documentItem {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.documentItem:hover {
+    background: #f8fafc;
+    transform: translateX(5px);
+}
+
+.documentIcon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: white;
+}
+
+.documentIconPdf {
+    background: linear-gradient(135deg, #EF4444 0%, #F87171 100%);
+}
+
+.documentIconDoc {
+    background: linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%);
+}
+
+.documentIconXls {
+    background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+}
+
+.documentInfo {
+    flex: 1;
+}
+
+.documentTitle {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+}
+
+.documentMeta {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.documentDate {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+.loadingSpinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 3rem;
+}
+
+.spinner {
+    width: 2rem;
+    height: 2rem;
+    border: 3px solid #e5e7eb;
+    border-top: 3px solid #1F448B;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.errorMessage {
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    color: #DC2626;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    text-align: center;
+    margin: 1rem 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .statsGrid {
+        grid-template-columns: 1fr;
+    }
+    
+    .quickActionsGrid {
+        grid-template-columns: 1fr;
+    }
+    
+    .title {
+        font-size: 2rem;
+    }
+    
+    .statValue {
+        font-size: 2rem;
+    }
+    
+    .statIcon {
+        font-size: 2.5rem;
+    }
+}
+
+/* Animaciones */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dashboardContainer {
+    animation: fadeInUp 0.6s ease-out;
+} 
