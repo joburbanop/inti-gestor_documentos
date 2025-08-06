@@ -22,14 +22,12 @@ class Document extends Model
         'category_id',
         'uploaded_by',
         'slug',
-        'download_count',
-        'is_public'
+        'download_count'
     ];
 
     protected $casts = [
         'file_size' => 'integer',
         'download_count' => 'integer',
-        'is_public' => 'boolean',
     ];
 
     protected static function boot()
@@ -93,10 +91,7 @@ class Document extends Model
         $this->increment('download_count');
     }
 
-    public function scopePublic($query)
-    {
-        return $query->where('is_public', true);
-    }
+
 
     public function scopeInCategory($query, $categoryId)
     {

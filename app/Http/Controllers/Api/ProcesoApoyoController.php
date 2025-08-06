@@ -142,7 +142,7 @@ class ProcesoApoyoController extends Controller
                         'tipo_archivo' => $documento->tipo_archivo,
                         'tamaño_formateado' => $documento->tamaño_formateado,
                         'contador_descargas' => $documento->contador_descargas,
-                        'publico' => $documento->publico,
+
                         'fecha_creacion' => $documento->created_at->format('Y-m-d H:i:s'),
                         'subido_por' => [
                             'id' => $documento->subidoPor->id,

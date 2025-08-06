@@ -75,7 +75,7 @@ class ProcesoApoyo extends Model
     {
         return [
             'total_documentos' => $this->documentos()->count(),
-            'documentos_publicos' => $this->documentos()->where('publico', true)->count(),
+
             'total_descargas' => $this->documentos()->sum('contador_descargas')
         ];
     }

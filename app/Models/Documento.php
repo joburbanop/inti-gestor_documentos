@@ -25,12 +25,10 @@ class Documento extends Model
         'direccion_id',
         'proceso_apoyo_id',
         'subido_por',
-        'slug',
-        'publico'
+        'slug'
     ];
 
     protected $casts = [
-        'publico' => 'boolean',
         'tamaño_archivo' => 'integer',
         'contador_descargas' => 'integer'
     ];
@@ -73,13 +71,7 @@ class Documento extends Model
         return $this->belongsTo(User::class, 'subido_por');
     }
 
-    /**
-     * Scope para documentos públicos
-     */
-    public function scopePublicos(Builder $query): Builder
-    {
-        return $query->where('publico', true);
-    }
+
 
     /**
      * Scope para filtrar por dirección
@@ -152,12 +144,7 @@ class Documento extends Model
      */
     public function esDescargablePor(User $user): bool
     {
-        // Si es público, cualquier usuario puede descargarlo
-        if ($this->publico) {
-            return true;
-        }
-
-        // Si no es público, solo el que lo subió o un admin puede descargarlo
+        // Solo el que lo subió o un admin puede descargarlo
         return $user->id === $this->subido_por || $user->is_admin;
     }
 
@@ -169,7 +156,6 @@ class Documento extends Model
         return static::where('id', '!=', $this->id)
                     ->where('direccion_id', $this->direccion_id)
                     ->where('proceso_apoyo_id', $this->proceso_apoyo_id)
-                    ->where('publico', true)
                     ->with(['direccion', 'procesoApoyo'])
                     ->orderBy('created_at', 'desc')
                     ->limit($limit)

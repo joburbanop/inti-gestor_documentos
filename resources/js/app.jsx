@@ -5,6 +5,7 @@ import Login from './components/Login';
 import AppRouter from './components/AppRouter';
 import Layout from './components/Layout';
 import './bootstrap';
+import '../css/app.css';
 
 const App = () => {
     return (

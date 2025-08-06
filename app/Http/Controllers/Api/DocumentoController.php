@@ -32,14 +32,7 @@ class DocumentoController extends Controller
                 $query->porProceso($request->proceso_apoyo_id);
             }
 
-            if ($request->has('publico')) {
-                $query->where('publico', $request->publico);
-            }
 
-            // Solo mostrar documentos públicos para usuarios no admin
-            if (!auth()->user()->is_admin) {
-                $query->publicos();
-            }
 
             $documentos = $query->paginate(15);
 
@@ -51,7 +44,7 @@ class DocumentoController extends Controller
                     'tipo_archivo' => $documento->tipo_archivo,
                     'tamaño_formateado' => $documento->tamaño_formateado,
                     'contador_descargas' => $documento->contador_descargas,
-                    'publico' => $documento->publico,
+
                     'fecha_creacion' => $documento->created_at->format('Y-m-d H:i:s'),
                     'direccion' => [
                         'id' => $documento->direccion->id,
@@ -121,7 +114,7 @@ class DocumentoController extends Controller
                 'tipo_archivo' => $documento->tipo_archivo,
                 'tamaño_formateado' => $documento->tamaño_formateado,
                 'contador_descargas' => $documento->contador_descargas,
-                'publico' => $documento->publico,
+
                 'fecha_creacion' => $documento->created_at->format('Y-m-d H:i:s'),
                 'direccion' => [
                     'id' => $documento->direccion->id,
@@ -183,7 +176,7 @@ class DocumentoController extends Controller
                 'archivo' => 'required|file|max:10240', // 10MB máximo
                 'direccion_id' => 'required|exists:direcciones,id',
                 'proceso_apoyo_id' => 'required|exists:procesos_apoyo,id',
-                'publico' => 'boolean'
+
             ], [
                 'titulo.required' => 'El título es obligatorio',
                 'archivo.required' => 'El archivo es obligatorio',
@@ -215,7 +208,7 @@ class DocumentoController extends Controller
                 'direccion_id' => $request->direccion_id,
                 'proceso_apoyo_id' => $request->proceso_apoyo_id,
                 'subido_por' => auth()->id(),
-                'publico' => $request->publico ?? false
+
             ]);
 
             return response()->json([
@@ -256,7 +249,7 @@ class DocumentoController extends Controller
                 'descripcion' => 'nullable|string',
                 'direccion_id' => 'required|exists:direcciones,id',
                 'proceso_apoyo_id' => 'required|exists:procesos_apoyo,id',
-                'publico' => 'boolean'
+
             ]);
 
             if ($validator->fails()) {
@@ -420,11 +413,6 @@ class DocumentoController extends Controller
                 ->with(['direccion', 'procesoApoyo', 'subidoPor'])
                 ->orderBy('created_at', 'desc');
 
-            // Solo mostrar documentos públicos para usuarios no admin
-            if (!auth()->user()->is_admin) {
-                $query->publicos();
-            }
-
             $documentos = $query->paginate(15);
 
             $data = $documentos->getCollection()->map(function ($documento) {
@@ -435,7 +423,7 @@ class DocumentoController extends Controller
                     'tipo_archivo' => $documento->tipo_archivo,
                     'tamaño_formateado' => $documento->tamaño_formateado,
                     'contador_descargas' => $documento->contador_descargas,
-                    'publico' => $documento->publico,
+
                     'fecha_creacion' => $documento->created_at->format('Y-m-d H:i:s'),
                     'direccion' => [
                         'id' => $documento->direccion->id,
@@ -489,11 +477,6 @@ class DocumentoController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->limit(10);
 
-            // Solo mostrar documentos públicos para usuarios no admin
-            if (!auth()->user()->is_admin) {
-                $query->publicos();
-            }
-
             $documentos = $query->get()->map(function ($documento) {
                 return [
                     'id' => $documento->id,
@@ -536,7 +519,6 @@ class DocumentoController extends Controller
         try {
             $stats = [
                 'total_documentos' => Documento::count(),
-                'documentos_publicos' => Documento::publicos()->count(),
                 'total_descargas' => Documento::sum('contador_descargas') ?? 0,
                 'por_direccion' => Direccion::withCount('documentos')->get()->map(function ($direccion) {
                     return [

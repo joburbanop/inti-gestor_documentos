@@ -103,12 +103,7 @@ const Dashboard = () => {
                     icon="📄"
                     gradientClass="statCardAzul"
                 />
-                <StatCard
-                    title="Documentos Públicos"
-                    value={stats?.documentos_publicos || 0}
-                    icon="🌐"
-                    gradientClass="statCardVerde"
-                />
+
                 <StatCard
                     title="Total Descargas"
                     value={stats?.total_descargas || 0}

@@ -69,7 +69,7 @@ class Direccion extends Model
         return [
             'total_procesos' => $this->procesosApoyo()->count(),
             'total_documentos' => $this->documentos()->count(),
-            'documentos_publicos' => $this->documentos()->where('publico', true)->count(),
+
             'total_descargas' => $this->documentos()->sum('contador_descargas')
         ];
     }
