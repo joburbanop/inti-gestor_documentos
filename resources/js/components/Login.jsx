@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { INTILED_COLORS, INTILED_GRADIENTS, INTILED_THEMES } from '../config/colors';
 
 const Login = () => {
     const { login, error, clearError, isLoading, isAuthenticated } = useAuth();
@@ -24,7 +25,6 @@ const Login = () => {
         const result = await login(formData.email, formData.password);
         
         if (result.success) {
-            // El login fue exitoso, el contexto manejará la redirección
             console.log('Login exitoso');
         }
     };
@@ -50,45 +50,40 @@ const Login = () => {
                     margin: 0;
                     padding: 0;
                     overflow-x: hidden;
-                    background: linear-gradient(135deg, #1F448B 0%, #667eea 50%, #764ba2 100%);
+                    background: ${INTILED_COLORS.fondo};
                 }
                 
                 #app {
                     margin: 0;
                     padding: 0;
                     min-height: 100vh;
-                    background: linear-gradient(135deg, #1F448B 0%, #667eea 50%, #764ba2 100%);
-                }
-                
-                @keyframes float {
-                    0%, 100% { transform: translateY(0px); }
-                    50% { transform: translateY(-20px); }
+                    background: ${INTILED_COLORS.fondo};
                 }
                 
                 input:focus {
-                    border-color: rgba(255, 255, 255, 0.5) !important;
-                    background: rgba(255, 255, 255, 0.15) !important;
-                    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1) !important;
+                    border-color: ${INTILED_COLORS.azul} !important;
+                    background: ${INTILED_COLORS.superficie} !important;
+                    box-shadow: 0 0 0 3px ${INTILED_COLORS.azulTransparente} !important;
                 }
                 
                 input::placeholder {
-                    color: rgba(255, 255, 255, 0.5) !important;
+                    color: ${INTILED_COLORS.grisTexto} !important;
                 }
                 
                 button:hover:not(:disabled) {
                     transform: translateY(-2px) !important;
-                    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2) !important;
+                    box-shadow: 0 8px 25px rgba(31, 68, 139, 0.3) !important;
                 }
                 
                 button[type="button"]:hover {
-                    background: rgba(255, 255, 255, 0.1) !important;
-                    color: white !important;
+                    background: ${INTILED_COLORS.superficieSecundaria} !important;
+                    color: ${INTILED_COLORS.azul} !important;
                 }
             `}</style>
 
             <div style={{
                 minHeight: '100vh',
-                background: 'linear-gradient(135deg, #1F448B 0%, #667eea 50%, #764ba2 100%)',
+                background: INTILED_COLORS.fondo,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -98,47 +93,11 @@ const Login = () => {
                 overflow: 'hidden',
                 margin: 0
             }}>
-                {/* Animated Background Elements */}
-                <div style={{
-                    position: 'absolute',
-                    top: '10%',
-                    left: '10%',
-                    width: '200px',
-                    height: '200px',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    borderRadius: '50%',
-                    animation: 'float 6s ease-in-out infinite'
-                }}></div>
-                <div style={{
-                    position: 'absolute',
-                    top: '60%',
-                    right: '10%',
-                    width: '150px',
-                    height: '150px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    borderRadius: '50%',
-                    animation: 'float 8s ease-in-out infinite reverse'
-                }}></div>
-                <div style={{
-                    position: 'absolute',
-                    bottom: '20%',
-                    left: '20%',
-                    width: '100px',
-                    height: '100px',
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    borderRadius: '50%',
-                    animation: 'float 7s ease-in-out infinite'
-                }}></div>
-
                 {/* Main Content */}
                 <div style={{
-                    background: 'rgba(255, 255, 255, 0.15)',
-                    backdropFilter: 'blur(20px)',
-                    WebkitBackdropFilter: 'blur(20px)',
+                    ...INTILED_THEMES.cardElevada,
                     borderRadius: '24px',
                     padding: '3rem',
-                    border: '1px solid rgba(255, 255, 255, 0.3)',
-                    boxShadow: '0 25px 50px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.1)',
                     maxWidth: '450px',
                     width: '100%',
                     position: 'relative',
@@ -157,22 +116,20 @@ const Login = () => {
                                 style={{
                                     height: '60px',
                                     width: 'auto',
-                                    filter: 'brightness(0) invert(1)',
                                     opacity: 0.9
                                 }}
                             />
                         </div>
                         <h1 style={{ 
-                            color: 'white', 
+                            color: INTILED_COLORS.azul, 
                             fontSize: '2.5rem', 
                             fontWeight: '700',
-                            marginBottom: '0.5rem',
-                            textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                            marginBottom: '0.5rem'
                         }}>
                             Intranet Inti
                         </h1>
                         <p style={{ 
-                            color: 'rgba(255, 255, 255, 0.9)', 
+                            color: INTILED_COLORS.grisTexto, 
                             fontSize: '1.1rem',
                             fontWeight: '400'
                         }}>
@@ -183,7 +140,7 @@ const Login = () => {
                     {/* Welcome Message */}
                     <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
                         <h2 style={{ 
-                            color: 'white', 
+                            color: INTILED_COLORS.grisOscuro, 
                             fontSize: '1.5rem', 
                             fontWeight: '600',
                             marginBottom: '0.5rem'
@@ -191,7 +148,7 @@ const Login = () => {
                             ¡Bienvenido!
                         </h2>
                         <p style={{ 
-                            color: 'rgba(255, 255, 255, 0.8)', 
+                            color: INTILED_COLORS.grisTexto, 
                             fontSize: '0.95rem'
                         }}>
                             Accede a tu cuenta para continuar
@@ -203,7 +160,7 @@ const Login = () => {
                         <div>
                             <label style={{ 
                                 display: 'block', 
-                                color: 'white', 
+                                color: INTILED_COLORS.grisOscuro, 
                                 marginBottom: '0.75rem',
                                 fontWeight: '600',
                                 fontSize: '0.9rem'
@@ -219,12 +176,9 @@ const Login = () => {
                                     width: '100%',
                                     padding: '1rem',
                                     borderRadius: '12px',
-                                    border: '1px solid rgba(255, 255, 255, 0.3)',
-                                    background: 'rgba(255, 255, 255, 0.1)',
-                                    color: 'white',
+                                    ...INTILED_THEMES.input,
                                     outline: 'none',
                                     fontSize: '1rem',
-                                    transition: 'all 0.3s ease',
                                     boxSizing: 'border-box'
                                 }}
                                 placeholder="tu@email.com"
@@ -236,7 +190,7 @@ const Login = () => {
                         <div>
                             <label style={{ 
                                 display: 'block', 
-                                color: 'white', 
+                                color: INTILED_COLORS.grisOscuro, 
                                 marginBottom: '0.75rem',
                                 fontWeight: '600',
                                 fontSize: '0.9rem'
@@ -254,12 +208,9 @@ const Login = () => {
                                         padding: '1rem',
                                         paddingRight: '3rem',
                                         borderRadius: '12px',
-                                        border: '1px solid rgba(255, 255, 255, 0.3)',
-                                        background: 'rgba(255, 255, 255, 0.1)',
-                                        color: 'white',
+                                        ...INTILED_THEMES.input,
                                         outline: 'none',
                                         fontSize: '1rem',
-                                        transition: 'all 0.3s ease',
                                         boxSizing: 'border-box'
                                     }}
                                     placeholder="••••••••"
@@ -276,7 +227,7 @@ const Login = () => {
                                         transform: 'translateY(-50%)',
                                         background: 'none',
                                         border: 'none',
-                                        color: 'rgba(255, 255, 255, 0.7)',
+                                        color: INTILED_COLORS.grisTexto,
                                         cursor: 'pointer',
                                         fontSize: '0.9rem',
                                         fontWeight: '500',
@@ -294,9 +245,7 @@ const Login = () => {
                         {/* Error Message */}
                         {error && (
                             <div style={{
-                                background: 'rgba(239, 68, 68, 0.2)',
-                                border: '1px solid rgba(239, 68, 68, 0.4)',
-                                color: '#fecaca',
+                                ...INTILED_THEMES.error,
                                 padding: '1rem',
                                 borderRadius: '12px',
                                 fontSize: '0.9rem',
@@ -314,16 +263,12 @@ const Login = () => {
                                 width: '100%',
                                 padding: '1rem',
                                 borderRadius: '12px',
-                                background: 'linear-gradient(45deg, #FF7D09, #B1CC34)',
-                                color: 'white',
-                                border: 'none',
+                                ...INTILED_THEMES.botonPrimario,
                                 fontWeight: '600',
                                 cursor: isLoading ? 'not-allowed' : 'pointer',
                                 fontSize: '1rem',
-                                transition: 'all 0.3s ease',
                                 opacity: isLoading ? 0.7 : 1,
-                                transform: isLoading ? 'scale(0.98)' : 'scale(1)',
-                                boxShadow: '0 4px 15px rgba(255, 125, 9, 0.3)'
+                                transform: isLoading ? 'scale(0.98)' : 'scale(1)'
                             }}
                         >
                             {isLoading ? (
@@ -348,11 +293,11 @@ const Login = () => {
                     <div style={{ 
                         marginTop: '2rem', 
                         paddingTop: '1.5rem', 
-                        borderTop: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderTop: `1px solid ${INTILED_COLORS.grisBorde}`,
                         textAlign: 'center'
                     }}>
                         <p style={{ 
-                            color: 'rgba(255, 255, 255, 0.9)', 
+                            color: INTILED_COLORS.grisTexto, 
                             fontSize: '0.9rem',
                             fontWeight: '500',
                             marginBottom: '1rem'
@@ -360,10 +305,10 @@ const Login = () => {
                             Credenciales de demostración
                         </p>
                         <div style={{ 
-                            background: 'rgba(255, 255, 255, 0.08)', 
+                            background: INTILED_COLORS.superficieSecundaria,
                             padding: '1.5rem', 
                             borderRadius: '12px',
-                            border: '1px solid rgba(255, 255, 255, 0.15)'
+                            border: `1px solid ${INTILED_COLORS.grisBorde}`
                         }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                 <div style={{ 
@@ -371,10 +316,10 @@ const Login = () => {
                                     justifyContent: 'space-between',
                                     alignItems: 'center'
                                 }}>
-                                    <span style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '0.85rem' }}>
+                                    <span style={{ color: INTILED_COLORS.grisTexto, fontSize: '0.85rem' }}>
                                         <strong>👨‍💼 Admin:</strong>
                                     </span>
-                                    <span style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '0.85rem', fontFamily: 'monospace' }}>
+                                    <span style={{ color: INTILED_COLORS.grisOscuro, fontSize: '0.85rem', fontFamily: 'monospace' }}>
                                         victor@intiled.com
                                     </span>
                                 </div>
@@ -383,10 +328,10 @@ const Login = () => {
                                     justifyContent: 'space-between',
                                     alignItems: 'center'
                                 }}>
-                                    <span style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '0.85rem' }}>
+                                    <span style={{ color: INTILED_COLORS.grisTexto, fontSize: '0.85rem' }}>
                                         <strong>👤 Usuario:</strong>
                                     </span>
-                                    <span style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '0.85rem', fontFamily: 'monospace' }}>
+                                    <span style={{ color: INTILED_COLORS.grisOscuro, fontSize: '0.85rem', fontFamily: 'monospace' }}>
                                         usuario@intiled.com
                                     </span>
                                 </div>
@@ -395,10 +340,10 @@ const Login = () => {
                                     justifyContent: 'space-between',
                                     alignItems: 'center'
                                 }}>
-                                    <span style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '0.85rem' }}>
+                                    <span style={{ color: INTILED_COLORS.grisTexto, fontSize: '0.85rem' }}>
                                         <strong>🔑 Contraseña:</strong>
                                     </span>
-                                    <span style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '0.85rem', fontFamily: 'monospace' }}>
+                                    <span style={{ color: INTILED_COLORS.grisOscuro, fontSize: '0.85rem', fontFamily: 'monospace' }}>
                                         password
                                     </span>
                                 </div>
@@ -413,7 +358,7 @@ const Login = () => {
                     bottom: '1rem',
                     left: '50%',
                     transform: 'translateX(-50%)',
-                    color: 'rgba(255, 255, 255, 0.6)',
+                    color: INTILED_COLORS.grisTexto,
                     fontSize: '0.8rem',
                     textAlign: 'center'
                 }}>

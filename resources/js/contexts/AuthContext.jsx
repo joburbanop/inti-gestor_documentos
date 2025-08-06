@@ -115,7 +115,7 @@ export const AuthProvider = ({ children }) => {
         };
 
         try {
-            const response = await fetch(`/api${url}`, config);
+            const response = await fetch(url.startsWith('/api') ? url : `/api${url}`, config);
             const data = await response.json();
 
             if (!response.ok) {
