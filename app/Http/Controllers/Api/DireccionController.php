@@ -32,7 +32,6 @@ class DireccionController extends Controller
                             'nombre' => $direccion->nombre,
                             'descripcion' => $direccion->descripcion,
                             'codigo' => $direccion->codigo,
-                            'color' => $direccion->color,
                             'orden' => $direccion->orden,
                             'estadisticas' => [
                                 'total_procesos' => $direccion->procesos_apoyo_count,
@@ -92,7 +91,6 @@ class DireccionController extends Controller
                 'nombre' => $direccion->nombre,
                 'descripcion' => $direccion->descripcion,
                 'codigo' => $direccion->codigo,
-                'color' => $direccion->color,
                 'orden' => $direccion->orden,
                 'estadisticas' => $direccion->estadisticas,
                 'procesos_apoyo' => $direccion->procesosApoyo->map(function ($proceso) {
@@ -168,14 +166,12 @@ class DireccionController extends Controller
                 'nombre' => 'required|string|max:255|unique:direcciones,nombre',
                 'descripcion' => 'nullable|string',
                 'codigo' => 'required|string|max:10|unique:direcciones,codigo',
-                'color' => 'required|string|max:7',
                 'orden' => 'nullable|integer|min:0'
             ], [
                 'nombre.required' => 'El nombre es obligatorio',
                 'nombre.unique' => 'Ya existe una dirección con ese nombre',
                 'codigo.required' => 'El código es obligatorio',
-                'codigo.unique' => 'Ya existe una dirección con ese código',
-                'color.required' => 'El color es obligatorio'
+                'codigo.unique' => 'Ya existe una dirección con ese código'
             ]);
 
             if ($validator->fails()) {
@@ -228,7 +224,6 @@ class DireccionController extends Controller
                 'nombre' => 'required|string|max:255|unique:direcciones,nombre,' . $id,
                 'descripcion' => 'nullable|string',
                 'codigo' => 'required|string|max:10|unique:direcciones,codigo,' . $id,
-                'color' => 'required|string|max:7',
                 'orden' => 'nullable|integer|min:0',
                 'activo' => 'boolean'
             ]);

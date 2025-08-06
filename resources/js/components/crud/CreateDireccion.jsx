@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import CreateForm from './CreateForm';
-import { BuildingIcon, CodeIcon, DescriptionIcon, ColorIcon } from '../icons/CrudIcons';
+import { BuildingIcon, CodeIcon, DescriptionIcon } from '../icons/CrudIcons';
 
 const CreateDireccion = () => {
     const { apiRequest } = useAuth();
@@ -77,8 +77,7 @@ const CreateDireccion = () => {
                     type: 'text',
                     placeholder: 'Ej: DTH',
                     required: true,
-                    maxLength: 10,
-                    icon: CodeIcon
+                    maxLength: 10
                 }
             ]
         },
@@ -96,18 +95,6 @@ const CreateDireccion = () => {
                     rows: 4
                 }
             ]
-        },
-        {
-            title: 'Personalización Visual',
-            icon: ColorIcon,
-            fields: [
-                {
-                    name: 'color',
-                    label: 'Color de Identificación',
-                    type: 'color',
-                    helpText: 'Este color se usará para identificar visualmente la dirección en el sistema'
-                }
-            ]
         }
     ];
 
@@ -123,8 +110,7 @@ const CreateDireccion = () => {
             initialData={{
                 nombre: '',
                 codigo: '',
-                descripcion: '',
-                color: '#1e40af'
+                descripcion: ''
             }}
         />
     );

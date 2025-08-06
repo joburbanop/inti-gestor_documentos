@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styles from '../../styles/components/CreateForm.module.css';
+// import styles from '../../styles/components/CreateForm.module.css';
 import { 
     BuildingIcon, 
     ArrowLeftIcon, 
     SaveIcon, 
     CodeIcon, 
-    DescriptionIcon, 
-    ColorIcon,
+    DescriptionIcon,
     ProcessIcon,
     DocumentIcon,
     SettingsIcon
@@ -68,13 +67,13 @@ const CreateForm = ({
     const getEntityIcon = (type) => {
         switch (type) {
             case 'direccion':
-                return <BuildingIcon className="w-6 h-6" />;
+                return <BuildingIcon className="w-5 h-5" />;
             case 'proceso':
-                return <ProcessIcon className="w-6 h-6" />;
+                return <ProcessIcon className="w-5 h-5" />;
             case 'documento':
-                return <DocumentIcon className="w-6 h-6" />;
+                return <DocumentIcon className="w-5 h-5" />;
             default:
-                return <SettingsIcon className="w-6 h-6" />;
+                return <SettingsIcon className="w-5 h-5" />;
         }
     };
 
@@ -97,9 +96,9 @@ const CreateForm = ({
         switch (type) {
             case 'textarea':
                 return (
-                    <div className={styles.formGroup} key={name}>
-                        <label htmlFor={name} className={styles.formLabel}>
-                            {FieldIcon && <FieldIcon className="w-4 h-4 inline mr-1" />}
+                    <div className="formGroup" key={name}>
+                        <label htmlFor={name} className="formLabel">
+                            {FieldIcon && <FieldIcon className="w-3 h-3 inline mr-1" />}
                             {label} {required && '*'}
                         </label>
                         <textarea
@@ -107,59 +106,29 @@ const CreateForm = ({
                             name={name}
                             value={fieldValue}
                             onChange={handleInputChange}
-                            className={`${styles.formTextarea} ${fieldError ? styles.inputError : ''}`}
+                            className={`formTextarea ${fieldError ? 'inputError' : ''}`}
                             placeholder={placeholder}
                             rows={rows}
                             maxLength={maxLength}
                         />
                         {maxLength && (
-                            <div className={styles.textareaFooter}>
-                                <span className={styles.charCount}>
+                            <div className="textareaFooter">
+                                <span className="charCount">
                                     {fieldValue.length}/{maxLength} caracteres
                                 </span>
                             </div>
                         )}
                         {fieldError && (
-                            <span className={styles.errorText}>{fieldError}</span>
-                        )}
-                    </div>
-                );
-
-            case 'color':
-                return (
-                    <div className={styles.formGroup} key={name}>
-                        <label htmlFor={name} className={styles.formLabel}>
-                            {FieldIcon && <FieldIcon className="w-4 h-4 inline mr-1" />}
-                            {label}
-                        </label>
-                        <div className={styles.colorInputContainer}>
-                            <input
-                                type="color"
-                                id={name}
-                                name={name}
-                                value={fieldValue}
-                                onChange={handleInputChange}
-                                className={styles.colorInput}
-                            />
-                            <div className={styles.colorPreview}>
-                                <span className={styles.colorValue}>{fieldValue}</span>
-                                <div 
-                                    className={styles.colorSwatch}
-                                    style={{ backgroundColor: fieldValue }}
-                                ></div>
-                            </div>
-                        </div>
-                        {field.helpText && (
-                            <p className={styles.colorHelp}>{field.helpText}</p>
+                            <span className="errorText">{fieldError}</span>
                         )}
                     </div>
                 );
 
             case 'select':
                 return (
-                    <div className={styles.formGroup} key={name}>
-                        <label htmlFor={name} className={styles.formLabel}>
-                            {FieldIcon && <FieldIcon className="w-4 h-4 inline mr-1" />}
+                    <div className="formGroup" key={name}>
+                        <label htmlFor={name} className="formLabel">
+                            {FieldIcon && <FieldIcon className="w-3 h-3 inline mr-1" />}
                             {label} {required && '*'}
                         </label>
                         <select
@@ -167,7 +136,7 @@ const CreateForm = ({
                             name={name}
                             value={fieldValue}
                             onChange={handleInputChange}
-                            className={`${styles.formSelect} ${fieldError ? styles.inputError : ''}`}
+                            className={`formSelect ${fieldError ? 'inputError' : ''}`}
                         >
                             <option value="">{placeholder}</option>
                             {options.map((option) => (
@@ -177,30 +146,30 @@ const CreateForm = ({
                             ))}
                         </select>
                         {fieldError && (
-                            <span className={styles.errorText}>{fieldError}</span>
+                            <span className="errorText">{fieldError}</span>
                         )}
                     </div>
                 );
 
             default:
                 return (
-                    <div className={styles.formGroup} key={name}>
-                        <label htmlFor={name} className={styles.formLabel}>
-                            {FieldIcon && <FieldIcon className="w-4 h-4 inline mr-1" />}
+                    <div className="formGroup" key={name}>
+                        <label htmlFor={name} className="formLabel">
+                            {FieldIcon && <FieldIcon className="w-3 h-3 inline mr-1" />}
                             {label} {required && '*'}
                         </label>
                         <input
-                            type={type}
                             id={name}
                             name={name}
+                            type={type}
                             value={fieldValue}
                             onChange={handleInputChange}
-                            className={`${styles.formInput} ${fieldError ? styles.inputError : ''}`}
+                            className={`formInput ${fieldError ? 'inputError' : ''}`}
                             placeholder={placeholder}
                             maxLength={maxLength}
                         />
                         {fieldError && (
-                            <span className={styles.errorText}>{fieldError}</span>
+                            <span className="errorText">{fieldError}</span>
                         )}
                     </div>
                 );
@@ -211,16 +180,16 @@ const CreateForm = ({
         const { title: sectionTitle, icon: SectionIcon, fields: sectionFields } = section;
         
         return (
-            <div className={styles.formSection} key={sectionTitle}>
-                <h3 className={styles.sectionTitle}>
-                    {SectionIcon && <SectionIcon className="w-5 h-5" />}
+            <div className="formSection" key={sectionTitle}>
+                <h3 className="sectionTitle">
+                    {SectionIcon && <SectionIcon className="w-4 h-4" />}
                     {sectionTitle}
                 </h3>
                 
                 {sectionFields.length === 1 ? (
                     renderField(sectionFields[0])
                 ) : (
-                    <div className={styles.formGrid}>
+                    <div className="formGrid">
                         {sectionFields.map(renderField)}
                     </div>
                 )}
@@ -229,36 +198,36 @@ const CreateForm = ({
     };
 
     return (
-        <div className={styles.createFormContainer}>
+        <div className="createFormContainer">
             {/* Header Compacto */}
-            <div className={styles.createHeader}>
-                <div className={styles.headerTop}>
+            <div className="createHeader">
+                <div className="headerTop">
                     <button 
                         onClick={handleCancel}
-                        className={styles.backButton}
+                        className="backButton"
                         aria-label="Volver"
                     >
-                        <ArrowLeftIcon className="w-4 h-4" />
+                        <ArrowLeftIcon className="w-3 h-3" />
                         <span>Volver</span>
                     </button>
                     
-                    <div className={styles.createIcon}>
+                    <div className="createIcon">
                         {getEntityIcon(entityType)}
                     </div>
                 </div>
                 
-                <div className={styles.createTitleSection}>
-                    <h1 className={styles.createTitle}>{title}</h1>
-                    <p className={styles.createSubtitle}>{subtitle}</p>
+                <div className="createTitleSection">
+                    <h1 className="createTitle">{title}</h1>
+                    <p className="createSubtitle">{subtitle}</p>
                 </div>
             </div>
 
             {/* Formulario Organizado */}
-            <div className={styles.formContainer}>
-                <form onSubmit={handleSubmit} className={styles.createForm}>
+            <div className="formContainer">
+                <form onSubmit={handleSubmit} className="createForm">
                     {/* Error general */}
                     {errors.general && (
-                        <div className={styles.errorMessage}>
+                        <div className="errorMessage">
                             {errors.general}
                         </div>
                     )}
@@ -267,11 +236,11 @@ const CreateForm = ({
                     {fields.map(renderSection)}
 
                     {/* Botones de acción */}
-                    <div className={styles.formActions}>
+                    <div className="formActions">
                         <button
                             type="button"
                             onClick={handleCancel}
-                            className={styles.cancelButton}
+                            className="cancelButton"
                             disabled={loading}
                         >
                             Cancelar
@@ -279,14 +248,14 @@ const CreateForm = ({
                         
                         <button
                             type="submit"
-                            className={styles.submitButton}
+                            className="submitButton"
                             disabled={loading}
                         >
                             {loading ? (
-                                <div className={styles.loadingSpinner}></div>
+                                <div className="loadingSpinner"></div>
                             ) : (
                                 <>
-                                    <SaveIcon className="w-5 h-5" />
+                                    <SaveIcon className="w-4 h-4" />
                                     <span>Crear {entityType}</span>
                                 </>
                             )}

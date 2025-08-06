@@ -17,7 +17,6 @@ class Area extends Model
         'description',
         'slug',
         'code',
-        'color',
         'is_active'
     ];
 

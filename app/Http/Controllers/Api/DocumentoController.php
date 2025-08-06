@@ -50,7 +50,6 @@ class DocumentoController extends Controller
                         'id' => $documento->direccion->id,
                         'nombre' => $documento->direccion->nombre,
                         'codigo' => $documento->direccion->codigo,
-                        'color' => $documento->direccion->color,
                     ],
                     'proceso_apoyo' => [
                         'id' => $documento->procesoApoyo->id,
@@ -120,7 +119,6 @@ class DocumentoController extends Controller
                     'id' => $documento->direccion->id,
                     'nombre' => $documento->direccion->nombre,
                     'codigo' => $documento->direccion->codigo,
-                    'color' => $documento->direccion->color,
                 ],
                 'proceso_apoyo' => [
                     'id' => $documento->procesoApoyo->id,
@@ -486,7 +484,6 @@ class DocumentoController extends Controller
                     'fecha_creacion' => $documento->created_at->format('Y-m-d H:i:s'),
                     'direccion' => [
                         'nombre' => $documento->direccion->nombre,
-                        'color' => $documento->direccion->color,
                     ],
                     'proceso_apoyo' => [
                         'nombre' => $documento->procesoApoyo->nombre,
@@ -520,10 +517,11 @@ class DocumentoController extends Controller
             $stats = [
                 'total_documentos' => Documento::count(),
                 'total_descargas' => Documento::sum('contador_descargas') ?? 0,
+                'total_direcciones' => Direccion::count(),
+                'total_procesos' => ProcesoApoyo::count(),
                 'por_direccion' => Direccion::withCount('documentos')->get()->map(function ($direccion) {
                     return [
                         'nombre' => $direccion->nombre,
-                        'color' => $direccion->color,
                         'total' => $direccion->documentos_count ?? 0
                     ];
                 }),

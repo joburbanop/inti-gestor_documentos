@@ -15,14 +15,20 @@ const Dashboard = () => {
         const fetchDashboardData = async () => {
             try {
                 setLoading(true);
+                console.log('🔄 Cargando datos del dashboard...');
                 
                 // Obtener estadísticas del sistema
                 const statsResponse = await apiRequest('/api/documentos/estadisticas');
+                console.log('📊 Respuesta de estadísticas:', statsResponse);
+                
                 if (statsResponse.success) {
                     setStats(statsResponse.data);
+                    console.log('✅ Estadísticas cargadas:', statsResponse.data);
+                } else {
+                    console.error('❌ Error en respuesta de estadísticas:', statsResponse);
                 }
             } catch (error) {
-                console.error('Error al cargar datos del dashboard:', error);
+                console.error('❌ Error al cargar datos del dashboard:', error);
             } finally {
                 setLoading(false);
             }
