@@ -98,7 +98,6 @@ const CreateForm = ({
                 return (
                     <div className="formGroup" key={name}>
                         <label htmlFor={name} className="formLabel">
-                            {FieldIcon && <FieldIcon className="w-3 h-3 inline mr-1" />}
                             {label} {required && '*'}
                         </label>
                         <textarea
@@ -128,7 +127,6 @@ const CreateForm = ({
                 return (
                     <div className="formGroup" key={name}>
                         <label htmlFor={name} className="formLabel">
-                            {FieldIcon && <FieldIcon className="w-3 h-3 inline mr-1" />}
                             {label} {required && '*'}
                         </label>
                         <select
@@ -155,7 +153,6 @@ const CreateForm = ({
                 return (
                     <div className="formGroup" key={name}>
                         <label htmlFor={name} className="formLabel">
-                            {FieldIcon && <FieldIcon className="w-3 h-3 inline mr-1" />}
                             {label} {required && '*'}
                         </label>
                         <input
@@ -182,7 +179,6 @@ const CreateForm = ({
         return (
             <div className="formSection" key={sectionTitle}>
                 <h3 className="sectionTitle">
-                    {SectionIcon && <SectionIcon className="w-4 h-4" />}
                     {sectionTitle}
                 </h3>
                 
@@ -210,10 +206,6 @@ const CreateForm = ({
                         <ArrowLeftIcon className="w-3 h-3" />
                         <span>Volver</span>
                     </button>
-                    
-                    <div className="createIcon">
-                        {getEntityIcon(entityType)}
-                    </div>
                 </div>
                 
                 <div className="createTitleSection">
@@ -255,7 +247,6 @@ const CreateForm = ({
                                 <div className="loadingSpinner"></div>
                             ) : (
                                 <>
-                                    <SaveIcon className="w-4 h-4" />
                                     <span>Crear {entityType}</span>
                                 </>
                             )}
