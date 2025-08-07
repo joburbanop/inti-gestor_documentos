@@ -209,6 +209,8 @@ class DireccionController extends Controller
             // Limpiar cache de manera eficiente
             Cache::forget('direcciones_activas');
             Cache::forget('procesos_apoyo_todos');
+            Cache::forget('dashboard_estadisticas');
+            Cache::forget('total_direcciones');
 
             return response()->json([
                 'success' => true,
@@ -290,6 +292,8 @@ class DireccionController extends Controller
             // Limpiar cache
             Cache::forget('direcciones_activas');
             Cache::forget("direccion_{$id}");
+            Cache::forget('dashboard_estadisticas');
+            Cache::forget('total_direcciones');
 
             return response()->json([
                 'success' => true,
@@ -343,6 +347,8 @@ class DireccionController extends Controller
             // Limpiar cache
             Cache::forget('direcciones_activas');
             Cache::forget("direccion_{$id}");
+            Cache::forget('dashboard_estadisticas');
+            Cache::forget('total_direcciones');
 
             return response()->json([
                 'success' => true,

@@ -51,11 +51,17 @@ const Dashboard = () => {
     }, [apiRequest]);
 
     useEffect(() => {
-        // Cargar datos solo si no están ya cargados
-        if (loading) {
+        // Cargar datos siempre al montar el componente
+        fetchDashboardData();
+        
+        // Configurar actualización automática cada 30 segundos
+        const intervalId = setInterval(() => {
             fetchDashboardData();
-        }
-    }, [fetchDashboardData, loading]);
+        }, 30000);
+        
+        // Limpiar intervalo al desmontar
+        return () => clearInterval(intervalId);
+    }, [fetchDashboardData]);
 
     // Configuración optimizada de estadísticas con memoización
     const statsConfig = useMemo(() => [
@@ -118,12 +124,27 @@ const Dashboard = () => {
         <div className={styles.dashboardContainer}>
             {/* Header optimizado */}
             <div className={styles.dashboardHeader}>
-                <h1 className={styles.dashboardTitle}>
-                    Panel de Administración
-                </h1>
-                <p className={styles.dashboardSubtitle}>
-                    Gestiona la información documental de la empresa
-                </p>
+                <div className={styles.headerContent}>
+                    <div>
+                        <h1 className={styles.dashboardTitle}>
+                            Panel de Administración
+                        </h1>
+                        <p className={styles.dashboardSubtitle}>
+                            Gestiona la información documental de la empresa
+                        </p>
+                    </div>
+                    <button
+                        onClick={fetchDashboardData}
+                        disabled={loading}
+                        className={styles.refreshButton}
+                        title="Actualizar datos"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        {loading ? 'Actualizando...' : 'Actualizar'}
+                    </button>
+                </div>
             </div>
 
             {/* Contenido optimizado con lazy loading */}

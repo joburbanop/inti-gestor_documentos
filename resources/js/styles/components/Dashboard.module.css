@@ -4,6 +4,60 @@
     padding: 2rem 0;
 }
 
+.dashboardHeader {
+    margin-bottom: 2rem;
+}
+
+.headerContent {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.refreshButton {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: linear-gradient(135deg, #1F448B 0%, #667eea 100%);
+    color: white;
+    border: none;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(31, 68, 139, 0.2);
+}
+
+.refreshButton:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(31, 68, 139, 0.3);
+}
+
+.refreshButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.dashboardTitle {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #1F448B 0%, #667eea 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.dashboardSubtitle {
+    font-size: 1.1rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
 .header {
     margin-bottom: 2rem;
 }
@@ -404,6 +458,26 @@
     
     .statIcon {
         font-size: 2.5rem;
+    }
+    
+    .headerContent {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .refreshButton {
+        align-self: flex-end;
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
+    }
+    
+    .dashboardTitle {
+        font-size: 2rem;
+    }
+    
+    .dashboardSubtitle {
+        font-size: 1rem;
     }
 }
 

@@ -515,18 +515,18 @@ class DocumentoController extends Controller
     public function estadisticas(): JsonResponse
     {
         try {
-            // Cache ultra rápido - 10 minutos para datos que cambian poco (funciona con cualquier driver)
-            $estadisticas = Cache::remember('dashboard_estadisticas', 600, function () {
-                // Consultas optimizadas con índices
-                $totalDocumentos = Cache::remember('total_documentos', 300, function () {
+            // Cache ultra rápido - 2 minutos para datos más frescos
+            $estadisticas = Cache::remember('dashboard_estadisticas', 120, function () {
+                // Consultas optimizadas con índices - cache más corto para datos que cambian
+                $totalDocumentos = Cache::remember('total_documentos', 60, function () {
                     return Documento::count();
                 });
                 
-                $totalDirecciones = Cache::remember('total_direcciones', 300, function () {
+                $totalDirecciones = Cache::remember('total_direcciones', 60, function () {
                     return Direccion::where('activo', true)->count();
                 });
                 
-                $totalProcesos = Cache::remember('total_procesos', 300, function () {
+                $totalProcesos = Cache::remember('total_procesos', 60, function () {
                     return ProcesoApoyo::where('activo', true)->count();
                 });
 
