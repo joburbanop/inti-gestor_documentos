@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import styles from '../../styles/components/Direcciones.module.css';
-import { CloseIcon, CodeIcon, DescriptionIcon, ColorIcon } from '../icons/DireccionesIcons';
+import { CloseIcon } from '../icons/DireccionesIcons';
+import CreateForm from '../crud/CreateForm';
+import { BuildingIcon, ProcessIcon, DocumentIcon } from '../icons/CrudIcons';
+import { useAuth } from '../../contexts/AuthContext';
 
 const DireccionModal = ({ 
     show, 
@@ -8,22 +11,118 @@ const DireccionModal = ({
     formData, 
     onClose, 
     onSubmit, 
-    onChange 
+    onChange,
+    loading = false,
+    errors = {}
 }) => {
-    if (!show) return null;
+    const { apiRequest } = useAuth();
+    const [procesosOptions, setProcesosOptions] = useState([]);
+    const [showProcessModal, setShowProcessModal] = useState(false);
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        onSubmit(e);
+    // Cargar procesos de apoyo para el select
+    useEffect(() => {
+        if (show) {
+            console.log('🔍 Modal abierto, cargando procesos...');
+            loadProcesosOptions();
+        }
+    }, [show]);
+
+    const loadProcesosOptions = async () => {
+        try {
+            console.log('🔍 Cargando procesos de apoyo...');
+            const response = await apiRequest('/api/procesos-apoyo/todos');
+            
+            console.log('🔍 Respuesta completa:', response);
+            
+            if (response.success) {
+                console.log('✅ Procesos cargados:', response.data.length);
+                console.log('✅ Datos de procesos:', response.data);
+                setProcesosOptions(response.data);
+            } else {
+                console.error('❌ Error en respuesta:', response.message);
+            }
+        } catch (error) {
+            console.error('❌ Error al cargar procesos:', error);
+        }
     };
 
-    const handleInputChange = (field, value) => {
-        onChange({ ...formData, [field]: value });
+    if (!show) return null;
+
+    // Configuración de campos para direcciones (igual que en CreateDireccion)
+    const direccionFields = [
+        {
+            title: 'Información Básica',
+            icon: BuildingIcon,
+            fields: [
+                {
+                    name: 'nombre',
+                    label: 'Nombre de la Dirección',
+                    type: 'text',
+                    placeholder: 'Ej: Dirección de Talento Humano',
+                    required: true,
+                    maxLength: 100
+                },
+                {
+                    name: 'codigo',
+                    label: 'Código',
+                    type: 'text',
+                    placeholder: 'Ej: DTH',
+                    required: true,
+                    maxLength: 10
+                }
+            ]
+        },
+        {
+            title: 'Descripción y Funciones',
+            icon: DocumentIcon,
+            fields: [
+                {
+                    name: 'descripcion',
+                    label: 'Descripción de la Dirección',
+                    type: 'textarea',
+                    placeholder: 'Describe las funciones principales, responsabilidades y objetivos de esta dirección...',
+                    required: true,
+                    maxLength: 500,
+                    rows: 4
+                }
+            ]
+        },
+        {
+            title: 'Procesos de Apoyo',
+            icon: ProcessIcon,
+            fields: [
+                {
+                    name: 'procesos_apoyo',
+                    label: 'Procesos de Apoyo Asociados',
+                    type: 'select',
+                    placeholder: 'Selecciona los procesos de apoyo (opcional)',
+                    required: false,
+                    multiple: true,
+                    options: procesosOptions,
+                    hasAddButton: true,
+                    addButtonText: 'Crear Nuevo Proceso',
+                    onAddClick: () => setShowProcessModal(true)
+                }
+            ]
+        }
+    ];
+
+    const handleFormSubmit = async (formData) => {
+        if (onSubmit) {
+            await onSubmit(formData);
+        }
+    };
+
+    const handleFormChange = (newFormData) => {
+        if (onChange) {
+            onChange(newFormData);
+        }
     };
 
     return (
         <div className={styles.modalOverlay} onClick={onClose}>
             <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+                {/* Header del Modal */}
                 <div className={styles.modalHeader}>
                     <h2 className={styles.modalTitle}>
                         {mode === 'create' ? 'Nueva Dirección' : 'Editar Dirección'}
@@ -36,83 +135,22 @@ const DireccionModal = ({
                         <CloseIcon />
                     </button>
                 </div>
-                
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className={styles.formGroup}>
-                        <label className={styles.formLabel}>
-                            Nombre *
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.nombre}
-                            onChange={(e) => handleInputChange('nombre', e.target.value)}
-                            className={styles.formInput}
-                            placeholder="Ingrese el nombre de la dirección"
-                            required
-                        />
-                    </div>
-                    
-                    <div className={styles.formGroup}>
-                        <label className={styles.formLabel}>
-                            <CodeIcon className="w-4 h-4 inline mr-2" />
-                            Código
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.codigo}
-                            onChange={(e) => handleInputChange('codigo', e.target.value)}
-                            className={styles.formInput}
-                            placeholder="Ej: DIR-001"
-                        />
-                    </div>
-                    
-                    <div className={styles.formGroup}>
-                        <label className={styles.formLabel}>
-                            <DescriptionIcon className="w-4 h-4 inline mr-2" />
-                            Descripción
-                        </label>
-                        <textarea
-                            value={formData.descripcion}
-                            onChange={(e) => handleInputChange('descripcion', e.target.value)}
-                            className={styles.formTextarea}
-                            placeholder="Descripción de la dirección y sus responsabilidades..."
-                            rows="3"
-                        />
-                    </div>
-                    
-                    <div className={styles.formGroup}>
-                        <label className={styles.formLabel}>
-                            <ColorIcon className="w-4 h-4 inline mr-2" />
-                            Color de identificación
-                        </label>
-                        <input
-                            type="color"
-                            value={formData.color}
-                            onChange={(e) => handleInputChange('color', e.target.value)}
-                            className={styles.colorInput}
-                            title="Seleccionar color"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                            Este color se usará para identificar la dirección en el sistema
-                        </p>
-                    </div>
-                    
-                    <div className={styles.modalButtons}>
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className={styles.cancelButton}
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            type="submit"
-                            className={styles.submitButton}
-                        >
-                            {mode === 'create' ? 'Crear Dirección' : 'Actualizar Dirección'}
-                        </button>
-                    </div>
-                </form>
+
+                {/* Contenido del Modal usando CreateForm */}
+                <div className={styles.modalBody}>
+                    <CreateForm
+                        entityType="direccion"
+                        title=""
+                        subtitle=""
+                        fields={direccionFields}
+                        onSubmit={handleFormSubmit}
+                        onCancel={onClose}
+                        initialData={formData}
+                        loading={loading}
+                        errors={errors}
+                        isModal={true}
+                    />
+                </div>
             </div>
         </div>
     );

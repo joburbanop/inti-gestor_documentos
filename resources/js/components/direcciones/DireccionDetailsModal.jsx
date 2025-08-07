@@ -9,7 +9,7 @@ const DireccionDetailsModal = ({
     if (!direccion) return null;
 
     return (
-        <div className={styles.modalOverlay} onClick={onClose}>
+        <div className={styles.detailsModalOverlay} onClick={onClose}>
             <div 
                 className={styles.detailsModal} 
                 onClick={(e) => e.stopPropagation()}

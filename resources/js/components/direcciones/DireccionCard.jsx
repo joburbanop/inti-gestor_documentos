@@ -6,16 +6,8 @@ const DireccionCard = ({
     direccion, 
     user, 
     onEdit, 
-    onDelete, 
-    onViewDetails 
+    onDelete
 }) => {
-    const handleCardClick = (e) => {
-        // Evitar que se active si se hace clic en los botones de acción
-        if (e.target.closest('button')) {
-            return;
-        }
-        onViewDetails(direccion);
-    };
 
     return (
         <div 
@@ -24,7 +16,6 @@ const DireccionCard = ({
                 '--direccion-color': direccion.color,
                 '--direccion-color-light': direccion.color + '20'
             }}
-            onClick={handleCardClick}
         >
             {/* Header de la tarjeta */}
             <div className={styles.cardHeader}>

@@ -21,15 +21,18 @@ const Direcciones = () => {
     const navigate = useNavigate();
     const [direcciones, setDirecciones] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [formLoading, setFormLoading] = useState(false);
     const [selectedDireccion, setSelectedDireccion] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [modalMode, setModalMode] = useState('edit');
     const [successMessage, setSuccessMessage] = useState('');
+    const [errors, setErrors] = useState({});
     const [formData, setFormData] = useState({
         nombre: '',
         descripcion: '',
         codigo: '',
-        color: '#1F448B'
+        color: '#1F448B',
+        procesos_apoyo: []
     });
 
     // Hook para modal de confirmación
@@ -63,33 +66,68 @@ const Direcciones = () => {
         }
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const handleSubmit = async (formData) => {
         try {
-            const response = await apiRequest(`/api/direcciones/${selectedDireccion.id}`, {
-                method: 'PUT',
-                body: JSON.stringify(formData)
-            });
+            setFormLoading(true);
+            setErrors({});
+            
+            console.log('🔍 Enviando datos del formulario:', formData);
+            
+            let response;
+            
+            if (modalMode === 'create') {
+                // Crear nueva dirección
+                console.log('🔍 Creando nueva dirección...');
+                response = await apiRequest('/api/direcciones', {
+                    method: 'POST',
+                    body: JSON.stringify(formData)
+                });
+            } else {
+                // Editar dirección existente
+                console.log('🔍 Editando dirección existente...');
+                response = await apiRequest(`/api/direcciones/${selectedDireccion.id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(formData)
+                });
+            }
+            
             if (response.success) {
                 setShowModal(false);
                 fetchDirecciones();
                 resetForm();
+                
+                // Mostrar mensaje de éxito
+                const action = modalMode === 'create' ? 'creada' : 'actualizada';
+                setSuccessMessage(`Dirección "${formData.nombre}" ${action} exitosamente`);
+                setTimeout(() => setSuccessMessage(''), 5000);
             }
         } catch (error) {
             console.error('Error al guardar dirección:', error);
+            
+            // Manejar errores de validación
+            if (error.message === 'Error de validación' && error.errors) {
+                setErrors(error.errors);
+            } else {
+                setErrors({ general: 'Error al guardar la dirección' });
+            }
+        } finally {
+            setFormLoading(false);
         }
     };
 
     const handleEdit = (direccion) => {
+        console.log('🔍 handleEdit llamado con:', direccion);
         setSelectedDireccion(direccion);
         setFormData({
             nombre: direccion.nombre,
             descripcion: direccion.descripcion || '',
             codigo: direccion.codigo || '',
-            color: direccion.color
+            color: direccion.color || '#1F448B',
+            procesos_apoyo: direccion.procesos_apoyo || []
         });
         setModalMode('edit');
         setShowModal(true);
+        console.log('🔍 Modal configurado para editar:', { mode: 'edit', show: true, formData: direccion });
     };
 
     const handleDelete = (direccion) => {
@@ -121,21 +159,22 @@ const Direcciones = () => {
         });
     };
 
-    const handleViewDetails = (direccion) => {
-        setSelectedDireccion(direccion);
-    };
+
 
     const resetForm = () => {
         setFormData({
             nombre: '',
             descripcion: '',
             codigo: '',
-            color: '#1F448B'
+            color: '#1F448B',
+            procesos_apoyo: []
         });
     };
 
-    const openCreatePage = () => {
-        navigate('/direcciones/crear');
+    const openCreateModal = () => {
+        resetForm();
+        setModalMode('create');
+        setShowModal(true);
     };
 
     const closeModal = () => {
@@ -143,9 +182,7 @@ const Direcciones = () => {
         resetForm();
     };
 
-    const closeDetailsModal = () => {
-        setSelectedDireccion(null);
-    };
+
 
     if (loading) {
         return (
@@ -191,7 +228,7 @@ const Direcciones = () => {
                 </div>
                 {user?.is_admin && (
                     <button
-                        onClick={openCreatePage}
+                        onClick={openCreateModal}
                         className={styles.newButton}
                         title="Crear nueva dirección"
                     >
@@ -210,7 +247,6 @@ const Direcciones = () => {
                         user={user}
                         onEdit={handleEdit}
                         onDelete={handleDelete}
-                        onViewDetails={handleViewDetails}
                     />
                 ))}
             </div>
@@ -227,7 +263,7 @@ const Direcciones = () => {
                     </p>
                     {user?.is_admin && (
                         <button
-                            onClick={openCreatePage}
+                            onClick={openCreateModal}
                             className={styles.newButton}
                         >
                             <PlusIcon />
@@ -245,13 +281,11 @@ const Direcciones = () => {
                 onClose={closeModal}
                 onSubmit={handleSubmit}
                 onChange={setFormData}
+                loading={formLoading}
+                errors={errors}
             />
 
-            {/* Modal de Detalles */}
-            <DireccionDetailsModal
-                direccion={selectedDireccion}
-                onClose={closeDetailsModal}
-            />
+
 
             {/* Modal de Confirmación Genérico */}
             <ConfirmModal

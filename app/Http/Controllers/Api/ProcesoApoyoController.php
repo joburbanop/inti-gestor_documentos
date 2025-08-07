@@ -18,25 +18,44 @@ class ProcesoApoyoController extends Controller
     public function todos(): JsonResponse
     {
         try {
-            $procesos = Cache::remember('procesos_apoyo_todos', 300, function () {
-                return ProcesoApoyo::activos()
+            \Log::info('Iniciando carga de procesos de apoyo');
+            
+            // Verificar si hay datos en la tabla
+            $totalProcesos = ProcesoApoyo::count();
+            \Log::info('Total de procesos en BD:', ['total' => $totalProcesos]);
+            
+            // Cache optimizado para grandes volúmenes (5 minutos)
+            $procesos = Cache::remember('procesos_apoyo_todos_optimized', 300, function () {
+                \Log::info('Cache miss, cargando desde BD');
+                
+                $procesosRaw = ProcesoApoyo::activos()
                     ->ordenados()
                     ->select('id', 'nombre', 'codigo', 'direccion_id')
                     ->with(['direccion:id,nombre,codigo'])
-                    ->get()
-                    ->map(function ($proceso) {
-                        $label = $proceso->nombre . ' (' . $proceso->codigo . ') - ' . ($proceso->direccion ? $proceso->direccion->nombre : 'Sin dirección');
-                        return [
-                            'value' => $proceso->id,
-                            'label' => $label
-                        ];
-                    });
+                    ->get();
+                
+                \Log::info('Procesos raw obtenidos:', ['count' => $procesosRaw->count()]);
+                
+                return $procesosRaw->map(function ($proceso) {
+                    $direccionNombre = $proceso->direccion ? $proceso->direccion->nombre : 'Sin dirección';
+                    return [
+                        'value' => $proceso->id,
+                        'label' => $proceso->nombre . ' (' . $proceso->codigo . ') - ' . $direccionNombre
+                    ];
+                });
             });
+
+            \Log::info('Procesos cargados exitosamente', ['total' => count($procesos)]);
 
             return response()->json([
                 'success' => true,
                 'data' => $procesos,
-                'message' => 'Procesos de apoyo obtenidos exitosamente'
+                'message' => 'Procesos de apoyo obtenidos exitosamente',
+                'total' => count($procesos),
+                'debug' => [
+                    'total_en_bd' => $totalProcesos,
+                    'procesos_activos' => count($procesos)
+                ]
             ], 200);
 
         } catch (\Exception $e) {
@@ -51,40 +70,71 @@ class ProcesoApoyoController extends Controller
     }
 
     /**
-     * Obtener todos los procesos de apoyo activos
+     * Obtener todos los procesos de apoyo activos con paginación optimizada
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         try {
-            $procesos = Cache::remember('procesos_apoyo_activos', 300, function () {
-                return ProcesoApoyo::activos()
+            $perPage = min($request->get('per_page', 50), 100); // Máximo 100 por página
+            $page = $request->get('page', 1);
+            $search = $request->get('search', '');
+            $direccionId = $request->get('direccion_id');
+
+            $cacheKey = "procesos_apoyo_paginated_{$perPage}_{$page}_{$search}_{$direccionId}";
+            
+            $procesos = Cache::remember($cacheKey, 300, function () use ($perPage, $search, $direccionId) {
+                $query = ProcesoApoyo::activos()
                     ->ordenados()
-                    ->with(['direccion'])
-                    ->withCount('documentos')
-                    ->get()
-                    ->map(function ($proceso) {
-                        return [
-                            'id' => $proceso->id,
-                            'nombre' => $proceso->nombre,
-                            'descripcion' => $proceso->descripcion,
-                            'codigo' => $proceso->codigo,
-                            'orden' => $proceso->orden,
-                            'direccion' => [
-                                'id' => $proceso->direccion->id,
-                                'nombre' => $proceso->direccion->nombre,
-                                'codigo' => $proceso->direccion->codigo,
-                                'color' => $proceso->direccion->color,
-                            ],
-                            'estadisticas' => [
-                                'total_documentos' => $proceso->documentos_count,
-                            ]
-                        ];
+                    ->with(['direccion:id,nombre,codigo,color'])
+                    ->withCount('documentos');
+
+                // Filtro por búsqueda
+                if ($search) {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('nombre', 'like', "%{$search}%")
+                          ->orWhere('codigo', 'like', "%{$search}%")
+                          ->orWhere('descripcion', 'like', "%{$search}%");
                     });
+                }
+
+                // Filtro por dirección
+                if ($direccionId) {
+                    $query->where('direccion_id', $direccionId);
+                }
+
+                return $query->paginate($perPage);
+            });
+
+            $data = $procesos->getCollection()->map(function ($proceso) {
+                return [
+                    'id' => $proceso->id,
+                    'nombre' => $proceso->nombre,
+                    'descripcion' => $proceso->descripcion,
+                    'codigo' => $proceso->codigo,
+                    'orden' => $proceso->orden,
+                    'direccion' => [
+                        'id' => $proceso->direccion->id,
+                        'nombre' => $proceso->direccion->nombre,
+                        'codigo' => $proceso->direccion->codigo,
+                        'color' => $proceso->direccion->color,
+                    ],
+                    'estadisticas' => [
+                        'total_documentos' => $proceso->documentos_count,
+                    ]
+                ];
             });
 
             return response()->json([
                 'success' => true,
-                'data' => $procesos,
+                'data' => $data,
+                'pagination' => [
+                    'current_page' => $procesos->currentPage(),
+                    'last_page' => $procesos->lastPage(),
+                    'per_page' => $procesos->perPage(),
+                    'total' => $procesos->total(),
+                    'from' => $procesos->firstItem(),
+                    'to' => $procesos->lastItem(),
+                ],
                 'message' => 'Procesos de apoyo obtenidos exitosamente'
             ], 200);
 

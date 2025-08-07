@@ -22,11 +22,18 @@ const CreateForm = ({
     onCancel,
     initialData = {},
     loading = false,
-    errors = {}
+    errors = {},
+    isModal = false
 }) => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState(initialData);
     const [multiSelectOpen, setMultiSelectOpen] = useState(null);
+
+    // Actualizar formData cuando cambie initialData
+    useEffect(() => {
+        console.log('🔍 CreateForm - initialData actualizado:', initialData);
+        setFormData(initialData);
+    }, [initialData]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -134,6 +141,15 @@ const CreateForm = ({
 
         const fieldError = errors[name];
         const fieldValue = formData[name] || '';
+
+        // Debug para campos select
+        if (type === 'select' && name === 'procesos_apoyo') {
+            console.log('🔍 Renderizando campo procesos_apoyo:', {
+                optionsCount: options.length,
+                fieldValue,
+                optionsSample: options.slice(0, 3) // Solo mostrar los primeros 3
+            });
+        }
 
         switch (type) {
             case 'textarea':
@@ -338,25 +354,27 @@ const CreateForm = ({
     };
 
     return (
-        <div className="createFormContainer">
-            {/* Header Compacto */}
-            <div className="createHeader">
-                <div className="headerTop">
-                    <button 
-                        onClick={handleCancel}
-                        className="backButton"
-                        aria-label="Volver"
-                    >
-                        <ArrowLeftIcon className="w-3 h-3" />
-                        <span>Volver</span>
-                    </button>
+        <div className={`createFormContainer ${isModal ? 'modalMode' : ''}`}>
+            {/* Header Compacto - Solo si no es modal */}
+            {!isModal && (
+                <div className="createHeader">
+                    <div className="headerTop">
+                        <button 
+                            onClick={handleCancel}
+                            className="backButton"
+                            aria-label="Volver"
+                        >
+                            <ArrowLeftIcon className="w-3 h-3" />
+                            <span>Volver</span>
+                        </button>
+                    </div>
+                    
+                    <div className="createTitleSection">
+                        <h1 className="createTitle">{title}</h1>
+                        <p className="createSubtitle">{subtitle}</p>
+                    </div>
                 </div>
-                
-                <div className="createTitleSection">
-                    <h1 className="createTitle">{title}</h1>
-                    <p className="createSubtitle">{subtitle}</p>
-                </div>
-            </div>
+            )}
 
             {/* Formulario Organizado */}
             <div className="formContainer">
@@ -391,7 +409,7 @@ const CreateForm = ({
                                 <div className="loadingSpinner"></div>
                             ) : (
                                 <>
-                                    <span>Crear {entityType}</span>
+                                    <span>{isModal ? 'Guardar' : `Crear ${entityType}`}</span>
                                 </>
                             )}
                         </button>

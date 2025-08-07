@@ -57,13 +57,34 @@ class Direccion extends Model
     }
 
     /**
-     * Relación con procesos de apoyo
+     * Relación con procesos de apoyo (optimizada)
      */
     public function procesosApoyo(): HasMany
     {
         return $this->hasMany(ProcesoApoyo::class, 'direccion_id')
                     ->where('activo', true)
                     ->orderBy('orden');
+    }
+
+    /**
+     * Obtener procesos de apoyo con cache
+     */
+    public function getProcesosApoyoOptimizadosAttribute()
+    {
+        return Cache::remember("direccion_procesos_{$this->id}", 300, function () {
+            return $this->procesosApoyo()
+                        ->withCount('documentos')
+                        ->get()
+                        ->map(function ($proceso) {
+                            return [
+                                'id' => $proceso->id,
+                                'nombre' => $proceso->nombre,
+                                'codigo' => $proceso->codigo,
+                                'orden' => $proceso->orden,
+                                'total_documentos' => $proceso->documentos_count
+                            ];
+                        });
+        });
     }
 
     /**

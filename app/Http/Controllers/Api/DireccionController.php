@@ -24,7 +24,10 @@ class DireccionController extends Controller
                     ->with(['procesosApoyo' => function ($query) {
                         $query->activos()->ordenados();
                     }])
-                    ->withCount(['documentos', 'procesosApoyo'])
+                    ->withCount(['documentos'])
+                    ->withCount(['procesosApoyo' => function ($query) {
+                        $query->where('activo', true);
+                    }])
                     ->get()
                     ->map(function ($direccion) {
                         return [
@@ -77,6 +80,9 @@ class DireccionController extends Controller
                 return Direccion::activas()
                     ->with(['procesosApoyo' => function ($query) {
                         $query->activos()->ordenados();
+                    }])
+                    ->withCount(['procesosApoyo' => function ($query) {
+                        $query->where('activo', true);
                     }])
                     ->with(['documentos' => function ($query) {
                         $query->with(['procesoApoyo', 'subidoPor'])
@@ -193,15 +199,29 @@ class DireccionController extends Controller
             }
 
             // Preparar datos para inserción
-            $data = $request->only(['nombre', 'descripcion', 'codigo', 'procesos_apoyo', 'orden']);
+            $data = $request->only(['nombre', 'descripcion', 'codigo', 'orden']);
             $data['activo'] = true;
             $data['orden'] = $data['orden'] ?? 0;
+            $procesosApoyoIds = $request->input('procesos_apoyo', []);
 
             \Log::info('Datos validados correctamente, creando dirección', $data);
+            \Log::info('Procesos de apoyo seleccionados:', $procesosApoyoIds);
             
             // Crear dirección con transacción para consistencia
-            $direccion = \DB::transaction(function () use ($data) {
-                return Direccion::create($data);
+            $direccion = \DB::transaction(function () use ($data, $procesosApoyoIds) {
+                // Crear la dirección
+                $direccion = Direccion::create($data);
+                
+                // Actualizar los procesos de apoyo seleccionados
+                if (!empty($procesosApoyoIds)) {
+                    \App\Models\ProcesoApoyo::whereIn('id', $procesosApoyoIds)
+                        ->update(['direccion_id' => $direccion->id]);
+                    
+                    // Actualizar el campo JSON en la dirección
+                    $direccion->update(['procesos_apoyo' => $procesosApoyoIds]);
+                }
+                
+                return $direccion;
             });
             
             \Log::info('Dirección creada exitosamente', ['direccion_id' => $direccion->id]);
@@ -287,17 +307,39 @@ class DireccionController extends Controller
                 ], 422);
             }
 
-            $direccion->update($request->all());
+            $procesosApoyoIds = $request->input('procesos_apoyo', []);
+            
+            \Log::info('Actualizando dirección con procesos:', $procesosApoyoIds);
+
+            // Actualizar en transacción
+            \DB::transaction(function () use ($direccion, $request, $procesosApoyoIds) {
+                // Actualizar datos básicos de la dirección
+                $direccion->update($request->except(['procesos_apoyo']));
+                
+                // Limpiar relaciones anteriores (poner direccion_id = null)
+                \App\Models\ProcesoApoyo::where('direccion_id', $direccion->id)
+                    ->update(['direccion_id' => null]);
+                
+                // Actualizar los procesos de apoyo seleccionados
+                if (!empty($procesosApoyoIds)) {
+                    \App\Models\ProcesoApoyo::whereIn('id', $procesosApoyoIds)
+                        ->update(['direccion_id' => $direccion->id]);
+                }
+                
+                // Actualizar el campo JSON en la dirección
+                $direccion->update(['procesos_apoyo' => $procesosApoyoIds]);
+            });
 
             // Limpiar cache
             Cache::forget('direcciones_activas');
             Cache::forget("direccion_{$id}");
             Cache::forget('dashboard_estadisticas');
             Cache::forget('total_direcciones');
+            Cache::forget('procesos_apoyo_todos_optimized');
 
             return response()->json([
                 'success' => true,
-                'data' => $direccion,
+                'data' => $direccion->fresh(),
                 'message' => 'Dirección actualizada exitosamente'
             ], 200);
 
