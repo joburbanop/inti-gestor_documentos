@@ -7,9 +7,14 @@ import styles from '../styles/components/Direcciones.module.css';
 import DireccionCard from './direcciones/DireccionCard';
 import DireccionModal from './direcciones/DireccionModal';
 import DireccionDetailsModal from './direcciones/DireccionDetailsModal';
+import ConfirmModal from './common/ConfirmModal';
+
+// Hooks
+import useConfirmModal from '../hooks/useConfirmModal';
 
 // Iconos SVG
 import { BuildingIcon, PlusIcon } from './icons/DireccionesIcons';
+import { WarningIcon } from './icons/ModalIcons';
 
 const Direcciones = () => {
     const { user, apiRequest } = useAuth();
@@ -26,6 +31,9 @@ const Direcciones = () => {
         codigo: '',
         color: '#1F448B'
     });
+
+    // Hook para modal de confirmación
+    const { modalState, showConfirmModal, hideConfirmModal, executeConfirm } = useConfirmModal();
 
     useEffect(() => {
         fetchDirecciones();
@@ -84,19 +92,33 @@ const Direcciones = () => {
         setShowModal(true);
     };
 
-    const handleDelete = async (direccion) => {
-        if (window.confirm(`¿Estás seguro de que quieres eliminar la dirección "${direccion.nombre}"?`)) {
+    const handleDelete = (direccion) => {
+        console.log('🔍 handleDelete llamado con:', direccion);
+        
+        const deleteDireccion = async () => {
             try {
                 const response = await apiRequest(`/api/direcciones/${direccion.id}`, {
                     method: 'DELETE'
                 });
                 if (response.success) {
                     fetchDirecciones();
+                    setSuccessMessage(`Dirección "${direccion.nombre}" eliminada exitosamente`);
+                    setTimeout(() => setSuccessMessage(''), 5000);
                 }
             } catch (error) {
                 console.error('Error al eliminar dirección:', error);
             }
-        }
+        };
+
+        showConfirmModal({
+            title: 'Eliminar Dirección',
+            message: `¿Estás seguro de que quieres eliminar la dirección "${direccion.nombre}"? Esta acción no se puede deshacer.`,
+            confirmText: 'Eliminar',
+            cancelText: 'Cancelar',
+            type: 'danger',
+            onConfirm: deleteDireccion,
+            icon: WarningIcon
+        });
     };
 
     const handleViewDetails = (direccion) => {
@@ -229,6 +251,19 @@ const Direcciones = () => {
             <DireccionDetailsModal
                 direccion={selectedDireccion}
                 onClose={closeDetailsModal}
+            />
+
+            {/* Modal de Confirmación Genérico */}
+            <ConfirmModal
+                isOpen={modalState.isOpen}
+                onClose={hideConfirmModal}
+                onConfirm={executeConfirm}
+                title={modalState.title}
+                message={modalState.message}
+                confirmText={modalState.confirmText}
+                cancelText={modalState.cancelText}
+                type={modalState.type}
+                icon={modalState.icon}
             />
         </div>
     );
