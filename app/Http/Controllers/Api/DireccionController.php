@@ -30,12 +30,15 @@ class DireccionController extends Controller
                     }])
                     ->get()
                     ->map(function ($direccion) {
+                        \Log::info("Dirección {$direccion->nombre} tiene {$direccion->procesosApoyo->count()} procesos");
+                        
                         return [
                             'id' => $direccion->id,
                             'nombre' => $direccion->nombre,
                             'descripcion' => $direccion->descripcion,
                             'codigo' => $direccion->codigo,
                             'orden' => $direccion->orden,
+                            'color' => $direccion->color,
                             'estadisticas' => [
                                 'total_procesos' => $direccion->procesos_apoyo_count,
                                 'total_documentos' => $direccion->documentos_count,

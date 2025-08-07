@@ -147,8 +147,17 @@ const CreateForm = ({
             console.log('🔍 Renderizando campo procesos_apoyo:', {
                 optionsCount: options.length,
                 fieldValue,
+                fieldValueType: typeof fieldValue,
+                isArray: Array.isArray(fieldValue),
                 optionsSample: options.slice(0, 3) // Solo mostrar los primeros 3
             });
+            
+            // Verificar si los valores seleccionados están en las opciones
+            if (Array.isArray(fieldValue) && fieldValue.length > 0) {
+                console.log('🔍 Valores seleccionados:', fieldValue);
+                const selectedOptions = options.filter(opt => fieldValue.includes(opt.value));
+                console.log('🔍 Opciones encontradas para valores seleccionados:', selectedOptions);
+            }
         }
 
         switch (type) {

@@ -23,9 +23,20 @@ const DireccionModal = ({
     useEffect(() => {
         if (show) {
             console.log('🔍 Modal abierto, cargando procesos...');
+            console.log('🔍 Modal - mode:', mode);
+            console.log('🔍 Modal - formData completo:', formData);
+            
             loadProcesosOptions();
+            
+            // Verificar formData en modo edición
+            if (mode === 'edit') {
+                console.log('🔍 DireccionModal - formData en modo editar:', formData);
+                console.log('🔍 DireccionModal - procesos_apoyo en formData:', formData.procesos_apoyo);
+                console.log('🔍 DireccionModal - tipo de procesos_apoyo:', typeof formData.procesos_apoyo);
+                console.log('🔍 DireccionModal - es array?', Array.isArray(formData.procesos_apoyo));
+            }
         }
-    }, [show]);
+    }, [show, mode, formData]);
 
     const loadProcesosOptions = async () => {
         try {

@@ -117,17 +117,38 @@ const Direcciones = () => {
 
     const handleEdit = (direccion) => {
         console.log('🔍 handleEdit llamado con:', direccion);
+        console.log('🔍 Procesos de apoyo de la dirección:', direccion.procesos_apoyo);
+        
         setSelectedDireccion(direccion);
+        
+        // Extraer los IDs de los procesos de apoyo
+        const procesosIds = direccion.procesos_apoyo ? 
+            direccion.procesos_apoyo.map(proceso => proceso.id) : [];
+        
+        console.log('🔍 IDs de procesos extraídos:', procesosIds);
+        
         setFormData({
             nombre: direccion.nombre,
             descripcion: direccion.descripcion || '',
             codigo: direccion.codigo || '',
             color: direccion.color || '#1F448B',
-            procesos_apoyo: direccion.procesos_apoyo || []
+            procesos_apoyo: procesosIds
         });
+        
         setModalMode('edit');
         setShowModal(true);
-        console.log('🔍 Modal configurado para editar:', { mode: 'edit', show: true, formData: direccion });
+        
+        console.log('🔍 Modal configurado para editar:', { 
+            mode: 'edit', 
+            show: true, 
+            formData: {
+                nombre: direccion.nombre,
+                descripcion: direccion.descripcion || '',
+                codigo: direccion.codigo || '',
+                color: direccion.color || '#1F448B',
+                procesos_apoyo: procesosIds
+            }
+        });
     };
 
     const handleDelete = (direccion) => {
