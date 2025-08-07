@@ -4,22 +4,34 @@ import CreateForm from './CreateForm';
 import { BuildingIcon, CodeIcon, DescriptionIcon, ProcessIcon, PlusIcon } from '../icons/CrudIcons';
 
 const CreateDireccion = () => {
-    const { apiRequest } = useAuth();
+    const { apiRequest, token, isAuthenticated } = useAuth();
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
     const [procesosOptions, setProcesosOptions] = useState([]);
     const [showProcessModal, setShowProcessModal] = useState(false);
 
+    // Debug: Verificar estado de autenticación
+    console.log('🔍 CreateDireccion - Estado de autenticación:', {
+        isAuthenticated,
+        hasToken: !!token,
+        tokenPreview: token ? token.substring(0, 20) + '...' : 'No token',
+        localStorageToken: localStorage.getItem('auth_token') ? 'Presente' : 'Ausente'
+    });
+
     // Cargar opciones de procesos de apoyo
     useEffect(() => {
         const cargarProcesos = async () => {
             try {
-                const response = await apiRequest('/api/procesos-apoyo/todos');
+                const response = await apiRequest('/procesos-apoyo/todos');
                 if (response.success) {
                     setProcesosOptions(response.data);
                 }
             } catch (error) {
                 console.error('Error al cargar procesos de apoyo:', error);
+                // No mostrar error si es de autenticación, ya se maneja en el contexto
+                if (!error.message?.includes('No autenticado')) {
+                    setErrors({ general: 'Error al cargar procesos de apoyo' });
+                }
             }
         };
 
@@ -52,18 +64,21 @@ const CreateDireccion = () => {
 
         try {
             setLoading(true);
+            setErrors({});
             
-            const response = await apiRequest('/api/direcciones', {
+            // Debug: Verificar que el token esté disponible antes de la petición
+            console.log('🔍 handleSubmit - Token antes de petición:', {
+                hasToken: !!token,
+                tokenPreview: token ? token.substring(0, 20) + '...' : 'No token'
+            });
+            
+            const response = await apiRequest('/direcciones', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
                 body: JSON.stringify(formData)
             });
 
             if (response.success) {
                 // Redirigir a la lista de direcciones con mensaje de éxito
-                // Usar setTimeout para asegurar que la redirección sea suave
                 setTimeout(() => {
                     window.location.href = '/#direcciones?success=created';
                 }, 100);
@@ -72,7 +87,10 @@ const CreateDireccion = () => {
             }
         } catch (error) {
             console.error('Error al crear dirección:', error);
-            setErrors({ general: 'Error de conexión. Inténtalo de nuevo.' });
+            // No mostrar error si es de autenticación, ya se maneja en el contexto
+            if (!error.message?.includes('No autenticado')) {
+                setErrors({ general: 'Error de conexión. Inténtalo de nuevo.' });
+            }
         } finally {
             setLoading(false);
         }

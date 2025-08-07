@@ -9,7 +9,7 @@ import {
     ArrowRightIcon 
 } from '../icons/DashboardIcons';
 
-const QuickActionCard = ({ title, description, icon, hash, colorClass, onClick, styles = {} }) => (
+const QuickActionCard = React.memo(({ title, description, icon, hash, colorClass, onClick, styles = {} }) => (
     <button
         onClick={() => onClick ? onClick(hash) : (window.location.hash = hash)}
         className={styles.quickActionCard || ''}
@@ -27,7 +27,7 @@ const QuickActionCard = ({ title, description, icon, hash, colorClass, onClick, 
             </div>
         </div>
     </button>
-);
+));
 
 const QuickActionsSection = ({ 
     user, 

@@ -64,7 +64,7 @@ const StatsSection = ({
             <div className={styles.statsGrid || ''}>
                 {finalStatsConfig.map((stat, index) => (
                     <div 
-                        key={index} 
+                        key={`stat-${index}-${stat.title}`} 
                         className={`${styles.statCard || ''} ${styles[stat.colorClass] || ''}`}
                     >
                         <div className={styles.statContent || ''}>

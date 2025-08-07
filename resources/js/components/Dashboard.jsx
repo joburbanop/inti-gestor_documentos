@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import StatsSection from './dashboard/StatsSection';
 import QuickActionsSection from './dashboard/QuickActionsSection';
-import { DocumentIcon, BuildingIcon, ProcessIcon, ChartIcon } from './icons/DashboardIcons';
+import { DocumentIcon, BuildingIcon, ProcessIcon, AdminIcon } from './icons/DashboardIcons';
 import styles from '../styles/components/Dashboard.module.css';
 
 const Dashboard = () => {
@@ -13,17 +13,21 @@ const Dashboard = () => {
         total_procesos: 0
     });
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    // Cargar estadísticas optimizadas
-    const fetchDashboardData = useMemo(() => async () => {
+    // Cargar estadísticas optimizadas con useCallback
+    const fetchDashboardData = useCallback(async () => {
         try {
             setLoading(true);
+            setError(null);
             
             // Usar AbortController para cancelar peticiones si es necesario
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos timeout
+            const timeoutId = setTimeout(() => controller.abort(), 3000); // Reducido a 3 segundos
             
-            const response = await apiRequest('/documentos/estadisticas');
+            const response = await apiRequest('/documentos/estadisticas', {
+                signal: controller.signal
+            });
             
             clearTimeout(timeoutId);
             
@@ -31,75 +35,84 @@ const Dashboard = () => {
                 setStats(response.data);
             }
         } catch (error) {
-            console.error('Error al cargar estadísticas:', error);
-            // Usar datos por defecto si falla
-            setStats({
-                total_documentos: 0,
-                total_direcciones: 0,
-                total_procesos: 0
-            });
+            if (error.name !== 'AbortError') {
+                console.error('Error al cargar estadísticas:', error);
+                setError('Error al cargar datos');
+                // Usar datos por defecto si falla
+                setStats({
+                    total_documentos: 0,
+                    total_direcciones: 0,
+                    total_procesos: 0
+                });
+            }
         } finally {
             setLoading(false);
         }
     }, [apiRequest]);
 
     useEffect(() => {
-        fetchDashboardData();
-    }, [fetchDashboardData]);
+        // Cargar datos solo si no están ya cargados
+        if (loading) {
+            fetchDashboardData();
+        }
+    }, [fetchDashboardData, loading]);
 
-    // Configuración optimizada de estadísticas
+    // Configuración optimizada de estadísticas con memoización
     const statsConfig = useMemo(() => [
         {
             title: 'Total Documentos',
             value: stats.total_documentos,
             subtitle: 'Documentos disponibles en el sistema',
-            icon: <DocumentIcon />
+            icon: <DocumentIcon className="w-8 h-8" />,
+            colorClass: 'statCardAzul'
         },
         {
             title: 'Direcciones',
             value: stats.total_direcciones,
             subtitle: 'Direcciones administrativas',
-            icon: <BuildingIcon />
+            icon: <BuildingIcon className="w-8 h-8" />,
+            colorClass: 'statCardVerde'
         },
         {
             title: 'Procesos de Apoyo',
             value: stats.total_procesos,
             subtitle: 'Procesos configurados',
-            icon: <ProcessIcon />
+            icon: <ProcessIcon className="w-8 h-8" />,
+            colorClass: 'statCardMorado'
         }
-    ], [stats]);
+    ], [stats.total_documentos, stats.total_direcciones, stats.total_procesos]);
 
-    // Configuración optimizada de acciones rápidas
+    // Configuración optimizada de acciones rápidas con memoización
     const actionsConfig = useMemo(() => [
         {
-            title: 'Organigrama',
-            description: 'Ver estructura organizacional',
-            icon: <ChartIcon />,
-            action: () => window.location.hash = 'organigrama',
-            color: 'blue'
-        },
-        {
             title: 'Direcciones',
-            description: 'Gestionar direcciones administrativas',
-            icon: <BuildingIcon />,
-            action: () => window.location.hash = 'direcciones',
-            color: 'green'
+            description: 'Crear, editar y eliminar direcciones administrativas. Organiza la estructura de la empresa evitando carpetas desordenadas.',
+            icon: <BuildingIcon className="w-6 h-6" />,
+            hash: 'direcciones',
+            colorClass: 'quickActionIconAzul'
         },
         {
             title: 'Procesos de Apoyo',
-            description: 'Administrar procesos de apoyo',
-            icon: <ProcessIcon />,
-            action: () => window.location.hash = 'procesos',
-            color: 'purple'
+            description: 'Crear, editar y eliminar procesos dentro de cada dirección. Define flujos de trabajo y procedimientos administrativos.',
+            icon: <ProcessIcon className="w-6 h-6" />,
+            hash: 'procesos',
+            colorClass: 'quickActionIconVerde'
         },
         {
-            title: 'Documentos/Formatos',
-            description: 'Gestionar documentos y formatos',
-            icon: <DocumentIcon />,
-            action: () => window.location.hash = 'documentos',
-            color: 'orange'
+            title: 'Formatos o Documentos',
+            description: 'Crear, editar y eliminar documentos del sistema. Organiza la información por dirección y proceso para fácil acceso.',
+            icon: <DocumentIcon className="w-6 h-6" />,
+            hash: 'documentos',
+            colorClass: 'quickActionIconNaranja'
+        },
+        {
+            title: 'Administración',
+            description: 'Crear, editar y eliminar usuarios y permisos. Gestiona el acceso y mantiene la seguridad del sistema.',
+            icon: <AdminIcon className="w-6 h-6" />,
+            hash: 'administracion',
+            colorClass: 'quickActionIconMorado'
         }
-    ], []);
+    ], []); // Memoizado sin dependencias ya que es estático
 
     return (
         <div className={styles.dashboardContainer}>
