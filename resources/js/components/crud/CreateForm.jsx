@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 // import styles from '../../styles/components/CreateForm.module.css';
 import { 
@@ -9,7 +9,8 @@ import {
     DescriptionIcon,
     ProcessIcon,
     DocumentIcon,
-    SettingsIcon
+    SettingsIcon,
+    PlusIcon
 } from '../icons/CrudIcons';
 
 const CreateForm = ({ 
@@ -25,6 +26,7 @@ const CreateForm = ({
 }) => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState(initialData);
+    const [multiSelectOpen, setMultiSelectOpen] = useState(null);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -33,6 +35,46 @@ const CreateForm = ({
             [name]: value
         }));
     };
+
+    const toggleMultiSelect = (fieldName) => {
+        setMultiSelectOpen(multiSelectOpen === fieldName ? null : fieldName);
+    };
+
+    const toggleOption = (fieldName, value) => {
+        setFormData(prev => {
+            const currentValues = prev[fieldName] || [];
+            const newValues = currentValues.includes(value)
+                ? currentValues.filter(v => v !== value)
+                : [...currentValues, value];
+            
+            return {
+                ...prev,
+                [fieldName]: newValues
+            };
+        });
+    };
+
+    const removeSelectedItem = (fieldName, value) => {
+        setFormData(prev => {
+            const currentValues = prev[fieldName] || [];
+            return {
+                ...prev,
+                [fieldName]: currentValues.filter(v => v !== value)
+            };
+        });
+    };
+
+    // Cerrar dropdown cuando se hace click fuera
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (!event.target.closest('.multiSelectContainer')) {
+                setMultiSelectOpen(null);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -124,57 +166,153 @@ const CreateForm = ({
                 );
 
             case 'select':
+                if (field.multiple) {
+                    return (
+                        <div className="formGroup" key={name}>
+                            <label htmlFor={name} className="formLabel">
+                                {label} {required && '*'}
+                            </label>
+                            <div className="selectWithButton">
+                                <div className={`multiSelectContainer ${multiSelectOpen === name ? 'open' : ''}`}>
+                                    <div className="multiSelectDisplay" onClick={() => toggleMultiSelect(name)}>
+                                        <div className="selectedItems">
+                                            {fieldValue && fieldValue.length > 0 ? (
+                                                fieldValue.map((value, index) => {
+                                                    const option = options.find(opt => opt.value == value);
+                                                    return option ? (
+                                                        <span key={value} className="selectedItem">
+                                                            {option.label}
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    removeSelectedItem(name, value);
+                                                                }}
+                                                                className="removeItem"
+                                                            >
+                                                                ×
+                                                            </button>
+                                                        </span>
+                                                    ) : null;
+                                                })
+                                            ) : (
+                                                <span className="placeholder">{placeholder}</span>
+                                            )}
+                                        </div>
+                                        <div className="multiSelectArrow">▼</div>
+                                    </div>
+                                    {multiSelectOpen === name && (
+                                        <div className="multiSelectDropdown">
+                                            {options.map((option) => (
+                                                <div
+                                                    key={option.value}
+                                                    className={`multiSelectOption ${fieldValue && fieldValue.includes(option.value) ? 'selected' : ''}`}
+                                                    onClick={() => toggleOption(name, option.value)}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={fieldValue && fieldValue.includes(option.value)}
+                                                        readOnly
+                                                    />
+                                                    <span>{option.label}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                {field.hasAddButton && (
+                                    <button
+                                        type="button"
+                                        onClick={field.onAddClick}
+                                        className="addButton"
+                                        title={field.addButtonText}
+                                    >
+                                        <PlusIcon className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
+                            {fieldError && (
+                                <span className="errorText">{fieldError}</span>
+                            )}
+                        </div>
+                    );
+                }
+                
                 return (
                     <div className="formGroup" key={name}>
                         <label htmlFor={name} className="formLabel">
                             {label} {required && '*'}
                         </label>
-                        <select
-                            id={name}
-                            name={name}
-                            value={fieldValue}
-                            onChange={handleInputChange}
-                            className={`formSelect ${fieldError ? 'inputError' : ''}`}
-                        >
-                            <option value="">{placeholder}</option>
-                            {options.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
+                        <div className="selectWithButton">
+                            <select
+                                id={name}
+                                name={name}
+                                value={fieldValue}
+                                onChange={handleInputChange}
+                                className={`formSelect ${fieldError ? 'inputError' : ''}`}
+                            >
+                                <option value="">{placeholder}</option>
+                                {options.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                            {field.hasAddButton && (
+                                <button
+                                    type="button"
+                                    onClick={field.onAddClick}
+                                    className="addButton"
+                                    title={field.addButtonText}
+                                >
+                                    <PlusIcon className="w-4 h-4" />
+                                </button>
+                            )}
+                        </div>
                         {fieldError && (
                             <span className="errorText">{fieldError}</span>
                         )}
                     </div>
                 );
 
-            default:
-                return (
-                    <div className="formGroup" key={name}>
-                        <label htmlFor={name} className="formLabel">
-                            {label} {required && '*'}
-                        </label>
-                        <input
-                            id={name}
-                            name={name}
-                            type={type}
-                            value={fieldValue}
-                            onChange={handleInputChange}
-                            className={`formInput ${fieldError ? 'inputError' : ''}`}
-                            placeholder={placeholder}
-                            maxLength={maxLength}
-                        />
-                        {fieldError && (
-                            <span className="errorText">{fieldError}</span>
-                        )}
-                    </div>
-                );
+            default: // text, number, email, password, etc.
+                    return (
+                        <div className="formGroup" key={name}>
+                            <label htmlFor={name} className="formLabel">
+                                {label} {required && '*'}
+                            </label>
+                            <div className="inputWithButton">
+                                <input
+                                    type={type}
+                                    id={name}
+                                    name={name}
+                                    value={fieldValue}
+                                    onChange={handleInputChange}
+                                    className={`formInput ${fieldError ? 'inputError' : ''}`}
+                                    placeholder={placeholder}
+                                    maxLength={maxLength}
+                                />
+                                {field.hasAddButton && (
+                                    <button
+                                        type="button"
+                                        onClick={field.onAddClick}
+                                        className="addButton"
+                                        title={field.addButtonText}
+                                    >
+                                        <PlusIcon className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
+                            {fieldError && (
+                                <span className="errorText">{fieldError}</span>
+                            )}
+                        </div>
+                    );
         }
     };
 
     const renderSection = (section) => {
-        const { title: sectionTitle, icon: SectionIcon, fields: sectionFields } = section;
+        const { title: sectionTitle, icon: SectionIcon, fields: sectionFields, extraContent } = section;
         
         return (
             <div className="formSection" key={sectionTitle}>
@@ -187,6 +325,12 @@ const CreateForm = ({
                 ) : (
                     <div className="formGrid">
                         {sectionFields.map(renderField)}
+                    </div>
+                )}
+                
+                {extraContent && (
+                    <div className="extraContent">
+                        {extraContent}
                     </div>
                 )}
             </div>

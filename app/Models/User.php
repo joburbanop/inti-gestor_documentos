@@ -71,4 +71,12 @@ class User extends Authenticatable
     {
         return $this->hasRole('user');
     }
+
+    /**
+     * Accessor para is_admin
+     */
+    public function getIsAdminAttribute(): bool
+    {
+        return $this->isAdmin();
+    }
 }

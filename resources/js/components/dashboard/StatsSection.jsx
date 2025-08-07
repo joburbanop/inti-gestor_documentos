@@ -11,7 +11,8 @@ const StatsSection = ({
     subtitle = "Resumen de la actividad del sistema",
     statsConfig = [],
     styles = {},
-    className = ""
+    className = "",
+    loading = false
 }) => {
     // Configuración por defecto si no se proporciona statsConfig
     const defaultStatsConfig = [
@@ -53,12 +54,12 @@ const StatsSection = ({
 
     return (
         <div className={`${styles.statsSection || ''} ${className}`}>
-            {(title || subtitle) && (
+            {(title && title.trim() !== '') || (subtitle && subtitle.trim() !== '') ? (
                 <div className={styles.statsHeader || ''}>
-                    {title && <h2 className={styles.statsTitle || ''}>{title}</h2>}
-                    {subtitle && <p className={styles.statsSubtitle || ''}>{subtitle}</p>}
+                    {title && title.trim() !== '' && <h2 className={styles.statsTitle || ''}>{title}</h2>}
+                    {subtitle && subtitle.trim() !== '' && <p className={styles.statsSubtitle || ''}>{subtitle}</p>}
                 </div>
-            )}
+            ) : null}
             
             <div className={styles.statsGrid || ''}>
                 {finalStatsConfig.map((stat, index) => (
@@ -70,7 +71,7 @@ const StatsSection = ({
                             <div className={styles.statInfo || ''}>
                                 <h3>{stat.title}</h3>
                                 <div className={styles.statValue || ''}>
-                                    {stat.value?.toLocaleString() || '0'}
+                                    {loading ? '...' : (stat.value?.toLocaleString() || '0')}
                                 </div>
                                 {stat.description && (
                                     <p className={styles.statDescription || ''}>

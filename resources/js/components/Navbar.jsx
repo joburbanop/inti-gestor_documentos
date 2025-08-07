@@ -60,6 +60,10 @@ const Navbar = ({ title = "Intranet Inti" }) => {
     const { user, logout } = useAuth();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+    // Debug: Log del usuario
+    console.log('Navbar - User:', user);
+    console.log('Navbar - User is_admin:', user?.is_admin);
+
     const handleLogout = () => {
         logout();
     };

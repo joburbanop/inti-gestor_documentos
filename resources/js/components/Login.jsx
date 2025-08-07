@@ -33,7 +33,8 @@ const Login = () => {
     // Redirigir si ya está autenticado
     useEffect(() => {
         if (isAuthenticated) {
-            window.location.href = '/dashboard';
+            // Usar el sistema de hash routing en lugar de redirección directa
+            window.location.href = '/#dashboard';
         }
     }, [isAuthenticated]);
 

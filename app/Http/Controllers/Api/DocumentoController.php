@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cache;
 
 class DocumentoController extends Controller
 {
@@ -509,32 +510,36 @@ class DocumentoController extends Controller
     }
 
     /**
-     * Obtener estadísticas de documentos
+     * Obtener estadísticas optimizadas para el dashboard
      */
     public function estadisticas(): JsonResponse
     {
         try {
-            $stats = [
-                'total_documentos' => Documento::count(),
-                'total_descargas' => Documento::sum('contador_descargas') ?? 0,
-                'total_direcciones' => Direccion::count(),
-                'total_procesos' => ProcesoApoyo::count(),
-                'por_direccion' => Direccion::withCount('documentos')->get()->map(function ($direccion) {
-                    return [
-                        'nombre' => $direccion->nombre,
-                        'total' => $direccion->documentos_count ?? 0
-                    ];
-                }),
-                'tipos_archivo' => Documento::selectRaw('tipo_archivo, COUNT(*) as total')
-                    ->groupBy('tipo_archivo')
-                    ->orderBy('total', 'desc')
-                    ->limit(5)
-                    ->get()
-            ];
+            // Cache ultra rápido - 10 minutos para datos que cambian poco (funciona con cualquier driver)
+            $estadisticas = Cache::remember('dashboard_estadisticas', 600, function () {
+                // Consultas optimizadas con índices
+                $totalDocumentos = Cache::remember('total_documentos', 300, function () {
+                    return Documento::count();
+                });
+                
+                $totalDirecciones = Cache::remember('total_direcciones', 300, function () {
+                    return Direccion::where('activo', true)->count();
+                });
+                
+                $totalProcesos = Cache::remember('total_procesos', 300, function () {
+                    return ProcesoApoyo::where('activo', true)->count();
+                });
+
+                return [
+                    'total_documentos' => $totalDocumentos,
+                    'total_direcciones' => $totalDirecciones,
+                    'total_procesos' => $totalProcesos
+                ];
+            });
 
             return response()->json([
                 'success' => true,
-                'data' => $stats,
+                'data' => $estadisticas,
                 'message' => 'Estadísticas obtenidas exitosamente'
             ], 200);
 

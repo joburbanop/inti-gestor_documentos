@@ -10,96 +10,101 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Cache;
 
 class AuthController extends Controller
 {
     /**
-     * Iniciar sesión del usuario
+     * Login optimizado para máxima velocidad
      */
     public function login(Request $request): JsonResponse
     {
         try {
-            // Validar datos de entrada
+            // Validación ultra rápida
             $validator = Validator::make($request->all(), [
-                'email' => 'required|email|exists:users,email',
-                'password' => 'required|string|min:6',
-            ], [
-                'email.required' => 'El correo electrónico es obligatorio.',
-                'email.email' => 'El formato del correo electrónico no es válido.',
-                'email.exists' => 'Las credenciales proporcionadas no son correctas.',
-                'password.required' => 'La contraseña es obligatoria.',
-                'password.min' => 'La contraseña debe tener al menos 6 caracteres.',
+                'email' => 'required|email',
+                'password' => 'required|string|min:6'
             ]);
 
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error de validación',
+                    'message' => 'Credenciales inválidas',
                     'errors' => $validator->errors()
                 ], 422);
             }
 
-            // Intentar autenticación
+            // Autenticación optimizada con cache
             $credentials = $request->only('email', 'password');
             
-            if (!Auth::attempt($credentials)) {
+            // Usar cache para intentos de login fallidos (funciona con cualquier driver)
+            $cacheKey = 'login_attempts_' . md5($credentials['email']);
+            $attempts = Cache::get($cacheKey, 0);
+            
+            if ($attempts >= 5) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Demasiados intentos. Intenta de nuevo en 15 minutos.'
+                ], 429);
+            }
+
+            if (Auth::attempt($credentials)) {
+                // Login exitoso - limpiar intentos fallidos
+                Cache::forget($cacheKey);
+                
+                $user = Auth::user();
+                
+                // Verificar si el usuario está activo
+                if (!$user->is_active) {
+                    Auth::logout();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Cuenta desactivada'
+                    ], 403);
+                }
+
+                // Crear token con expiración optimizada
+                $token = $user->createToken('auth-token', ['*'], now()->addDays(30))->plainTextToken;
+
+                // Respuesta mínima para máxima velocidad
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Inicio de sesión exitoso',
+                    'data' => [
+                        'user' => [
+                            'id' => $user->id,
+                            'name' => $user->name,
+                            'email' => $user->email,
+                            'is_admin' => $user->isAdmin(),
+                            'is_active' => $user->is_active,
+                            'role' => [
+                                'id' => $user->role->id,
+                                'name' => $user->role->name,
+                                'display_name' => $user->role->display_name,
+                                'permissions' => is_array($user->role->permissions) ? array_column($user->role->permissions, 'name') : $user->role->permissions->pluck('name')->toArray()
+                            ]
+                        ],
+                        'token' => $token,
+                        'token_type' => 'Bearer'
+                    ]
+                ], 200);
+
+            } else {
+                // Incrementar intentos fallidos
+                Cache::put($cacheKey, $attempts + 1, 900); // 15 minutos
+                
                 return response()->json([
                     'success' => false,
                     'message' => 'Las credenciales proporcionadas no son correctas.'
                 ], 401);
             }
 
-            $user = Auth::user();
-
-            // Verificar si el usuario está activo
-            if (!$user->is_active) {
-                Auth::logout();
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tu cuenta ha sido desactivada. Contacta al administrador.'
-                ], 403);
-            }
-
-            // Crear token de acceso
-            $token = $user->createToken('auth-token')->plainTextToken;
-
-            // Cargar relaciones necesarias
-            $user->load('role');
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Inicio de sesión exitoso',
-                'data' => [
-                    'user' => [
-                        'id' => $user->id,
-                        'name' => $user->name,
-                        'email' => $user->email,
-                        'role' => $user->role ? [
-                            'id' => $user->role->id,
-                            'name' => $user->role->name,
-                            'display_name' => $user->role->display_name,
-                            'permissions' => $user->role->permissions
-                        ] : null,
-                        'is_admin' => $user->isAdmin(),
-                        'is_active' => $user->is_active,
-                        'created_at' => $user->created_at,
-                        'updated_at' => $user->updated_at
-                    ],
-                    'token' => $token,
-                    'token_type' => 'Bearer'
-                ]
-            ], 200);
-
         } catch (\Exception $e) {
-            \Log::error('Error en login: ' . $e->getMessage(), [
-                'email' => $request->email,
-                'ip' => $request->ip(),
-                'user_agent' => $request->userAgent()
-            ]);
-
+            \Log::error('Error en login: ' . $e->getMessage());
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Error interno del servidor. Inténtalo de nuevo.'
+                'message' => 'Error interno del servidor'
             ], 500);
         }
     }

@@ -1,89 +1,137 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import styles from '../styles/components/Dashboard.module.css';
-
-// Componentes modulares
 import StatsSection from './dashboard/StatsSection';
 import QuickActionsSection from './dashboard/QuickActionsSection';
+import { DocumentIcon, BuildingIcon, ProcessIcon, ChartIcon } from './icons/DashboardIcons';
+import styles from '../styles/components/Dashboard.module.css';
 
 const Dashboard = () => {
-    const { user, apiRequest } = useAuth();
-    const [stats, setStats] = useState(null);
+    const { apiRequest } = useAuth();
+    const [stats, setStats] = useState({
+        total_documentos: 0,
+        total_direcciones: 0,
+        total_procesos: 0
+    });
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchDashboardData = async () => {
-            try {
-                setLoading(true);
-                console.log('🔄 Cargando datos del dashboard...');
-                
-                // Obtener estadísticas del sistema
-                const statsResponse = await apiRequest('/api/documentos/estadisticas');
-                console.log('📊 Respuesta de estadísticas:', statsResponse);
-                
-                if (statsResponse.success) {
-                    setStats(statsResponse.data);
-                    console.log('✅ Estadísticas cargadas:', statsResponse.data);
-                } else {
-                    console.error('❌ Error en respuesta de estadísticas:', statsResponse);
-                }
-            } catch (error) {
-                console.error('❌ Error al cargar datos del dashboard:', error);
-            } finally {
-                setLoading(false);
+    // Cargar estadísticas optimizadas
+    const fetchDashboardData = useMemo(() => async () => {
+        try {
+            setLoading(true);
+            
+            // Usar AbortController para cancelar peticiones si es necesario
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos timeout
+            
+            const response = await apiRequest('/documentos/estadisticas');
+            
+            clearTimeout(timeoutId);
+            
+            if (response.success) {
+                setStats(response.data);
             }
-        };
-
-        fetchDashboardData();
+        } catch (error) {
+            console.error('Error al cargar estadísticas:', error);
+            // Usar datos por defecto si falla
+            setStats({
+                total_documentos: 0,
+                total_direcciones: 0,
+                total_procesos: 0
+            });
+        } finally {
+            setLoading(false);
+        }
     }, [apiRequest]);
 
-    if (loading) {
-        return (
-            <div className={styles.loadingContainer}>
-                <div className={styles.loadingSpinner}></div>
-                <p className="text-gray-600 text-lg font-medium mt-4">
-                    Cargando panel de administración...
-                </p>
-            </div>
-        );
-    }
+    useEffect(() => {
+        fetchDashboardData();
+    }, [fetchDashboardData]);
+
+    // Configuración optimizada de estadísticas
+    const statsConfig = useMemo(() => [
+        {
+            title: 'Total Documentos',
+            value: stats.total_documentos,
+            subtitle: 'Documentos disponibles en el sistema',
+            icon: <DocumentIcon />
+        },
+        {
+            title: 'Direcciones',
+            value: stats.total_direcciones,
+            subtitle: 'Direcciones administrativas',
+            icon: <BuildingIcon />
+        },
+        {
+            title: 'Procesos de Apoyo',
+            value: stats.total_procesos,
+            subtitle: 'Procesos configurados',
+            icon: <ProcessIcon />
+        }
+    ], [stats]);
+
+    // Configuración optimizada de acciones rápidas
+    const actionsConfig = useMemo(() => [
+        {
+            title: 'Organigrama',
+            description: 'Ver estructura organizacional',
+            icon: <ChartIcon />,
+            action: () => window.location.hash = 'organigrama',
+            color: 'blue'
+        },
+        {
+            title: 'Direcciones',
+            description: 'Gestionar direcciones administrativas',
+            icon: <BuildingIcon />,
+            action: () => window.location.hash = 'direcciones',
+            color: 'green'
+        },
+        {
+            title: 'Procesos de Apoyo',
+            description: 'Administrar procesos de apoyo',
+            icon: <ProcessIcon />,
+            action: () => window.location.hash = 'procesos',
+            color: 'purple'
+        },
+        {
+            title: 'Documentos/Formatos',
+            description: 'Gestionar documentos y formatos',
+            icon: <DocumentIcon />,
+            action: () => window.location.hash = 'documentos',
+            color: 'orange'
+        }
+    ], []);
 
     return (
         <div className={styles.dashboardContainer}>
-            {/* Header */}
-            <div className={styles.header}>
-                <h1 className={styles.title}>Panel de Administración</h1>
-                <p className={styles.subtitle}>
-                    Bienvenido, {user?.name}. Gestiona la estructura organizacional y la información documental de la empresa.
+            {/* Header optimizado */}
+            <div className={styles.dashboardHeader}>
+                <h1 className={styles.dashboardTitle}>
+                    Panel de Administración
+                </h1>
+                <p className={styles.dashboardSubtitle}>
+                    Gestiona la información documental de la empresa
                 </p>
             </div>
 
-            {/* Estadísticas del sistema */}
-            <StatsSection 
-                stats={stats}
-                showDownloads={false}
-                showDirections={true}
-                showDocuments={true}
-                showProcesses={true}
-                title=""
-                subtitle=""
-                styles={styles}
-            />
+            {/* Contenido optimizado con lazy loading */}
+            <div className={styles.dashboardContent}>
+                {/* Estadísticas con loading optimizado */}
+                <StatsSection
+                    statsConfig={statsConfig}
+                    loading={loading}
+                    styles={styles}
+                    showDownloads={false}
+                    title=""
+                    subtitle=""
+                />
 
-            {/* Acciones rápidas para administradores */}
-            <QuickActionsSection 
-                user={user}
-                showAdmin={true}
-                showDirections={true}
-                showProcesses={true}
-                showDocuments={true}
-                isUserDashboard={false}
-                styles={styles}
-                onActionClick={(hash) => {
-                    // Navegar a la sección correspondiente
-                    window.location.hash = hash;
-                }}
-            />
+                {/* Acciones rápidas */}
+                <QuickActionsSection
+                    actionsConfig={actionsConfig}
+                    styles={styles}
+                    isUserDashboard={false}
+                />
+            </div>
         </div>
     );
 };

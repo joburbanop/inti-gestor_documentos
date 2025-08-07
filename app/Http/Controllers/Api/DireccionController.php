@@ -154,27 +154,37 @@ class DireccionController extends Controller
     public function store(Request $request): JsonResponse
     {
         try {
+            \Log::info('Iniciando creación de dirección', $request->all());
+            
             // Verificar permisos de administrador
             if (!auth()->user()->is_admin) {
+                \Log::warning('Usuario no autorizado intentando crear dirección', ['user_id' => auth()->id()]);
                 return response()->json([
                     'success' => false,
                     'message' => 'No tienes permisos para crear direcciones'
                 ], 403);
             }
 
+            // Validación optimizada
             $validator = Validator::make($request->all(), [
                 'nombre' => 'required|string|max:255|unique:direcciones,nombre',
-                'descripcion' => 'nullable|string',
+                'descripcion' => 'nullable|string|max:1000',
                 'codigo' => 'required|string|max:10|unique:direcciones,codigo',
+                'procesos_apoyo' => 'nullable|array',
+                'procesos_apoyo.*' => 'integer|exists:procesos_apoyo,id',
                 'orden' => 'nullable|integer|min:0'
             ], [
                 'nombre.required' => 'El nombre es obligatorio',
                 'nombre.unique' => 'Ya existe una dirección con ese nombre',
                 'codigo.required' => 'El código es obligatorio',
-                'codigo.unique' => 'Ya existe una dirección con ese código'
+                'codigo.unique' => 'Ya existe una dirección con ese código',
+                'procesos_apoyo.array' => 'Los procesos de apoyo deben ser una lista',
+                'procesos_apoyo.*.integer' => 'Cada proceso de apoyo debe ser un ID válido',
+                'procesos_apoyo.*.exists' => 'Uno o más procesos de apoyo no existen'
             ]);
 
             if ($validator->fails()) {
+                \Log::warning('Validación fallida al crear dirección', ['errors' => $validator->errors()]);
                 return response()->json([
                     'success' => false,
                     'message' => 'Error de validación',
@@ -182,19 +192,56 @@ class DireccionController extends Controller
                 ], 422);
             }
 
-            $direccion = Direccion::create($request->all());
+            // Preparar datos para inserción
+            $data = $request->only(['nombre', 'descripcion', 'codigo', 'procesos_apoyo', 'orden']);
+            $data['activo'] = true;
+            $data['orden'] = $data['orden'] ?? 0;
 
-            // Limpiar cache
+            \Log::info('Datos validados correctamente, creando dirección', $data);
+            
+            // Crear dirección con transacción para consistencia
+            $direccion = \DB::transaction(function () use ($data) {
+                return Direccion::create($data);
+            });
+            
+            \Log::info('Dirección creada exitosamente', ['direccion_id' => $direccion->id]);
+
+            // Limpiar cache de manera eficiente
             Cache::forget('direcciones_activas');
+            Cache::forget('procesos_apoyo_todos');
 
             return response()->json([
                 'success' => true,
-                'data' => $direccion,
+                'data' => [
+                    'id' => $direccion->id,
+                    'nombre' => $direccion->nombre,
+                    'descripcion' => $direccion->descripcion,
+                    'codigo' => $direccion->codigo,
+                    'procesos_apoyo' => $direccion->procesos_apoyo,
+                    'orden' => $direccion->orden,
+                    'activo' => $direccion->activo
+                ],
                 'message' => 'Dirección creada exitosamente'
             ], 201);
 
+        } catch (\Illuminate\Database\QueryException $e) {
+            \Log::error('Error de base de datos al crear dirección: ' . $e->getMessage(), [
+                'sql' => $e->getSql(),
+                'bindings' => $e->getBindings(),
+                'request_data' => $request->all()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de base de datos al crear la dirección',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+            
         } catch (\Exception $e) {
-            \Log::error('Error al crear dirección: ' . $e->getMessage());
+            \Log::error('Error inesperado al crear dirección: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
             
             return response()->json([
                 'success' => false,
@@ -224,6 +271,8 @@ class DireccionController extends Controller
                 'nombre' => 'required|string|max:255|unique:direcciones,nombre,' . $id,
                 'descripcion' => 'nullable|string',
                 'codigo' => 'required|string|max:10|unique:direcciones,codigo,' . $id,
+                'procesos_apoyo' => 'nullable|array',
+                'procesos_apoyo.*' => 'integer|exists:procesos_apoyo,id',
                 'orden' => 'nullable|integer|min:0',
                 'activo' => 'boolean'
             ]);

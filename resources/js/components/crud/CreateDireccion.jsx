@@ -1,12 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import CreateForm from './CreateForm';
-import { BuildingIcon, CodeIcon, DescriptionIcon } from '../icons/CrudIcons';
+import { BuildingIcon, CodeIcon, DescriptionIcon, ProcessIcon, PlusIcon } from '../icons/CrudIcons';
 
 const CreateDireccion = () => {
     const { apiRequest } = useAuth();
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
+    const [procesosOptions, setProcesosOptions] = useState([]);
+    const [showProcessModal, setShowProcessModal] = useState(false);
+
+    // Cargar opciones de procesos de apoyo
+    useEffect(() => {
+        const cargarProcesos = async () => {
+            try {
+                const response = await apiRequest('/api/procesos-apoyo/todos');
+                if (response.success) {
+                    setProcesosOptions(response.data);
+                }
+            } catch (error) {
+                console.error('Error al cargar procesos de apoyo:', error);
+            }
+        };
+
+        cargarProcesos();
+    }, [apiRequest]);
 
     const validateForm = (formData) => {
         const newErrors = {};
@@ -45,7 +63,10 @@ const CreateDireccion = () => {
 
             if (response.success) {
                 // Redirigir a la lista de direcciones con mensaje de éxito
-                window.location.href = '/#direcciones?success=created';
+                // Usar setTimeout para asegurar que la redirección sea suave
+                setTimeout(() => {
+                    window.location.href = '/#direcciones?success=created';
+                }, 100);
             } else {
                 setErrors({ general: response.message || 'Error al crear la dirección' });
             }
@@ -95,24 +116,79 @@ const CreateDireccion = () => {
                     rows: 4
                 }
             ]
+        },
+        {
+            title: 'Procesos de Apoyo',
+            icon: ProcessIcon,
+            fields: [
+                {
+                    name: 'procesos_apoyo',
+                    label: 'Procesos de Apoyo Asociados',
+                    type: 'select',
+                    placeholder: 'Selecciona los procesos de apoyo (opcional)',
+                    required: false,
+                    multiple: true,
+                    options: procesosOptions,
+                    hasAddButton: true,
+                    addButtonText: 'Crear Nuevo Proceso',
+                    onAddClick: () => setShowProcessModal(true)
+                }
+            ]
         }
     ];
 
     return (
-        <CreateForm
-            entityType="direccion"
-            title="Crear Nueva Dirección"
-            subtitle="Completa la información básica para crear una nueva dirección administrativa"
-            fields={direccionFields}
-            onSubmit={handleSubmit}
-            loading={loading}
-            errors={errors}
-            initialData={{
-                nombre: '',
-                codigo: '',
-                descripcion: ''
-            }}
-        />
+        <>
+            <CreateForm
+                entityType="direccion"
+                title="Crear Nueva Dirección"
+                subtitle="Completa la información básica para crear una nueva dirección administrativa"
+                fields={direccionFields}
+                onSubmit={handleSubmit}
+                loading={loading}
+                errors={errors}
+                initialData={{
+                    nombre: '',
+                    codigo: '',
+                    descripcion: ''
+                }}
+            />
+            
+            {/* Modal para crear proceso de apoyo */}
+            {showProcessModal && (
+                <div className="modalOverlay">
+                    <div className="processModal">
+                        <div className="modalHeader">
+                            <h3>Crear Nuevo Proceso de Apoyo</h3>
+                            <button 
+                                onClick={() => setShowProcessModal(false)}
+                                className="closeButton"
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <div className="modalContent">
+                            <p>Esta funcionalidad estará disponible próximamente.</p>
+                            <p>Por ahora, puedes crear procesos de apoyo desde la sección de Procesos.</p>
+                        </div>
+                        <div className="modalActions">
+                            <button 
+                                onClick={() => window.location.href = '/#procesos'}
+                                className="primaryButton"
+                            >
+                                Ir a Procesos
+                            </button>
+                            <button 
+                                onClick={() => setShowProcessModal(false)}
+                                className="secondaryButton"
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
     );
 };
 

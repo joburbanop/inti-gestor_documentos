@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\Route;
 Route::post('/login', [AuthController::class, 'login']);
 
 // Rutas protegidas
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('api.auth')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/verify', [AuthController::class, 'verify']);
@@ -31,10 +31,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('direcciones', DireccionController::class);
     Route::get('/direcciones/{id}/documentos', [DireccionController::class, 'documentos']);
 
-    // Rutas de Procesos de Apoyo
-    Route::apiResource('procesos-apoyo', ProcesoApoyoController::class);
+    // Rutas de Procesos de Apoyo (RUTAS ESPECÍFICAS ANTES DEL apiResource)
+    Route::get('/procesos-apoyo/todos', [ProcesoApoyoController::class, 'todos']);
     Route::get('/procesos-apoyo/{id}/documentos', [ProcesoApoyoController::class, 'documentos']);
     Route::get('/direcciones/{direccionId}/procesos-apoyo', [ProcesoApoyoController::class, 'porDireccion']);
+    Route::apiResource('procesos-apoyo', ProcesoApoyoController::class);
 
     // Rutas específicas de Documentos (DEBEN IR ANTES que apiResource)
     Route::get('/documentos/buscar', [DocumentoController::class, 'buscar']);

@@ -15,6 +15,7 @@ class Area extends Model
     protected $fillable = [
         'name',
         'description',
+        'procesos_apoyo',
         'slug',
         'code',
         'is_active'
@@ -22,6 +23,7 @@ class Area extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'procesos_apoyo' => 'array',
     ];
 
     protected static function boot()

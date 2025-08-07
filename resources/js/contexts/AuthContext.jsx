@@ -119,29 +119,46 @@ export const AuthProvider = ({ children }) => {
             const data = await response.json();
 
             if (!response.ok) {
+                // Si es un error 401, manejar específicamente
+                if (response.status === 401) {
+                    // Solo hacer logout si el mensaje indica que el token es inválido
+                    if (data.message && (data.message.includes('No autenticado') || data.message.includes('Token'))) {
+                        localStorage.removeItem('auth_token');
+                        dispatch({ type: AUTH_ACTIONS.LOGOUT });
+                    }
+                }
                 throw new Error(data.message || 'Error en la petición');
             }
 
             return data;
         } catch (error) {
+            // No hacer logout automático aquí, dejar que el componente maneje el error
             throw error;
         }
     };
 
-    // Función de login
+    // Función de login optimizada para máxima velocidad
     const login = async (email, password) => {
         try {
             dispatch({ type: AUTH_ACTIONS.LOGIN_START });
 
-            const data = await apiRequest('/login', {
+            // Optimización: Usar fetch directamente para máxima velocidad
+            const response = await fetch('/api/login', {
                 method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
                 body: JSON.stringify({ email, password })
             });
 
+            const data = await response.json();
+
             if (data.success) {
-                // Guardar token en localStorage
+                // Guardar token inmediatamente para acceso rápido
                 localStorage.setItem('auth_token', data.data.token);
                 
+                // Dispatch inmediato sin esperar verificaciones adicionales
                 dispatch({
                     type: AUTH_ACTIONS.LOGIN_SUCCESS,
                     payload: {
@@ -150,6 +167,9 @@ export const AuthProvider = ({ children }) => {
                     }
                 });
 
+                // Redirección inmediata sin verificaciones adicionales
+                window.location.href = '/#dashboard';
+                
                 return { success: true };
             } else {
                 throw new Error(data.message || 'Error en el inicio de sesión');
@@ -231,10 +251,23 @@ export const AuthProvider = ({ children }) => {
         window.fetch = async (...args) => {
             const response = await originalFetch(...args);
             
-            if (response.status === 401) {
-                // Token expirado o inválido
-                localStorage.removeItem('auth_token');
-                dispatch({ type: AUTH_ACTIONS.LOGOUT });
+            // Solo hacer logout si es una petición a la API y el status es 401
+            if (response.status === 401 && args[0] && typeof args[0] === 'string' && args[0].includes('/api/')) {
+                // Verificar si la respuesta es JSON antes de procesarla
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    try {
+                        const data = await response.clone().json();
+                        // Solo hacer logout si el mensaje indica que el token es inválido
+                        if (data.message && (data.message.includes('No autenticado') || data.message.includes('Token'))) {
+                            localStorage.removeItem('auth_token');
+                            dispatch({ type: AUTH_ACTIONS.LOGOUT });
+                        }
+                    } catch (error) {
+                        // Si no es JSON válido, no hacer logout automático
+                        console.warn('Respuesta 401 no es JSON válido:', error);
+                    }
+                }
             }
             
             return response;

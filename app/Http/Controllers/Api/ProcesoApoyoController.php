@@ -13,6 +13,44 @@ use Illuminate\Support\Facades\Validator;
 class ProcesoApoyoController extends Controller
 {
     /**
+     * Obtener todos los procesos de apoyo para select
+     */
+    public function todos(): JsonResponse
+    {
+        try {
+            $procesos = Cache::remember('procesos_apoyo_todos', 300, function () {
+                return ProcesoApoyo::activos()
+                    ->ordenados()
+                    ->select('id', 'nombre', 'codigo', 'direccion_id')
+                    ->with(['direccion:id,nombre,codigo'])
+                    ->get()
+                    ->map(function ($proceso) {
+                        $label = $proceso->nombre . ' (' . $proceso->codigo . ') - ' . ($proceso->direccion ? $proceso->direccion->nombre : 'Sin dirección');
+                        return [
+                            'value' => $proceso->id,
+                            'label' => $label
+                        ];
+                    });
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $procesos,
+                'message' => 'Procesos de apoyo obtenidos exitosamente'
+            ], 200);
+
+        } catch (\Exception $e) {
+            \Log::error('Error al obtener procesos de apoyo: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener los procesos de apoyo',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+
+    /**
      * Obtener todos los procesos de apoyo activos
      */
     public function index(): JsonResponse
