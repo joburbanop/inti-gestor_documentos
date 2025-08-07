@@ -269,8 +269,11 @@ class ProcesoApoyoController extends Controller
     public function store(Request $request): JsonResponse
     {
         try {
+            \Log::info('Iniciando creación de proceso de apoyo', $request->all());
+            
             // Verificar permisos de administrador
             if (!auth()->user()->is_admin) {
+                \Log::warning('Usuario no autorizado intentando crear proceso de apoyo', ['user_id' => auth()->id()]);
                 return response()->json([
                     'success' => false,
                     'message' => 'No tienes permisos para crear procesos de apoyo'
@@ -278,18 +281,21 @@ class ProcesoApoyoController extends Controller
             }
 
             $validator = Validator::make($request->all(), [
-                'nombre' => 'required|string|max:255',
-                'descripcion' => 'nullable|string',
+                'nombre' => 'required|string|max:255|unique:procesos_apoyo,nombre',
+                'descripcion' => 'nullable|string|max:1000',
                 'direccion_id' => 'required|exists:direcciones,id',
-                'codigo' => 'nullable|string|max:20',
+                'codigo' => 'nullable|string|max:20|unique:procesos_apoyo,codigo',
                 'orden' => 'nullable|integer|min:0'
             ], [
                 'nombre.required' => 'El nombre es obligatorio',
+                'nombre.unique' => 'Ya existe un proceso con ese nombre',
+                'codigo.unique' => 'Ya existe un proceso con ese código',
                 'direccion_id.required' => 'La dirección es obligatoria',
                 'direccion_id.exists' => 'La dirección seleccionada no existe'
             ]);
 
             if ($validator->fails()) {
+                \Log::warning('Validación fallida al crear proceso de apoyo', ['errors' => $validator->errors()]);
                 return response()->json([
                     'success' => false,
                     'message' => 'Error de validación',
@@ -297,20 +303,58 @@ class ProcesoApoyoController extends Controller
                 ], 422);
             }
 
-            $proceso = ProcesoApoyo::create($request->all());
+            // Preparar datos para inserción
+            $data = $request->only(['nombre', 'descripcion', 'direccion_id', 'codigo', 'orden']);
+            $data['activo'] = true;
+            $data['orden'] = $data['orden'] ?? 0;
 
-            // Limpiar cache
+            \Log::info('Datos validados correctamente, creando proceso de apoyo', $data);
+            
+            // Crear proceso de apoyo con transacción para consistencia
+            $proceso = \DB::transaction(function () use ($data) {
+                return ProcesoApoyo::create($data);
+            });
+            
+            \Log::info('Proceso de apoyo creado exitosamente', ['proceso_id' => $proceso->id]);
+
+            // Limpiar cache de manera eficiente
             Cache::forget('procesos_apoyo_activos');
-            Cache::forget("procesos_apoyo_direccion_{$request->direccion_id}");
+            Cache::forget("procesos_apoyo_direccion_{$data['direccion_id']}");
+            Cache::forget('procesos_apoyo_todos_optimized');
+            Cache::forget('dashboard_estadisticas');
 
             return response()->json([
                 'success' => true,
-                'data' => $proceso,
+                'data' => [
+                    'id' => $proceso->id,
+                    'nombre' => $proceso->nombre,
+                    'descripcion' => $proceso->descripcion,
+                    'codigo' => $proceso->codigo,
+                    'direccion_id' => $proceso->direccion_id,
+                    'orden' => $proceso->orden,
+                    'activo' => $proceso->activo
+                ],
                 'message' => 'Proceso de apoyo creado exitosamente'
             ], 201);
 
+        } catch (\Illuminate\Database\QueryException $e) {
+            \Log::error('Error de base de datos al crear proceso de apoyo: ' . $e->getMessage(), [
+                'sql' => $e->getSql(),
+                'bindings' => $e->getBindings(),
+                'request_data' => $request->all()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de base de datos al crear el proceso de apoyo',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+            
         } catch (\Exception $e) {
-            \Log::error('Error al crear proceso de apoyo: ' . $e->getMessage());
+            \Log::error('Error inesperado al crear proceso de apoyo: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
             
             return response()->json([
                 'success' => false,
