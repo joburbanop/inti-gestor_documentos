@@ -28,8 +28,11 @@ const HashRouter = () => {
                 return;
             }
             
+            // Extraer la vista principal (antes del ?)
+            const view = hash.split('?')[0];
+            
             // Si hay un hash válido, establecer esa vista
-            setCurrentView(hash);
+            setCurrentView(view);
         };
 
         // Establecer vista inicial
@@ -99,20 +102,8 @@ const HashRouter = () => {
 const CreateDireccionWrapper = () => {
     const { user } = useAuth();
     
-    // Función para manejar la navegación desde el navbar
-    useEffect(() => {
-        const handleHashNavigation = () => {
-            const hash = window.location.hash.replace('#', '');
-            if (hash && hash !== 'direcciones') {
-                // Si hay un hash diferente a 'direcciones', navegar a la página principal
-                window.location.href = '/#' + hash;
-            }
-        };
-
-        // Escuchar cambios en el hash
-        window.addEventListener('hashchange', handleHashNavigation);
-        return () => window.removeEventListener('hashchange', handleHashNavigation);
-    }, []);
+    // No interferir con la navegación desde este componente
+    // Dejar que CreateDireccion maneje su propia redirección
 
     return <CreateDireccion />;
 };

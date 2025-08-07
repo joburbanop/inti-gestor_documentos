@@ -19,6 +19,7 @@ const Direcciones = () => {
     const [selectedDireccion, setSelectedDireccion] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [modalMode, setModalMode] = useState('edit');
+    const [successMessage, setSuccessMessage] = useState('');
     const [formData, setFormData] = useState({
         nombre: '',
         descripcion: '',
@@ -28,6 +29,16 @@ const Direcciones = () => {
 
     useEffect(() => {
         fetchDirecciones();
+        
+        // Verificar si hay mensaje de éxito en la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('success') === 'created') {
+            setSuccessMessage('¡Dirección creada exitosamente!');
+            // Limpiar el parámetro de la URL
+            window.history.replaceState({}, document.title, window.location.pathname + window.location.hash.split('?')[0]);
+            // Ocultar el mensaje después de 5 segundos
+            setTimeout(() => setSuccessMessage(''), 5000);
+        }
     }, []);
 
     const fetchDirecciones = async () => {
@@ -127,6 +138,24 @@ const Direcciones = () => {
 
     return (
         <div className={styles.direccionesContainer}>
+            {/* Mensaje de éxito */}
+            {successMessage && (
+                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center">
+                        <div className="flex-shrink-0">
+                            <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                        <div className="ml-3">
+                            <p className="text-sm font-medium text-green-800">
+                                {successMessage}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+            
             {/* Header */}
             <div className={styles.header}>
                 <div className={styles.headerContent}>

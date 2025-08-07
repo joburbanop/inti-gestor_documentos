@@ -78,17 +78,23 @@ const CreateDireccion = () => {
             });
 
             if (response.success) {
-                // Redirigir a la lista de direcciones con mensaje de éxito
-                setTimeout(() => {
-                    window.location.href = '/#direcciones?success=created';
-                }, 100);
+                console.log('✅ Dirección creada exitosamente, redirigiendo...');
+                // Redirigir inmediatamente a la lista de direcciones con mensaje de éxito
+                window.location.href = '/#direcciones?success=created';
             } else {
                 setErrors({ general: response.message || 'Error al crear la dirección' });
             }
         } catch (error) {
             console.error('Error al crear dirección:', error);
-            // No mostrar error si es de autenticación, ya se maneja en el contexto
-            if (!error.message?.includes('No autenticado')) {
+            
+            // Manejar errores de validación específicamente
+            if (error.message === 'Error de validación' && error.errors) {
+                const validationErrors = {};
+                Object.keys(error.errors).forEach(key => {
+                    validationErrors[key] = error.errors[key][0]; // Tomar el primer error de cada campo
+                });
+                setErrors(validationErrors);
+            } else if (!error.message?.includes('No autenticado')) {
                 setErrors({ general: 'Error de conexión. Inténtalo de nuevo.' });
             }
         } finally {

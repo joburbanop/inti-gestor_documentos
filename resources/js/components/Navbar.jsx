@@ -69,7 +69,14 @@ const Navbar = ({ title = "Intranet Inti" }) => {
     };
 
     const handleNavigation = (hash) => {
-        window.location.hash = hash;
+        // Si estamos en una ruta diferente a la principal (como /direcciones/crear)
+        // usar window.location.href para navegar correctamente
+        if (window.location.pathname !== '/') {
+            window.location.href = '/#' + hash;
+        } else {
+            // Si estamos en la página principal, usar hash normal
+            window.location.hash = hash;
+        }
         setIsMobileMenuOpen(false);
     };
 
