@@ -100,7 +100,6 @@ class AuthController extends Controller
             }
 
         } catch (\Exception $e) {
-            \Log::error('Error en login: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
@@ -149,7 +148,6 @@ class AuthController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('Error obteniendo usuario: ' . $e->getMessage());
 
             return response()->json([
                 'success' => false,
@@ -177,7 +175,6 @@ class AuthController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('Error en logout: ' . $e->getMessage());
 
             return response()->json([
                 'success' => false,

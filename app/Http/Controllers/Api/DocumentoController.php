@@ -96,7 +96,6 @@ class DocumentoController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('Error al obtener documentos: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
@@ -174,7 +173,6 @@ class DocumentoController extends Controller
             ], 404);
 
         } catch (\Exception $e) {
-            \Log::error('Error al obtener documento: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
@@ -253,7 +251,6 @@ class DocumentoController extends Controller
             ], 201);
 
         } catch (\Exception $e) {
-            \Log::error('Error al subir documento: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
@@ -339,7 +336,6 @@ class DocumentoController extends Controller
             ], 404);
 
         } catch (\Exception $e) {
-            \Log::error('Error al actualizar documento: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
@@ -396,7 +392,6 @@ class DocumentoController extends Controller
             ], 404);
 
         } catch (\Exception $e) {
-            \Log::error('Error al eliminar documento: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
@@ -472,7 +467,6 @@ class DocumentoController extends Controller
             ], 404);
 
         } catch (\Exception $e) {
-            \Log::error('Error al descargar documento: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
@@ -539,7 +533,6 @@ class DocumentoController extends Controller
                 'message' => 'Documento no encontrado'
             ], 404);
         } catch (\Exception $e) {
-            \Log::error('Error en vista previa de documento: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error al generar la vista previa',
@@ -613,7 +606,6 @@ class DocumentoController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('Error en búsqueda de documentos: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
@@ -656,7 +648,6 @@ class DocumentoController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('Error al obtener documentos recientes: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
@@ -701,7 +692,6 @@ class DocumentoController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('Error al obtener estadísticas: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,

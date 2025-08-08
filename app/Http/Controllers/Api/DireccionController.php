@@ -30,7 +30,7 @@ class DireccionController extends Controller
                     }])
                     ->get()
                     ->map(function ($direccion) {
-                        \Log::info("Dirección {$direccion->nombre} tiene {$direccion->procesosApoyo->count()} procesos");
+                        // logging removido
                         
                         return [
                             'id' => $direccion->id,
@@ -62,7 +62,6 @@ class DireccionController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('Error al obtener direcciones: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
@@ -145,7 +144,6 @@ class DireccionController extends Controller
             ], 404);
 
         } catch (\Exception $e) {
-            \Log::error('Error al obtener dirección: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
@@ -161,11 +159,11 @@ class DireccionController extends Controller
     public function store(Request $request): JsonResponse
     {
         try {
-            \Log::info('Iniciando creación de dirección', $request->all());
+            // logging removido
             
             // Verificar permisos de administrador
             if (!auth()->user()->is_admin) {
-                \Log::warning('Usuario no autorizado intentando crear dirección', ['user_id' => auth()->id()]);
+                // logging removido
                 return response()->json([
                     'success' => false,
                     'message' => 'No tienes permisos para crear direcciones'
@@ -190,7 +188,7 @@ class DireccionController extends Controller
             ]);
 
             if ($validator->fails()) {
-                \Log::warning('Validación fallida al crear dirección', ['errors' => $validator->errors()]);
+                // logging removido
                 return response()->json([
                     'success' => false,
                     'message' => 'Error de validación',
@@ -203,8 +201,7 @@ class DireccionController extends Controller
             $data['activo'] = true;
             $procesosApoyoIds = $request->input('procesos_apoyo', []);
 
-            \Log::info('Datos validados correctamente, creando dirección', $data);
-            \Log::info('Procesos de apoyo seleccionados:', $procesosApoyoIds);
+            // logging removido
             
             // Crear dirección con transacción para consistencia
             $direccion = \DB::transaction(function () use ($data, $procesosApoyoIds) {
@@ -223,7 +220,7 @@ class DireccionController extends Controller
                 return $direccion;
             });
             
-            \Log::info('Dirección creada exitosamente', ['direccion_id' => $direccion->id]);
+            // logging removido
 
             // Limpiar cache de manera eficiente
             Cache::forget('direcciones_activas');
@@ -245,11 +242,6 @@ class DireccionController extends Controller
             ], 201);
 
         } catch (\Illuminate\Database\QueryException $e) {
-            \Log::error('Error de base de datos al crear dirección: ' . $e->getMessage(), [
-                'sql' => $e->getSql(),
-                'bindings' => $e->getBindings(),
-                'request_data' => $request->all()
-            ]);
             
             return response()->json([
                 'success' => false,
@@ -258,10 +250,6 @@ class DireccionController extends Controller
             ], 500);
             
         } catch (\Exception $e) {
-            \Log::error('Error inesperado al crear dirección: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-                'request_data' => $request->all()
-            ]);
             
             return response()->json([
                 'success' => false,
@@ -353,7 +341,6 @@ class DireccionController extends Controller
             ], 404);
 
         } catch (\Exception $e) {
-            \Log::error('Error al actualizar dirección: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
@@ -407,7 +394,6 @@ class DireccionController extends Controller
             ], 404);
 
         } catch (\Exception $e) {
-            \Log::error('Error al eliminar dirección: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,

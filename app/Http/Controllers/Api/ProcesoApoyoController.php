@@ -18,15 +18,15 @@ class ProcesoApoyoController extends Controller
     public function todos(): JsonResponse
     {
         try {
-            \Log::info('Iniciando carga de procesos de apoyo');
+            
             
             // Verificar si hay datos en la tabla
             $totalProcesos = ProcesoApoyo::count();
-            \Log::info('Total de procesos en BD:', ['total' => $totalProcesos]);
+            
             
             // Cache optimizado para grandes volúmenes (5 minutos)
             $procesos = Cache::remember('procesos_apoyo_todos_optimized', 300, function () {
-                \Log::info('Cache miss, cargando desde BD');
+                
                 
                 $procesosRaw = ProcesoApoyo::activos()
                     ->ordenados()
@@ -34,7 +34,7 @@ class ProcesoApoyoController extends Controller
                     ->with(['direccion:id,nombre,codigo'])
                     ->get();
                 
-                \Log::info('Procesos raw obtenidos:', ['count' => $procesosRaw->count()]);
+                
                 
                 return $procesosRaw->map(function ($proceso) {
                     $direccionNombre = $proceso->direccion ? $proceso->direccion->nombre : 'Sin dirección';
@@ -45,7 +45,7 @@ class ProcesoApoyoController extends Controller
                 });
             });
 
-            \Log::info('Procesos cargados exitosamente', ['total' => count($procesos)]);
+            
 
             return response()->json([
                 'success' => true,
@@ -59,7 +59,6 @@ class ProcesoApoyoController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('Error al obtener procesos de apoyo: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
@@ -141,7 +140,6 @@ class ProcesoApoyoController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('Error al obtener procesos de apoyo: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
@@ -184,7 +182,6 @@ class ProcesoApoyoController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('Error al obtener procesos de apoyo por dirección: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
@@ -255,7 +252,6 @@ class ProcesoApoyoController extends Controller
             ], 404);
 
         } catch (\Exception $e) {
-            \Log::error('Error al obtener proceso de apoyo: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
@@ -271,11 +267,11 @@ class ProcesoApoyoController extends Controller
     public function store(Request $request): JsonResponse
     {
         try {
-            \Log::info('Iniciando creación de proceso de apoyo', $request->all());
+            
             
             // Verificar permisos de administrador
             if (!auth()->user()->is_admin) {
-                \Log::warning('Usuario no autorizado intentando crear proceso de apoyo', ['user_id' => auth()->id()]);
+                
                 return response()->json([
                     'success' => false,
                     'message' => 'No tienes permisos para crear procesos de apoyo'
@@ -297,7 +293,7 @@ class ProcesoApoyoController extends Controller
             ]);
 
             if ($validator->fails()) {
-                \Log::warning('Validación fallida al crear proceso de apoyo', ['errors' => $validator->errors()]);
+                
                 return response()->json([
                     'success' => false,
                     'message' => 'Error de validación',
@@ -310,14 +306,14 @@ class ProcesoApoyoController extends Controller
             $data['activo'] = true;
             
 
-            \Log::info('Datos validados correctamente, creando proceso de apoyo', $data);
+            
             
             // Crear proceso de apoyo con transacción para consistencia
             $proceso = \DB::transaction(function () use ($data) {
                 return ProcesoApoyo::create($data);
             });
             
-            \Log::info('Proceso de apoyo creado exitosamente', ['proceso_id' => $proceso->id]);
+            
 
             // Limpiar cache de manera eficiente
             Cache::forget('procesos_apoyo_activos');
@@ -347,11 +343,6 @@ class ProcesoApoyoController extends Controller
             ], 201);
 
         } catch (\Illuminate\Database\QueryException $e) {
-            \Log::error('Error de base de datos al crear proceso de apoyo: ' . $e->getMessage(), [
-                'sql' => $e->getSql(),
-                'bindings' => $e->getBindings(),
-                'request_data' => $request->all()
-            ]);
             
             return response()->json([
                 'success' => false,
@@ -360,10 +351,6 @@ class ProcesoApoyoController extends Controller
             ], 500);
             
         } catch (\Exception $e) {
-            \Log::error('Error inesperado al crear proceso de apoyo: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-                'request_data' => $request->all()
-            ]);
             
             return response()->json([
                 'success' => false,
@@ -444,7 +431,6 @@ class ProcesoApoyoController extends Controller
             ], 404);
 
         } catch (\Exception $e) {
-            \Log::error('Error al actualizar proceso de apoyo: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
@@ -501,7 +487,6 @@ class ProcesoApoyoController extends Controller
             ], 404);
 
         } catch (\Exception $e) {
-            \Log::error('Error al eliminar proceso de apoyo: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
@@ -533,7 +518,6 @@ class ProcesoApoyoController extends Controller
             ], 404);
 
         } catch (\Exception $e) {
-            \Log::error('Error al obtener documentos del proceso: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
