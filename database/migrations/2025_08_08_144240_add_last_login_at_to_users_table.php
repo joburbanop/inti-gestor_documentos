@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('areas', function (Blueprint $table) {
-            $table->dropColumn('color');
+        Schema::table('users', function (Blueprint $table) {
+            $table->timestamp('last_login_at')->nullable()->after('is_active');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('areas', function (Blueprint $table) {
-            $table->string('color', 7)->default('#1F448B')->after('code');
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('last_login_at');
         });
     }
 };

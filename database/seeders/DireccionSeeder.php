@@ -51,7 +51,11 @@ class DireccionSeeder extends Seeder
         ];
 
         foreach ($direcciones as $direccion) {
-            Direccion::create($direccion);
+            // Evitar duplicados por el código único
+            \App\Models\Direccion::updateOrCreate(
+                ['codigo' => $direccion['codigo']],
+                $direccion
+            );
         }
     }
 } 

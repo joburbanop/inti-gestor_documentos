@@ -13,6 +13,17 @@ const HierarchicalFilters = ({
     const [loading, setLoading] = useState(false);
     const [localFilters, setLocalFilters] = useState(filters);
 
+    // Mantener localFilters sincronizado con props.filters para evitar estados "fantasma"
+    useEffect(() => {
+        // Evitar sets innecesarios comparando superficialmente
+        const keys = ['direccionId', 'procesoId', 'tipoArchivo', 'sortBy'];
+        const isDifferent = keys.some((k) => (filters?.[k] || '') !== (localFilters?.[k] || ''));
+        if (isDifferent) {
+            setLocalFilters(prev => ({ ...prev, ...filters }));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [filters]);
+
     // Cargar direcciones al montar el componente
     useEffect(() => {
         loadDirecciones();
@@ -53,7 +64,7 @@ const HierarchicalFilters = ({
     const loadProcesos = async (direccionId) => {
         try {
             setLoading(true);
-            const response = await apiRequest(`/api/direcciones/${direccionId}/procesos`);
+            const response = await apiRequest(`/api/direcciones/${direccionId}/procesos-apoyo`);
             if (response.success) {
                 setProcesos(response.data || []);
             }
@@ -67,9 +78,12 @@ const HierarchicalFilters = ({
     const loadTiposArchivo = async (direccionId, procesoId) => {
         try {
             setLoading(true);
-            const response = await apiRequest(`/api/direcciones/${direccionId}/procesos/${procesoId}/tipos-archivo`);
+            const response = await apiRequest(`/api/procesos-apoyo/${procesoId}/documentos`);
             if (response.success) {
-                setTiposArchivo(response.data || []);
+                // Extraer tipos únicos de archivo de los documentos
+                const documentos = response.data || [];
+                const tiposUnicos = [...new Set(documentos.map(doc => doc.tipo_archivo).filter(Boolean))];
+                setTiposArchivo(tiposUnicos);
             }
         } catch (error) {
             console.error('Error al cargar tipos de archivo:', error);
@@ -100,7 +114,7 @@ const HierarchicalFilters = ({
                 <label className={styles.filterLabel || ''}>Dirección</label>
                 <select
                     value={localFilters.direccionId || ''}
-                    onChange={(e) => handleFilterChange('direccionId', e.target.value)}
+                    onChange={(e) => handleFilterChange('direccionId', e.target.value ? Number(e.target.value) : '')}
                     className={styles.filterSelect || ''}
                     disabled={loading}
                 >
@@ -118,7 +132,7 @@ const HierarchicalFilters = ({
                 <label className={styles.filterLabel || ''}>Proceso de Apoyo</label>
                 <select
                     value={localFilters.procesoId || ''}
-                    onChange={(e) => handleFilterChange('procesoId', e.target.value)}
+                    onChange={(e) => handleFilterChange('procesoId', e.target.value ? Number(e.target.value) : '')}
                     className={styles.filterSelect || ''}
                     disabled={!localFilters.direccionId || loading}
                 >

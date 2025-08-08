@@ -428,3 +428,87 @@
 .meta {
     composes: documentMeta;
 }
+
+/* Estadísticas de filtros */
+.filterStats {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.filterStatsContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.filterStatsInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.filterStatsText {
+  font-size: 0.9rem;
+  color: #495057;
+  font-weight: 500;
+}
+
+.filterStatsSearch {
+  font-size: 0.85rem;
+  color: #1F448B;
+  font-weight: 600;
+  background: rgba(31, 68, 139, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.filterStatsActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.clearFiltersButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clearFiltersButton:hover {
+  background: #c82333;
+  transform: translateY(-1px);
+}
+
+.clearFiltersButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Responsive para estadísticas */
+@media (max-width: 768px) {
+  .filterStatsContent {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .filterStatsActions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

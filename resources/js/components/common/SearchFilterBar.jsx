@@ -1,21 +1,22 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { MagnifyingGlassIcon, XMarkIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, XMarkIcon, AdjustmentsHorizontalIcon, FunnelIcon } from '@heroicons/react/24/outline';
 import styles from '../../styles/components/SearchFilterBar.module.css';
 
 const SearchFilterBar = ({
     onSearch,
     onFiltersChange,
     placeholder = "Buscar...",
-    filters = [],
+    filters, // sin default [] para evitar referencia nueva en cada render
     searchValue = "",
     loading = false,
     showAdvancedFilters = false,
     advancedFilters = [],
     onAdvancedFilterChange,
+    clearAllFilters,
     className = ""
 }) => {
     const [searchTerm, setSearchTerm] = useState(searchValue);
-    const [activeFilters, setActiveFilters] = useState(filters);
+    const [activeFilters, setActiveFilters] = useState(Array.isArray(filters) ? filters : []);
     const [showFilters, setShowFilters] = useState(false);
     const [isSearchFocused, setIsSearchFocused] = useState(false);
     const searchTimeoutRef = useRef(null);
@@ -62,13 +63,41 @@ const SearchFilterBar = ({
     };
 
     // Clear all filters
-    const clearAllFilters = () => {
+    const handleClearAllFilters = () => {
         setActiveFilters([]);
         onFiltersChange([]);
+        if (clearAllFilters) {
+            clearAllFilters();
+        }
     };
 
     // Handle advanced filter change
     const handleAdvancedFilterChange = (filterKey, value) => {
+        console.log('🔍 SearchFilterBar: Cambio de filtro avanzado:', { filterKey, value });
+        
+        // Limpiar el filtro anterior si existe
+        const newFilters = activeFilters.filter(f => f.key !== filterKey);
+        
+        // Agregar el nuevo filtro solo si tiene valor
+        if (value && value !== '' && value !== null && value !== undefined) {
+            let label = '';
+            
+            // Buscar la etiqueta en las opciones del filtro
+            const filterConfig = advancedFilters.find(f => f.key === filterKey);
+            if (filterConfig && filterConfig.options) {
+                const option = filterConfig.options.find(opt => opt.value === value);
+                label = option ? option.label : value;
+            } else {
+                label = value;
+            }
+            
+            newFilters.push({ key: filterKey, value, label });
+        }
+        
+        console.log('🔍 SearchFilterBar: Nuevos filtros:', newFilters);
+        setActiveFilters(newFilters);
+        onFiltersChange(newFilters);
+        
         if (onAdvancedFilterChange) {
             onAdvancedFilterChange(filterKey, value);
         }
@@ -87,14 +116,32 @@ const SearchFilterBar = ({
         return () => document.removeEventListener('keydown', handleKeyDown);
     }, []);
 
-    // Update local state when props change
+    // Update local state when props change (con guardas para evitar loops)
     useEffect(() => {
-        setSearchTerm(searchValue);
+        if (searchValue !== undefined && searchTerm !== searchValue) {
+            setSearchTerm(searchValue);
+        }
     }, [searchValue]);
 
     useEffect(() => {
-        setActiveFilters(filters);
+        const incoming = Array.isArray(filters) ? filters : [];
+        // Comparación superficial por longitud y pares clave-valor para evitar set innecesario
+        const areEqual = () => {
+            if (activeFilters.length !== incoming.length) return false;
+            for (let i = 0; i < activeFilters.length; i += 1) {
+                const a = activeFilters[i];
+                const b = incoming[i];
+                if (!a || !b || a.key !== b.key || a.value !== b.value) return false;
+            }
+            return true;
+        };
+        if (!areEqual()) {
+            setActiveFilters(incoming);
+        }
     }, [filters]);
+
+    // Contar filtros activos
+    const activeFiltersCount = (advancedFilters?.filter(f => f.value && f.value !== '').length || 0) + activeFilters.length;
 
     return (
         <div className={`${styles.searchFilterContainer} ${className}`}>
@@ -135,21 +182,23 @@ const SearchFilterBar = ({
                 {/* Filter Toggle Button */}
                 <button
                     onClick={() => setShowFilters(!showFilters)}
-                    className={`${styles.filterToggle} ${showFilters ? styles.active : ''}`}
+                    className={`${styles.filterToggle} ${showFilters ? styles.active : ''} ${activeFiltersCount > 0 ? styles.hasFilters : ''}`}
                     disabled={loading}
                 >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
+                    <FunnelIcon className="w-5 h-5" />
                     <span className={styles.filterButtonText}>
                         {showFilters ? 'Ocultar' : 'Filtros'}
                     </span>
+                    {activeFiltersCount > 0 && (
+                        <span className={styles.filterCount}>
+                            {activeFiltersCount}
+                        </span>
+                    )}
                 </button>
             </div>
 
             {/* Active Filters Chips */}
-            {activeFilters.length > 0 && (
+            {(activeFilters.length > 0 || activeFiltersCount > 0) && (
                 <div className={styles.activeFiltersContainer}>
                     <div className={styles.activeFilters}>
                         {activeFilters.map((filter, index) => (
@@ -166,9 +215,23 @@ const SearchFilterBar = ({
                                 </button>
                             </div>
                         ))}
+                        {advancedFilters.filter(f => f.value && f.value !== '').map((filter) => (
+                            <div key={`advanced-${filter.key}`} className={styles.filterChip}>
+                                <span className={styles.filterChipLabel}>
+                                    {filter.label}: {filter.value}
+                                </span>
+                                <button
+                                    onClick={() => handleAdvancedFilterChange(filter.key, '')}
+                                    className={styles.filterChipRemove}
+                                    disabled={loading}
+                                >
+                                    <XMarkIcon className="w-3 h-3" />
+                                </button>
+                            </div>
+                        ))}
                     </div>
                     <button
-                        onClick={clearAllFilters}
+                        onClick={handleClearAllFilters}
                         className={styles.clearAllButton}
                         disabled={loading}
                     >
@@ -192,7 +255,6 @@ const SearchFilterBar = ({
                                     className={styles.inlineFilterSelect}
                                     disabled={loading}
                                 >
-                                    <option value="">Todos</option>
                                     {filter.options?.map((option) => (
                                         <option key={option.value} value={option.value}>
                                             {option.label}
@@ -217,6 +279,15 @@ const SearchFilterBar = ({
                                     onChange={(e) => handleAdvancedFilterChange(filter.key, e.target.value === '' ? '' : Number(e.target.value))}
                                     className={styles.inlineFilterInput}
                                     placeholder={filter.placeholder || ''}
+                                    disabled={loading}
+                                />
+                            )}
+                            {filter.type === 'date' && (
+                                <input
+                                    type="date"
+                                    value={filter.value || ''}
+                                    onChange={(e) => handleAdvancedFilterChange(filter.key, e.target.value)}
+                                    className={styles.inlineFilterInput}
                                     disabled={loading}
                                 />
                             )}

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { NavLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { useAuth } from '../contexts/AuthContext';
 import { INTILED_COLORS } from '../config/colors';
@@ -66,27 +67,17 @@ const Navbar = ({ title = "Intranet Inti" }) => {
         logout();
     };
 
-    const handleNavigation = (hash) => {
-        // Si estamos en una ruta diferente a la principal (como /direcciones/crear)
-        // usar window.location.href para navegar correctamente
-        if (window.location.pathname !== '/') {
-            window.location.href = '/#' + hash;
-        } else {
-            // Si estamos en la página principal, usar hash normal
-            window.location.hash = hash;
-        }
-        setIsMobileMenuOpen(false);
-    };
+    const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
     const navItems = [
-        { name: 'Dashboard', hash: 'dashboard', icon: DashboardIcon },
-        { name: 'Direcciones', hash: 'direcciones', icon: DirectionsIcon },
-        { name: 'Procesos de Apoyo', hash: 'procesos', icon: ProcessesIcon },
-        { name: 'Documentos', hash: 'documentos', icon: DocumentsIcon },
+        { name: 'Dashboard', path: '/' , icon: DashboardIcon },
+        { name: 'Direcciones', path: '/direcciones', icon: DirectionsIcon },
+        { name: 'Procesos de Apoyo', path: '/procesos', icon: ProcessesIcon },
+        { name: 'Documentos', path: '/documentos', icon: DocumentsIcon },
     ];
 
     const adminItems = [
-        { name: 'Administración', hash: 'administracion', icon: AdminIcon },
+        { name: 'Administración', path: '/administracion', icon: AdminIcon },
     ];
 
     return (
@@ -116,29 +107,31 @@ const Navbar = ({ title = "Intranet Inti" }) => {
                         {user?.is_admin && navItems.map((item) => {
                             const IconComponent = item.icon;
                             return (
-                                <button 
-                                    key={item.hash}
-                                    onClick={() => handleNavigation(item.hash)}
+                                <NavLink 
+                                    key={item.path}
+                                    to={item.path}
+                                    onClick={closeMobileMenu}
                                     className={styles.navButton}
                                     aria-label={`Navegar a ${item.name}`}
                                 >
                                     <IconComponent className={styles.navIcon} />
                                     <span>{item.name}</span>
-                                </button>
+                                </NavLink>
                             );
                         })}
                         {user?.is_admin && adminItems.map((item) => {
                             const IconComponent = item.icon;
                             return (
-                                <button 
-                                    key={item.hash}
-                                    onClick={() => handleNavigation(item.hash)}
+                                <NavLink 
+                                    key={item.path}
+                                    to={item.path}
+                                    onClick={closeMobileMenu}
                                     className={`${styles.navButton} ${styles.adminButton}`}
                                     aria-label={`Navegar a ${item.name}`}
                                 >
                                     <IconComponent className={styles.navIcon} />
                                     <span>{item.name}</span>
-                                </button>
+                                </NavLink>
                             );
                         })}
                     </div>
@@ -190,29 +183,31 @@ const Navbar = ({ title = "Intranet Inti" }) => {
                             {user?.is_admin && navItems.map((item) => {
                                 const IconComponent = item.icon;
                                 return (
-                                    <button
-                                        key={item.hash}
-                                        onClick={() => handleNavigation(item.hash)}
+                                    <NavLink
+                                        key={item.path}
+                                        to={item.path}
+                                        onClick={closeMobileMenu}
                                         className={styles.mobileNavButton}
                                         aria-label={`Navegar a ${item.name}`}
                                     >
                                         <IconComponent className={styles.mobileIcon} />
                                         <span>{item.name}</span>
-                                    </button>
+                                    </NavLink>
                                 );
                             })}
                             {user?.is_admin && adminItems.map((item) => {
                                 const IconComponent = item.icon;
                                 return (
-                                    <button
-                                        key={item.hash}
-                                        onClick={() => handleNavigation(item.hash)}
+                                    <NavLink
+                                        key={item.path}
+                                        to={item.path}
+                                        onClick={closeMobileMenu}
                                         className={`${styles.mobileNavButton} ${styles.mobileAdminButton}`}
                                         aria-label={`Navegar a ${item.name}`}
                                     >
                                         <IconComponent className={styles.mobileIcon} />
                                         <span>{item.name}</span>
-                                    </button>
+                                    </NavLink>
                                 );
                             })}
                         </div>

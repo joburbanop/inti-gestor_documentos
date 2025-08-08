@@ -123,7 +123,7 @@ class Documento extends Model
      */
     public function getUrlDescargaAttribute(): string
     {
-        return route('documentos.descargar', $this->slug);
+        return route('documentos.descargar', ['id' => $this->id]);
     }
 
     /**
@@ -131,7 +131,7 @@ class Documento extends Model
      */
     public function getUrlVistaPreviaAttribute(): string
     {
-        return route('documentos.vista-previa', $this->slug);
+        return route('documentos.vista-previa', ['id' => $this->id]);
     }
 
     /**
@@ -152,10 +152,17 @@ class Documento extends Model
     /**
      * Verificar si el documento es descargable por el usuario
      */
-    public function esDescargablePor(User $user): bool
+    public function esDescargablePor(?User $user): bool
     {
-        // Solo el que lo subió o un admin puede descargarlo
-        return $user->id === $this->subido_por || $user->is_admin;
+        if (!$user) {
+            return false;
+        }
+        // Si es restringido, solo el autor o un admin
+        if (strtolower((string) $this->confidencialidad) === 'restringido') {
+            return $user->is_admin || $user->id === (int) $this->subido_por;
+        }
+        // Público / Interno: cualquier usuario autenticado puede ver/descargar
+        return true;
     }
 
     /**

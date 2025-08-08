@@ -514,24 +514,103 @@ const UserDashboard = () => {
                         Imágenes
                     </button>
                 </div>
+                <div className={userStyles.searchHeader}>
+                    <h2 className={userStyles.searchTitle}>Búsqueda Avanzada</h2>
+                    <p className={userStyles.searchSubtitle}>
+                        Encuentra la información que necesitas usando filtros inteligentes
+                    </p>
+                </div>
+
+                {/* Barra de búsqueda principal */}
+                <form onSubmit={handleSearch} className={userStyles.searchForm}>
+                    <div className={userStyles.searchInputContainer}>
+                        <input
+                            type="text"
+                            placeholder="¿Qué documento buscas? Escribe al menos 3 caracteres..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className={userStyles.searchInput}
+                        />
+                        <button 
+                            type="submit" 
+                            className={userStyles.searchButton}
+                            disabled={!searchTerm || searchTerm.trim().length < 3}
+                        >
+                            <SearchIcon className="w-5 h-5" />
+                        </button>
+                    </div>
+                    {/* Acciones rápidas y orden */}
+                    <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: 12 }}>
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            {[
+                                { label: 'Todos', ext: '' },
+                                { label: 'PDF', ext: 'pdf' },
+                                { label: 'Word', ext: 'docx' },
+                                { label: 'Excel', ext: 'xlsx' },
+                                { label: 'Imágenes', ext: 'jpg' },
+                            ].map((chip) => (
+                                <button
+                                    type="button"
+                                    key={chip.label}
+                                    onClick={() => {
+                                        const next = { ...filters };
+                                        if (!chip.ext) { delete next.extension; delete next.tipo_archivo; }
+                                        else if (chip.ext === 'jpg') { next.extension = 'jpg'; } else { next.extension = chip.ext; }
+                                        handleFilterChange(next);
+                                    }}
+                                    className={userStyles.actionButton}
+                                    style={{ padding: '6px 10px' }}
+                                >
+                                    {chip.label}
+                                </button>
+                            ))}
+                        </div>
+                        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+                            <select
+                                value={sortBy}
+                                onChange={(e) => { setSortBy(e.target.value); scheduleSearch(); }}
+                                className={userStyles.searchInput}
+                                style={{ maxWidth: 220 }}
+                            >
+                                <option value="created_at">Fecha de creación</option>
+                                <option value="updated_at">Última modificación</option>
+                                <option value="titulo">Título</option>
+                            </select>
+                            <select
+                                value={sortOrder}
+                                onChange={(e) => { setSortOrder(e.target.value); scheduleSearch(); }}
+                                className={userStyles.searchInput}
+                                style={{ maxWidth: 160 }}
+                            >
+                                <option value="desc">Descendente</option>
+                                <option value="asc">Ascendente</option>
+                            </select>
+                        </div>
+                    </div>
+                    {searchTerm && searchTerm.trim().length > 0 && searchTerm.trim().length < 3 && (
+                        <div className={userStyles.searchHint}>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>Escribe al menos 3 caracteres para buscar</span>
+                        </div>
+                    )}
+                </form>
 
                 {/* Botón para mostrar/ocultar filtros avanzados */}
-                <div className={userStyles.advancedToggleContainer}>
-                    <button 
-                        className={userStyles.advancedToggleButton}
+                <div className={userStyles.filterToggleContainer}>
+                    <button
                         onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                        className={userStyles.filterToggleButton}
                     >
-                        <svg style={{ width: '18px', height: '18px', marginRight: '8px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z" />
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
                         </svg>
                         {showAdvancedFilters ? 'Ocultar Filtros Avanzados' : 'Mostrar Filtros Avanzados'}
-                        <svg style={{ width: '16px', height: '16px', marginLeft: '8px', transform: showAdvancedFilters ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
                     </button>
                 </div>
 
-                                {/* Filtros Jerárquicos */}
+                {/* Filtros Jerárquicos */}
                 <HierarchicalFilters 
                     onFilterChange={handleFilterChange}
                     filters={filters}

@@ -47,16 +47,21 @@ class ProcesoApoyoController extends Controller
 
             
 
-            return response()->json([
+            $response = [
                 'success' => true,
                 'data' => $procesos,
                 'message' => 'Procesos de apoyo obtenidos exitosamente',
-                'total' => count($procesos),
-                'debug' => [
+                'total' => count($procesos)
+            ];
+
+            if (config('app.debug')) {
+                $response['debug'] = [
                     'total_en_bd' => $totalProcesos,
                     'procesos_activos' => count($procesos)
-                ]
-            ], 200);
+                ];
+            }
+
+            return response()->json($response, 200);
 
         } catch (\Exception $e) {
             

@@ -48,6 +48,23 @@ class DocumentoController extends Controller
                 $query->whereJsonContains('etiquetas', $request->etiqueta);
             }
 
+            // Filtro por tipo de archivo (MIME) si se envía
+            if ($request->filled('tipo_archivo')) {
+                $query->where('tipo_archivo', 'like', $request->tipo_archivo.'%');
+            }
+
+            // Filtro por extensión (según nombre original)
+            if ($request->filled('extension')) {
+                $ext = ltrim(strtolower($request->extension), '.');
+                $query->where('nombre_original', 'like', '%.'.$ext);
+            }
+
+            // Ordenamiento configurable
+            $allowedSortBy = ['created_at', 'updated_at', 'titulo'];
+            $sortBy = in_array($request->get('sort_by'), $allowedSortBy) ? $request->get('sort_by') : 'created_at';
+            $sortOrder = strtolower($request->get('sort_order', 'desc')) === 'asc' ? 'asc' : 'desc';
+            $query->orderBy($sortBy, $sortOrder);
+
             $documentos = $query->paginate(15);
 
             $data = $documentos->getCollection()->map(function ($documento) {
@@ -559,8 +576,37 @@ class DocumentoController extends Controller
             }
 
             $query = Documento::buscar($request->termino)
-                ->with(['direccion', 'procesoApoyo', 'subidoPor'])
-                ->orderBy('created_at', 'desc');
+                ->with(['direccion', 'procesoApoyo', 'subidoPor']);
+
+            // Aplicar filtros opcionales también en búsqueda
+            if ($request->has('direccion_id')) {
+                $query->porDireccion($request->direccion_id);
+            }
+            if ($request->has('proceso_apoyo_id')) {
+                $query->porProceso($request->proceso_apoyo_id);
+            }
+            if ($request->filled('tipo')) {
+                $query->where('tipo', $request->tipo);
+            }
+            if ($request->filled('confidencialidad')) {
+                $query->where('confidencialidad', $request->confidencialidad);
+            }
+            if ($request->filled('etiqueta')) {
+                $query->whereJsonContains('etiquetas', $request->etiqueta);
+            }
+            if ($request->filled('tipo_archivo')) {
+                $query->where('tipo_archivo', 'like', $request->tipo_archivo.'%');
+            }
+            if ($request->filled('extension')) {
+                $ext = ltrim(strtolower($request->extension), '.');
+                $query->where('nombre_original', 'like', '%.'.$ext);
+            }
+
+            // Ordenamiento configurable
+            $allowedSortBy = ['created_at', 'updated_at', 'titulo'];
+            $sortBy = in_array($request->get('sort_by'), $allowedSortBy) ? $request->get('sort_by') : 'created_at';
+            $sortOrder = strtolower($request->get('sort_order', 'desc')) === 'asc' ? 'asc' : 'desc';
+            $query->orderBy($sortBy, $sortOrder);
 
             $documentos = $query->paginate(15);
 

@@ -8,7 +8,7 @@ import useConfirmModal from '../hooks/useConfirmModal';
 import styles from '../styles/components/Documentos.module.css';
 
 const TIPO_OPTIONS = [
-  { value: '', label: 'Todos' },
+  { value: '', label: 'Todos los tipos' },
   { value: 'Política', label: 'Política' },
   { value: 'Procedimiento', label: 'Procedimiento' },
   { value: 'Formato', label: 'Formato' },
@@ -18,14 +18,29 @@ const TIPO_OPTIONS = [
   { value: 'Acta', label: 'Acta' },
   { value: 'Contrato', label: 'Contrato' },
   { value: 'Fotografía', label: 'Fotografía' },
+  { value: 'Factura', label: 'Factura' },
+  { value: 'Presupuesto', label: 'Presupuesto' },
+  { value: 'Manual', label: 'Manual' },
   { value: 'Otro', label: 'Otro' }
 ];
 
 const CONF_OPTS = [
-  { value: '', label: 'Todas' },
+  { value: '', label: 'Todas las confidencialidades' },
   { value: 'Publico', label: 'Público' },
   { value: 'Interno', label: 'Interno' },
   { value: 'Restringido', label: 'Restringido' }
+];
+
+const EXTENSION_OPTIONS = [
+  { value: '', label: 'Todos los formatos' },
+  { value: 'pdf', label: 'PDF' },
+  { value: 'docx', label: 'Word (.docx)' },
+  { value: 'xlsx', label: 'Excel (.xlsx)' },
+  { value: 'pptx', label: 'PowerPoint (.pptx)' },
+  { value: 'jpg', label: 'Imagen (.jpg)' },
+  { value: 'png', label: 'Imagen (.png)' },
+  { value: 'txt', label: 'Texto (.txt)' },
+  { value: 'zip', label: 'Archivo comprimido (.zip)' }
 ];
 
 const Documentos = () => {
@@ -51,16 +66,41 @@ const Documentos = () => {
   const [errors, setErrors] = useState({});
   const { modalState, showConfirmModal, hideConfirmModal } = useConfirmModal();
 
+  // Estados para filtros avanzados
+  const [advancedFilterValues, setAdvancedFilterValues] = useState({
+    tipo: '',
+    confidencialidad: '',
+    etiqueta: '',
+    extension: '',
+    fechaDesde: '',
+    fechaHasta: '',
+    direccion: '',
+    proceso: '',
+    subidoPor: '',
+    tamanoMin: '',
+    tamanoMax: '',
+    descargasMin: ''
+  });
+
   const fetchDocumentos = async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      // Filtros soportados por backend
+      
+      // Filtros básicos
       activeFilters.forEach(f => {
         if (f.value !== '' && f.value !== null && f.value !== undefined) {
           params.set(f.key, f.value);
         }
       });
+
+      // Filtros avanzados
+      Object.entries(advancedFilterValues).forEach(([key, value]) => {
+        if (value && value !== '') {
+          params.set(key, value);
+        }
+      });
+
       const qs = params.toString();
       const url = qs ? `/api/documentos?${qs}` : '/api/documentos';
       const res = await apiRequest(url);
@@ -80,7 +120,7 @@ const Documentos = () => {
   useEffect(() => {
     fetchDocumentos();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(activeFilters)]);
+  }, [JSON.stringify(activeFilters), JSON.stringify(advancedFilterValues)]);
 
   const filteredDocs = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
@@ -89,43 +129,95 @@ const Documentos = () => {
       const inTitulo = (d.titulo || '').toLowerCase().includes(term);
       const inDesc = (d.descripcion || '').toLowerCase().includes(term);
       const inTags = Array.isArray(d.etiquetas) ? d.etiquetas.join(' ').toLowerCase().includes(term) : false;
-      return inTitulo || inDesc || inTags;
+      const inNombreOriginal = (d.nombre_original || '').toLowerCase().includes(term);
+      return inTitulo || inDesc || inTags || inNombreOriginal;
     });
   }, [searchTerm, documentos]);
 
   const handleSearch = (val) => setSearchTerm(val);
   const handleFiltersChange = (filters) => setActiveFilters(filters);
 
+  // Manejar cambios en filtros avanzados
+  const handleAdvancedFilterChange = (filterKey, value) => {
+    console.log('🔍 Documentos: Cambio de filtro avanzado:', { filterKey, value });
+    
+    setAdvancedFilterValues(prev => {
+      const newValues = {
+        ...prev,
+        [filterKey]: value
+      };
+      console.log('🔍 Documentos: Nuevos valores de filtros:', newValues);
+      return newValues;
+    });
+  };
+
+  // Limpiar todos los filtros
+  const clearAllFilters = () => {
+    setActiveFilters([]);
+    setAdvancedFilterValues({
+      tipo: '',
+      confidencialidad: '',
+      etiqueta: '',
+      extension: '',
+      fechaDesde: '',
+      fechaHasta: '',
+      direccion: '',
+      proceso: '',
+      subidoPor: '',
+      tamanoMin: '',
+      tamanoMax: '',
+      descargasMin: ''
+    });
+    setSearchTerm('');
+  };
+
   const advancedFilters = [
     {
       key: 'tipo',
-      label: 'Tipo',
+      label: 'Tipo de Documento',
       type: 'select',
-      options: TIPO_OPTIONS
+      options: TIPO_OPTIONS,
+      value: advancedFilterValues.tipo
     },
     {
       key: 'confidencialidad',
       label: 'Confidencialidad',
       type: 'select',
-      options: CONF_OPTS
+      options: CONF_OPTS,
+      value: advancedFilterValues.confidencialidad
+    },
+    {
+      key: 'extension',
+      label: 'Formato de Archivo',
+      type: 'select',
+      options: EXTENSION_OPTIONS,
+      value: advancedFilterValues.extension
     },
     {
       key: 'etiqueta',
       label: 'Etiqueta',
       type: 'text',
-      value: activeFilters.find(f => f.key === 'etiqueta')?.value ?? ''
+      placeholder: 'Ej: Proyecto Tumaco, Factura, etc.',
+      value: advancedFilterValues.etiqueta
     },
     {
-      key: 'desde',
-      label: 'Desde (YYYY-MM-DD)',
-      type: 'text',
-      value: activeFilters.find(f => f.key === 'desde')?.value ?? ''
+      key: 'fechaDesde',
+      label: 'Fecha Desde',
+      type: 'date',
+      value: advancedFilterValues.fechaDesde
     },
     {
-      key: 'hasta',
-      label: 'Hasta (YYYY-MM-DD)',
-      type: 'text',
-      value: activeFilters.find(f => f.key === 'hasta')?.value ?? ''
+      key: 'fechaHasta',
+      label: 'Fecha Hasta',
+      type: 'date',
+      value: advancedFilterValues.fechaHasta
+    },
+    {
+      key: 'descargasMin',
+      label: 'Mín. Descargas',
+      type: 'number',
+      placeholder: 'Ej: 5',
+      value: advancedFilterValues.descargasMin
     }
   ];
 
@@ -345,6 +437,8 @@ const Documentos = () => {
         loading={loading}
         showAdvancedFilters={true}
         advancedFilters={advancedFilters}
+        onAdvancedFilterChange={handleAdvancedFilterChange}
+        clearAllFilters={clearAllFilters}
       />
 
       {/* Contenido */}

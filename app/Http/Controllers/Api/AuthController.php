@@ -34,23 +34,21 @@ class AuthController extends Controller
                 ], 422);
             }
 
-            // Autenticación optimizada con cache
+            // Autenticación con rate limiting y cache básico
             $credentials = $request->only('email', 'password');
             
-            // Usar cache para intentos de login fallidos (funciona con cualquier driver)
-            $cacheKey = 'login_attempts_' . md5($credentials['email']);
-            $attempts = Cache::get($cacheKey, 0);
-            
-            if ($attempts >= 5) {
+            // Rate limit por email + IP (5/min) definido en AppServiceProvider
+            if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts('login:'.md5($credentials['email'].'|'.$request->ip()), 5)) {
+                $seconds = \Illuminate\Support\Facades\RateLimiter::availableIn('login:'.md5($credentials['email'].'|'.$request->ip()));
                 return response()->json([
                     'success' => false,
-                    'message' => 'Demasiados intentos. Intenta de nuevo en 15 minutos.'
+                    'message' => 'Demasiados intentos. Intenta de nuevo en '.$seconds.' segundos.'
                 ], 429);
             }
 
             if (Auth::attempt($credentials)) {
-                // Login exitoso - limpiar intentos fallidos
-                Cache::forget($cacheKey);
+                // Login exitoso - limpiar rate limiter
+                \Illuminate\Support\Facades\RateLimiter::clear('login:'.md5($credentials['email'].'|'.$request->ip()));
                 
                 $user = Auth::user();
                 
@@ -63,8 +61,9 @@ class AuthController extends Controller
                     ], 403);
                 }
 
-                // Crear token con expiración optimizada
-                $token = $user->createToken('auth-token', ['*'], now()->addDays(30))->plainTextToken;
+                // Rotación/expiración de tokens Sanctum: revocar tokens antiguos y emitir uno nuevo con expiración
+                try { $user->tokens()->where('name', 'auth-token')->delete(); } catch (\Throwable $e) {}
+                $token = $user->createToken('auth-token', ['*'], now()->addDays(7))->plainTextToken;
 
                 // Respuesta mínima para máxima velocidad
                 return response()->json([
@@ -90,8 +89,8 @@ class AuthController extends Controller
                 ], 200);
 
             } else {
-                // Incrementar intentos fallidos
-                Cache::put($cacheKey, $attempts + 1, 900); // 15 minutos
+                // Registrar intento fallido en rate limiter
+                \Illuminate\Support\Facades\RateLimiter::hit('login:'.md5($credentials['email'].'|'.$request->ip()), 60);
                 
                 return response()->json([
                     'success' => false,

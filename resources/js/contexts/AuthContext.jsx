@@ -136,7 +136,7 @@ export const AuthProvider = ({ children }) => {
         // Debug removido
 
         try {
-            const response = await fetch(url.startsWith('/api') ? url : `/api${url}`, config);
+            const response = await fetch(url.startsWith('/api') ? url : `/api/${url.replace(/^\//, '')}`, config);
             
             // Debug removido
             

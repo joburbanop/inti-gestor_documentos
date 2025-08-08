@@ -47,7 +47,8 @@ return [
     |
     */
 
-    'expiration' => null,
+    // Expiración global como respaldo (minutos). Preferimos setear expires_at por token.
+    'expiration' => 60 * 24 * 7, // 7 días
 
     /*
     |--------------------------------------------------------------------------

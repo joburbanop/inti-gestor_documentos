@@ -4,6 +4,9 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DireccionController;
 use App\Http\Controllers\Api\ProcesoApoyoController;
 use App\Http\Controllers\Api\DocumentoController;
+use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\AdminController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -35,6 +38,8 @@ Route::middleware('api.auth')->group(function () {
     Route::get('/procesos-apoyo/todos', [ProcesoApoyoController::class, 'todos']);
     Route::get('/procesos-apoyo/{id}/documentos', [ProcesoApoyoController::class, 'documentos']);
     Route::get('/direcciones/{direccionId}/procesos-apoyo', [ProcesoApoyoController::class, 'porDireccion']);
+    // Alias de compatibilidad para llamadas antiguas del frontend
+    Route::get('/direcciones/{direccionId}/procesos', [ProcesoApoyoController::class, 'porDireccion']);
     Route::apiResource('procesos-apoyo', ProcesoApoyoController::class);
 
     // Rutas específicas de Documentos (DEBEN IR ANTES que apiResource)
@@ -63,6 +68,25 @@ Route::middleware('api.auth')->group(function () {
     
     // Rutas de Documentos (apiResource debe ir DESPUÉS de las rutas específicas)
     Route::apiResource('documentos', DocumentoController::class);
-    Route::post('/documentos/{id}/descargar', [DocumentoController::class, 'descargar']);
-    Route::get('/documentos/{id}/vista-previa', [DocumentoController::class, 'vistaPrevia']);
+    Route::post('/documentos/{id}/descargar', [DocumentoController::class, 'descargar'])->name('documentos.descargar');
+    Route::get('/documentos/{id}/vista-previa', [DocumentoController::class, 'vistaPrevia'])->name('documentos.vista-previa');
+
+    // Rutas de Administración (solo para administradores)
+    Route::middleware('admin')->group(function () {
+        // Gestión de Usuarios
+        Route::apiResource('usuarios', UserController::class);
+        Route::patch('/usuarios/{id}/toggle-status', [UserController::class, 'toggleStatus']);
+        Route::get('/usuarios/stats', [UserController::class, 'stats']);
+
+        // Gestión de Roles
+        Route::apiResource('roles', RoleController::class);
+        Route::get('/roles/{id}/users', [RoleController::class, 'users']);
+        Route::get('/roles/stats', [RoleController::class, 'stats']);
+        Route::get('/roles/permissions', [RoleController::class, 'permissions']);
+
+        // Estadísticas Administrativas
+        Route::get('/admin/stats', [AdminController::class, 'stats']);
+        Route::get('/admin/activity', [AdminController::class, 'recentActivity']);
+        Route::get('/admin/report', [AdminController::class, 'systemReport']);
+    });
 }); 

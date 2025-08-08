@@ -1,99 +1,156 @@
-/* UserDashboard.module.css - Estilos específicos para el portal de usuario */
-
+/* Contenedor principal */
 .userDashboardContainer {
     max-width: 1200px;
     margin: 0 auto;
     padding: 2rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     min-height: 100vh;
-    background: #f8fafc;
 }
 
+/* Header del usuario */
 .userHeader {
     text-align: center;
     margin-bottom: 3rem;
     padding: 2rem;
     background: white;
-    border-radius: 1rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(31, 68, 139, 0.1);
 }
 
 .userTitle {
     font-size: 2.5rem;
     font-weight: 700;
-    color: #1e40af;
-    margin-bottom: 1rem;
+    color: #1F448B;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #1F448B, #2a5bb8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .userSubtitle {
-    font-size: 1.125rem;
-    color: #64748b;
-    line-height: 1.6;
+    font-size: 1.1rem;
+    color: #6b7280;
     max-width: 600px;
     margin: 0 auto;
+    line-height: 1.6;
 }
 
-/* Search Section para Usuario */
-.userSearchSection {
+/* Estadísticas */
+.statsContainer {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
     margin-bottom: 3rem;
-    padding: 2rem;
-    background: white;
-    border-radius: 1rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-/* Search Header */
+.statCard {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(31, 68, 139, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+}
+
+.statCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.statIcon {
+    color: #1F448B;
+    background: rgba(31, 68, 139, 0.1);
+    padding: 0.75rem;
+    border-radius: 10px;
+}
+
+.statContent h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1F448B;
+    margin: 0;
+}
+
+.statContent p {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Sección de búsqueda */
+.userSearchSection {
+    background: white;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(31, 68, 139, 0.1);
+    margin-bottom: 2rem;
+}
+
 .searchHeader {
     text-align: center;
     margin-bottom: 2rem;
 }
 
 .searchTitle {
-    font-size: 1.75rem;
+    font-size: 1.8rem;
     font-weight: 600;
-    color: #1f2937;
+    color: #1F448B;
     margin-bottom: 0.5rem;
 }
 
 .searchSubtitle {
     font-size: 1rem;
     color: #6b7280;
-    line-height: 1.5;
 }
 
-/* Search Form */
+/* Formulario de búsqueda */
 .searchForm {
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
 }
 
 .searchInputContainer {
     display: flex;
-    gap: 0.75rem;
-    max-width: 600px;
-    margin: 0 auto;
+    gap: 0.5rem;
+    background: #f8f9fa;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.searchInputContainer:focus-within {
+    background: white;
+    border-color: #1F448B;
+    box-shadow: 0 0 0 3px rgba(31, 68, 139, 0.1);
 }
 
 .searchInput {
     flex: 1;
-    padding: 0.875rem 1.25rem;
-    border: 2px solid #e5e7eb;
-    border-radius: 0.75rem;
+    border: none;
+    background: transparent;
+    padding: 0.75rem 1rem;
     font-size: 1rem;
+    color: #374151;
     outline: none;
-    transition: all 0.3s ease;
 }
 
-.searchInput:focus {
-    border-color: #1e40af;
-    box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+.searchInput::placeholder {
+    color: #9ca3af;
 }
 
 .searchButton {
-    padding: 0.875rem 1.25rem;
-    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+    background: #1F448B;
     color: white;
     border: none;
-    border-radius: 0.75rem;
-    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
@@ -101,21 +158,72 @@
     justify-content: center;
 }
 
-.searchButton:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(30, 64, 175, 0.3);
+.searchButton:hover:not(:disabled) {
+    background: #2a5bb8;
+    transform: translateY(-1px);
 }
 
-/* Filters Container */
+.searchButton:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.searchHint {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: #92400e;
+}
+
+.searchHint svg {
+    color: #f59e0b;
+    flex-shrink: 0;
+}
+
+/* Botón de filtros avanzados */
+.filterToggleContainer {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.filterToggleButton {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #f8f9fa;
+    border: 2px solid #e5e7eb;
+    color: #374151;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.filterToggleButton:hover {
+    background: #e9ecef;
+    border-color: #1F448B;
+    color: #1F448B;
+}
+
+/* Filtros jerárquicos */
 .filtersContainer {
-    padding: 1.5rem;
-    border-top: 1px solid #e5e7eb;
-    background: #f8fafc;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1rem;
-    border-radius: 0.75rem;
-    margin-top: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
 }
 
 .filterGroup {
@@ -125,136 +233,247 @@
 }
 
 .filterLabel {
-    font-size: 0.875rem;
+    font-size: 0.9rem;
     font-weight: 600;
     color: #374151;
 }
 
 .filterSelect {
-    padding: 0.5rem 0.75rem;
-    border: 1px solid #d1d5db;
-    border-radius: 0.5rem;
-    font-size: 0.875rem;
+    padding: 0.75rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
     background: white;
-    outline: none;
+    color: #374151;
+    font-size: 0.9rem;
     transition: all 0.3s ease;
 }
 
 .filterSelect:focus {
-    border-color: #1e40af;
-    box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.1);
+    outline: none;
+    border-color: #1F448B;
+    box-shadow: 0 0 0 3px rgba(31, 68, 139, 0.1);
 }
 
-.filterSelect:disabled {
-    background: #f3f4f6;
-    color: #9ca3af;
-    cursor: not-allowed;
+/* Filtros avanzados */
+.advancedFiltersContainer {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
 }
 
-/* Loading Indicator */
-.loadingIndicator {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
-    grid-column: 1 / -1;
-}
-
-/* Empty State para Usuario */
-.userEmptyState {
-    text-align: center;
-    padding: 4rem 2rem;
-    background: white;
-    border-radius: 1rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
-
-.userEmptyStateIcon {
+.activeFiltersSection {
     margin-bottom: 1.5rem;
 }
 
-.userEmptyStateTitle {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #374151;
+.activeFiltersHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 1rem;
 }
 
-.userEmptyStateDescription {
+.activeFiltersTitle {
     font-size: 1rem;
-    color: #6b7280;
-    line-height: 1.6;
-    max-width: 500px;
-    margin: 0 auto;
+    font-weight: 600;
+    color: #374151;
+    margin: 0;
 }
 
-/* Document Results para Usuario */
+.clearAllFiltersButton {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.clearAllFiltersButton:hover {
+    background: #c82333;
+}
+
+.activeFiltersList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.activeFilterChip {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: linear-gradient(135deg, #1F448B, #2a5bb8);
+    color: white;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.activeFilterRemove {
+    background: none;
+    border: none;
+    color: white;
+    padding: 0.25rem;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.activeFilterRemove:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.advancedFiltersGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.advancedFilterItem {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.advancedFilterLabel {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.advancedFilterSelect,
+.advancedFilterInput {
+    padding: 0.75rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    background: white;
+    color: #374151;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.advancedFilterSelect:focus,
+.advancedFilterInput:focus {
+    outline: none;
+    border-color: #1F448B;
+    box-shadow: 0 0 0 3px rgba(31, 68, 139, 0.1);
+}
+
+.advancedFiltersHelp {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: rgba(31, 68, 139, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(31, 68, 139, 0.1);
+}
+
+.helpIcon {
+    color: #1F448B;
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+.helpText {
+    font-size: 0.9rem;
+    color: #374151;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Resultados de documentos */
 .userDocumentResults {
     background: white;
-    border-radius: 1rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(31, 68, 139, 0.1);
     overflow: hidden;
 }
 
 .userDocumentResultsHeader {
-    padding: 2rem 2rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
     border-bottom: 1px solid #e5e7eb;
+    background: #f8f9fa;
 }
 
 .userDocumentResultsTitle {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     font-weight: 600;
-    color: #1f2937;
+    color: #1F448B;
     margin: 0;
 }
 
+.clearResultsButton {
+    background: #6b7280;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.clearResultsButton:hover {
+    background: #4b5563;
+}
+
 .userDocumentResultsList {
-    padding: 1rem 2rem 2rem;
+    padding: 1rem;
 }
 
 .userDocumentItem {
     display: flex;
     align-items: center;
+    gap: 1rem;
     padding: 1rem;
-    border-radius: 0.75rem;
-    transition: all 0.2s ease;
-    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
 }
 
 .userDocumentItem:hover {
-    background: #f8fafc;
+    background: #f8f9fa;
+    border-color: #e5e7eb;
     transform: translateX(4px);
 }
 
 .userDocumentIcon {
-    width: 3rem;
-    height: 3rem;
-    border-radius: 0.5rem;
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 1rem;
-    flex-shrink: 0;
+    background: #f3f4f6;
+    color: #6b7280;
 }
 
 .userDocumentIconPDF {
-    background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
-    color: white;
+    background: #fee2e2;
+    color: #dc2626;
 }
 
-.userDocumentIconXLSX, .userDocumentIconXLS {
-    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-    color: white;
+.userDocumentIconXLSX,
+.userDocumentIconXLS {
+    background: #dcfce7;
+    color: #16a34a;
 }
 
-.userDocumentIconDOC, .userDocumentIconDOCX {
-    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-    color: white;
-}
-
-.userDocumentIconDoc {
-    background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%);
-    color: white;
+.userDocumentIconDOC,
+.userDocumentIconDOCX {
+    background: #dbeafe;
+    color: #2563eb;
 }
 
 .userDocumentInfo {
@@ -265,147 +484,338 @@
 .userDocumentTitle {
     font-size: 1rem;
     font-weight: 600;
-    color: #1f2937;
+    color: #374151;
     margin-bottom: 0.25rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    line-height: 1.4;
 }
 
 .userDocumentMeta {
-    font-size: 0.875rem;
-    color: #6b7280;
     display: flex;
     align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.userDocumentSeparator {
+    color: #d1d5db;
+}
+
+.userDocumentDirection,
+.userDocumentProcess,
+.userDocumentType {
+    font-weight: 500;
+}
+
+.userDocumentTags {
+    display: flex;
     flex-wrap: wrap;
     gap: 0.25rem;
 }
 
-.userDocumentDirection {
-    font-weight: 600;
-    color: #1e40af;
+.userDocumentTag {
+    background: rgba(31, 68, 139, 0.1);
+    color: #1F448B;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
 }
 
-.userDocumentSeparator {
-    margin: 0 0.5rem;
-    color: #9ca3af;
-}
-
-.userDocumentProcess {
-    color: #059669;
+.userDocumentTagMore {
+    background: #f3f4f6;
+    color: #6b7280;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
     font-weight: 500;
 }
 
 .userDocumentDate {
-    font-size: 0.875rem;
+    font-size: 0.85rem;
     color: #9ca3af;
-    margin-left: 1rem;
-    flex-shrink: 0;
+    font-weight: 500;
+    white-space: nowrap;
 }
 
-/* Loading para Usuario */
-.userLoadingContainer {
+.userDocumentActions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.actionButton {
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.viewButton {
+    background: #1F448B;
+    color: white;
+}
+
+.viewButton:hover {
+    background: #2a5bb8;
+}
+
+.downloadButton {
+    background: #10b981;
+    color: white;
+}
+
+.downloadButton:hover {
+    background: #0ea37a;
+}
+
+/* Estados de carga y sin resultados */
+.userLoadingContainer,
+.noResultsContainer {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 4rem 2rem;
-    background: white;
-    border-radius: 1rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    text-align: center;
 }
 
 .userLoadingSpinner {
-    width: 3rem;
-    height: 3rem;
+    width: 40px;
+    height: 40px;
     border: 4px solid #e5e7eb;
-    border-top: 4px solid #1e40af;
+    border-top: 4px solid #1F448B;
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+.noResultsIcon {
+    color: #9ca3af;
+    margin-bottom: 1rem;
 }
 
-/* Responsive para Usuario */
+.noResultsTitle {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.noResultsText {
+    font-size: 1rem;
+    color: #6b7280;
+    margin-bottom: 1.5rem;
+    max-width: 400px;
+}
+
+.noResultsButton {
+    background: #1F448B;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.noResultsButton:hover {
+    background: #2a5bb8;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
     .userDashboardContainer {
         padding: 1rem;
-    }
-    
-    .userHeader {
-        padding: 1.5rem;
-        margin-bottom: 2rem;
     }
     
     .userTitle {
         font-size: 2rem;
     }
     
-    .userSubtitle {
-        font-size: 1rem;
-    }
-    
-    .userSearchSection {
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-    }
-    
-    .searchInputContainer {
-        flex-direction: column;
+    .statsContainer {
+        grid-template-columns: 1fr;
     }
     
     .filtersContainer {
         grid-template-columns: 1fr;
-        gap: 0.75rem;
+    }
+    
+    .advancedFiltersGrid {
+        grid-template-columns: 1fr;
     }
     
     .userDocumentResultsHeader {
-        padding: 1.5rem 1.5rem 1rem;
-    }
-    
-    .userDocumentResultsList {
-        padding: 1rem 1.5rem 1.5rem;
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
     }
     
     .userDocumentItem {
-        padding: 0.75rem;
-    }
-    
-    .userDocumentIcon {
-        width: 2.5rem;
-        height: 2.5rem;
-        margin-right: 0.75rem;
-    }
-    
-    .userDocumentTitle {
-        font-size: 0.875rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
     }
     
     .userDocumentMeta {
-        font-size: 0.75rem;
-    }
-    
-    .userDocumentDate {
-        font-size: 0.75rem;
-        margin-left: 0.75rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
     }
 }
 
-/* Animaciones para Usuario */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+/* Estilos mejorados para interfaz más fácil */
+
+/* Header de búsqueda mejorado */
+.searchTitleContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
 }
 
-.userDashboardContainer {
-    animation: fadeInUp 0.6s ease-out;
+.searchTitle {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #1F448B;
+    margin: 0;
+}
+
+.searchSubtitle {
+    font-size: 1rem;
+    color: #6b7280;
+    margin: 0;
+    text-align: center;
+}
+
+/* Contenedor de búsqueda moderno */
+.modernSearchContainer {
+    margin-bottom: 2rem;
+}
+
+.searchInputWrapper {
+    display: flex;
+    align-items: center;
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.searchInputWrapper:focus-within {
+    border-color: #1F448B;
+    box-shadow: 0 0 0 3px rgba(31, 68, 139, 0.1);
+    background: white;
+}
+
+.modernSearchInput {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 1rem;
+    color: #333;
+    outline: none;
+    padding: 0.5rem;
+}
+
+.modernSearchInput::placeholder {
+    color: #9ca3af;
+}
+
+.modernSearchButton {
+    background: linear-gradient(135deg, #1F448B, #2a5bb8);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-left: 1rem;
+}
+
+.modernSearchButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(31, 68, 139, 0.3);
+}
+
+/* Filtros rápidos tipo chips */
+.quickFilters {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+
+.filterChip {
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    color: #6b7280;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filterChip:hover {
+    border-color: #1F448B;
+    color: #1F448B;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(31, 68, 139, 0.2);
+}
+
+.filterChip.active {
+    background: linear-gradient(135deg, #1F448B, #2a5bb8);
+    color: white;
+    border-color: #1F448B;
+    box-shadow: 0 4px 15px rgba(31, 68, 139, 0.3);
+}
+
+/* Botón de filtros avanzados reorganizado */
+.advancedToggleContainer {
+    display: flex;
+    justify-content: center;
+    margin: 1.5rem 0;
+}
+
+.advancedToggleButton {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border: 2px solid #1F448B;
+    color: #1F448B;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    font-size: 0.95rem;
+    box-shadow: 0 2px 8px rgba(31, 68, 139, 0.1);
+}
+
+.advancedToggleButton:hover {
+    background: linear-gradient(135deg, #1F448B, #2a5bb8);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(31, 68, 139, 0.3);
+}
+
+/* Animaciones */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 } 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import { BrowserRouter as Router } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './components/Login';
 import AppRouter from './components/AppRouter';
@@ -10,7 +11,9 @@ import '../css/app.css';
 const App = () => {
     return (
         <AuthProvider>
-            <AppContent />
+            <Router>
+                <AppContent />
+            </Router>
         </AuthProvider>
     );
 };
