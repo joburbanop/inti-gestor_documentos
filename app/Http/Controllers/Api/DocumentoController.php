@@ -35,6 +35,19 @@ class DocumentoController extends Controller
 
 
 
+            // Filtros por metadatos
+            if ($request->filled('tipo')) {
+                $query->where('tipo', $request->tipo);
+            }
+            if ($request->filled('confidencialidad')) {
+                $query->where('confidencialidad', $request->confidencialidad);
+            }
+            // responsable_id eliminado
+            // filtros de fecha eliminados
+            if ($request->filled('etiqueta')) {
+                $query->whereJsonContains('etiquetas', $request->etiqueta);
+            }
+
             $documentos = $query->paginate(15);
 
             $data = $documentos->getCollection()->map(function ($documento) {
@@ -60,7 +73,11 @@ class DocumentoController extends Controller
                     'subido_por' => [
                         'id' => $documento->subidoPor->id,
                         'name' => $documento->subidoPor->name,
-                    ]
+                    ],
+                    'tipo' => $documento->tipo,
+                    'etiquetas' => $documento->etiquetas ?? [],
+                    // fechas eliminadas de respuesta pública
+                    'confidencialidad' => $documento->confidencialidad
                 ];
             });
 
@@ -130,6 +147,10 @@ class DocumentoController extends Controller
                     'id' => $documento->subidoPor->id,
                     'name' => $documento->subidoPor->name,
                 ],
+                'tipo' => $documento->tipo,
+                'etiquetas' => $documento->etiquetas ?? [],
+                // fechas eliminadas de respuesta pública
+                'confidencialidad' => $documento->confidencialidad,
                 'documentos_relacionados' => $documento->documentosRelacionados()->map(function ($relacionado) {
                     return [
                         'id' => $relacionado->id,
@@ -175,6 +196,10 @@ class DocumentoController extends Controller
                 'archivo' => 'required|file|max:10240', // 10MB máximo
                 'direccion_id' => 'required|exists:direcciones,id',
                 'proceso_apoyo_id' => 'required|exists:procesos_apoyo,id',
+                'tipo' => 'nullable|string|max:50',
+                'etiquetas' => 'nullable|array',
+                'etiquetas.*' => 'string|max:50',
+                'confidencialidad' => 'nullable|string|in:Publico,Interno,Restringido'
 
             ], [
                 'titulo.required' => 'El título es obligatorio',
@@ -207,8 +232,19 @@ class DocumentoController extends Controller
                 'direccion_id' => $request->direccion_id,
                 'proceso_apoyo_id' => $request->proceso_apoyo_id,
                 'subido_por' => auth()->id(),
+                'tipo' => $request->tipo,
+                'etiquetas' => $request->etiquetas,
+                'confidencialidad' => $request->confidencialidad ?: 'Publico',
 
             ]);
+
+            // Limpiar cache relacionado
+            Cache::forget('dashboard_estadisticas');
+            Cache::forget("direccion_estadisticas_{$request->direccion_id}");
+            Cache::forget("direccion_{$request->direccion_id}");
+            Cache::forget("proceso_apoyo_{$request->proceso_apoyo_id}");
+            Cache::forget("procesos_apoyo_direccion_{$request->direccion_id}");
+            Cache::increment('procesos_apoyo_cache_version');
 
             return response()->json([
                 'success' => true,
@@ -248,6 +284,10 @@ class DocumentoController extends Controller
                 'descripcion' => 'nullable|string',
                 'direccion_id' => 'required|exists:direcciones,id',
                 'proceso_apoyo_id' => 'required|exists:procesos_apoyo,id',
+                'tipo' => 'nullable|string|max:50',
+                'etiquetas' => 'nullable|array',
+                'etiquetas.*' => 'string|max:50',
+                'confidencialidad' => 'nullable|string|in:Publico,Interno,Restringido',
 
             ]);
 
@@ -259,7 +299,32 @@ class DocumentoController extends Controller
                 ], 422);
             }
 
-            $documento->update($request->all());
+            // Guardar IDs originales antes de actualizar
+            $oldDireccionId = $documento->direccion_id;
+            $oldProcesoApoyoId = $documento->proceso_apoyo_id;
+            
+            $documento->update($request->only([
+                'titulo', 'descripcion', 'direccion_id', 'proceso_apoyo_id',
+                'tipo', 'etiquetas', 'confidencialidad'
+            ]));
+
+            // Limpiar cache relacionado
+            Cache::forget('dashboard_estadisticas');
+            Cache::forget("direccion_estadisticas_{$oldDireccionId}");
+            Cache::forget("direccion_{$oldDireccionId}");
+            Cache::forget("proceso_apoyo_{$oldProcesoApoyoId}");
+            Cache::forget("procesos_apoyo_direccion_{$oldDireccionId}");
+            
+            // Si cambió la dirección o proceso, limpiar cache de los nuevos también
+            if ($oldDireccionId != $documento->direccion_id) {
+                Cache::forget("direccion_estadisticas_{$documento->direccion_id}");
+                Cache::forget("direccion_{$documento->direccion_id}");
+                Cache::forget("procesos_apoyo_direccion_{$documento->direccion_id}");
+            }
+            if ($oldProcesoApoyoId != $documento->proceso_apoyo_id) {
+                Cache::forget("proceso_apoyo_{$documento->proceso_apoyo_id}");
+            }
+            Cache::increment('procesos_apoyo_cache_version');
 
             return response()->json([
                 'success' => true,
@@ -305,7 +370,19 @@ class DocumentoController extends Controller
                 Storage::disk('public')->delete($documento->ruta_archivo);
             }
 
+            // Guardar IDs antes de eliminar para invalidar cache
+            $direccionId = $documento->direccion_id;
+            $procesoApoyoId = $documento->proceso_apoyo_id;
+            
             $documento->delete();
+
+            // Limpiar cache relacionado
+            Cache::forget('dashboard_estadisticas');
+            Cache::forget("direccion_estadisticas_{$direccionId}");
+            Cache::forget("direccion_{$direccionId}");
+            Cache::forget("proceso_apoyo_{$procesoApoyoId}");
+            Cache::forget("procesos_apoyo_direccion_{$direccionId}");
+            Cache::increment('procesos_apoyo_cache_version');
 
             return response()->json([
                 'success' => true,
@@ -356,14 +433,28 @@ class DocumentoController extends Controller
             // Incrementar contador de descargas
             $documento->incrementarDescargas();
 
-            // Generar URL de descarga temporal
-            $url = Storage::disk('public')->temporaryUrl(
-                $documento->ruta_archivo,
-                now()->addMinutes(5),
-                [
-                    'ResponseContentDisposition' => 'attachment; filename="' . $documento->nombre_original . '"'
-                ]
-            );
+            // Generar URL de descarga
+            $disk = Storage::disk('public');
+            $url = null;
+            try {
+                // Algunos drivers (S3) soportan temporaryUrl
+                if (method_exists($disk, 'temporaryUrl')) {
+                    $url = $disk->temporaryUrl(
+                        $documento->ruta_archivo,
+                        now()->addMinutes(5),
+                        [
+                            'ResponseContentDisposition' => 'attachment; filename="' . $documento->nombre_original . '"'
+                        ]
+                    );
+                }
+            } catch (\Throwable $e) {
+                // Ignorar y continuar con fallback
+            }
+
+            if (!$url) {
+                // Fallback para disco local: devolver ruta relativa para evitar problemas con APP_URL
+                $url = '/storage/' . ltrim($documento->ruta_archivo, '/');
+            }
 
             return response()->json([
                 'success' => true,
@@ -386,6 +477,72 @@ class DocumentoController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al generar la descarga',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+
+    /**
+     * Vista previa de un documento (sin contar como descarga)
+     */
+    public function vistaPrevia(int $id): JsonResponse
+    {
+        try {
+            $documento = Documento::findOrFail($id);
+
+            // Verificar permisos (puedes flexibilizar según confidencialidad si lo necesitas)
+            if (!$documento->esDescargablePor(auth()->user())) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No tienes permisos para ver este documento'
+                ], 403);
+            }
+
+            // Verificar que el archivo existe
+            if (!Storage::disk('public')->exists($documento->ruta_archivo)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El archivo no existe en el servidor'
+                ], 404);
+            }
+
+            // Generar URL pública/temporal sin attachment
+            $disk = Storage::disk('public');
+            $url = null;
+            try {
+                if (method_exists($disk, 'temporaryUrl')) {
+                    $url = $disk->temporaryUrl(
+                        $documento->ruta_archivo,
+                        now()->addMinutes(5),
+                        [
+                            'ResponseContentDisposition' => 'inline; filename="' . $documento->nombre_original . '"'
+                        ]
+                    );
+                }
+            } catch (\Throwable $e) {
+                // Ignorar y hacer fallback
+            }
+
+            if (!$url) {
+                $url = '/storage/' . ltrim($documento->ruta_archivo, '/');
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [ 'url' => $url ],
+                'message' => 'URL de vista previa generada'
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Documento no encontrado'
+            ], 404);
+        } catch (\Exception $e) {
+            \Log::error('Error en vista previa de documento: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al generar la vista previa',
                 'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }

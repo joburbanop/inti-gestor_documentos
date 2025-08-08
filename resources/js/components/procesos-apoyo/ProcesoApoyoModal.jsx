@@ -98,7 +98,7 @@ const ProcesoApoyoModal = ({
             ]
         },
         {
-            title: 'Asociación y Orden',
+            title: 'Asociación',
             icon: BuildingIcon,
             fields: [
                 {
@@ -109,14 +109,7 @@ const ProcesoApoyoModal = ({
                     required: true,
                     options: direccionesOptions
                 },
-                {
-                    name: 'orden',
-                    label: 'Orden de Prioridad',
-                    type: 'number',
-                    placeholder: 'Ej: 1',
-                    required: false,
-                    maxLength: 3
-                }
+                
             ]
         }
     ];

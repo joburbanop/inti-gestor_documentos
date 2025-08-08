@@ -25,12 +25,20 @@ class Documento extends Model
         'direccion_id',
         'proceso_apoyo_id',
         'subido_por',
-        'slug'
+        'slug',
+        'tipo',
+        'etiquetas',
+        'fecha_documento',
+        'vigente_hasta',
+        'confidencialidad'
     ];
 
     protected $casts = [
         'tamaño_archivo' => 'integer',
-        'contador_descargas' => 'integer'
+        'contador_descargas' => 'integer',
+        'etiquetas' => 'array',
+        'fecha_documento' => 'date',
+        'vigente_hasta' => 'date'
     ];
 
     /**
@@ -70,6 +78,8 @@ class Documento extends Model
     {
         return $this->belongsTo(User::class, 'subido_por');
     }
+
+    // responsable eliminado
 
 
 

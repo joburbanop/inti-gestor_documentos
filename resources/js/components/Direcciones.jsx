@@ -8,9 +8,12 @@ import DireccionCard from './direcciones/DireccionCard';
 import DireccionModal from './direcciones/DireccionModal';
 import DireccionDetailsModal from './direcciones/DireccionDetailsModal';
 import ConfirmModal from './common/ConfirmModal';
+import SearchFilterBar from './common/SearchFilterBar';
+import NotificationContainer from './common/NotificationContainer';
 
 // Hooks
 import useConfirmModal from '../hooks/useConfirmModal';
+import useNotifications from '../hooks/useNotifications';
 
 // Iconos SVG
 import { BuildingIcon, PlusIcon } from './icons/DireccionesIcons';
@@ -25,7 +28,6 @@ const Direcciones = () => {
     const [selectedDireccion, setSelectedDireccion] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [modalMode, setModalMode] = useState('edit');
-    const [successMessage, setSuccessMessage] = useState('');
     const [errors, setErrors] = useState({});
     const [formData, setFormData] = useState({
         nombre: '',
@@ -35,8 +37,17 @@ const Direcciones = () => {
         procesos_apoyo: []
     });
 
+    // Estados para filtrado y búsqueda
+    const [searchTerm, setSearchTerm] = useState('');
+    const [activeFilters, setActiveFilters] = useState([]);
+    const [filteredDirecciones, setFilteredDirecciones] = useState([]);
+    const [direccionesOptions, setDireccionesOptions] = useState([]);
+
     // Hook para modal de confirmación
     const { modalState, showConfirmModal, hideConfirmModal, executeConfirm } = useConfirmModal();
+    
+    // Hook para notificaciones
+    const { notifications, showSuccess, showError, showWarning, removeNotification } = useNotifications();
 
     useEffect(() => {
         fetchDirecciones();
@@ -44,11 +55,9 @@ const Direcciones = () => {
         // Verificar si hay mensaje de éxito en la URL
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('success') === 'created') {
-            setSuccessMessage('¡Dirección creada exitosamente!');
+            showSuccess('¡Dirección creada exitosamente!');
             // Limpiar el parámetro de la URL
             window.history.replaceState({}, document.title, window.location.pathname + window.location.hash.split('?')[0]);
-            // Ocultar el mensaje después de 5 segundos
-            setTimeout(() => setSuccessMessage(''), 5000);
         }
     }, []);
 
@@ -58,12 +67,67 @@ const Direcciones = () => {
             const response = await apiRequest('/api/direcciones');
             if (response.success) {
                 setDirecciones(response.data);
+                setFilteredDirecciones(response.data);
             }
         } catch (error) {
             console.error('Error al cargar direcciones:', error);
         } finally {
             setLoading(false);
         }
+    };
+
+    // Función de búsqueda
+    const handleSearch = (term) => {
+        setSearchTerm(term);
+        applyFilters(term, activeFilters);
+    };
+
+    // Función de filtros
+    const handleFiltersChange = (filters) => {
+        setActiveFilters(filters);
+        applyFilters(searchTerm, filters);
+    };
+
+    // Aplicar filtros y búsqueda
+    const applyFilters = (search, filters) => {
+        let filtered = [...direcciones];
+
+        // Aplicar búsqueda
+        if (search.trim()) {
+            const searchLower = search.toLowerCase();
+            filtered = filtered.filter(direccion => 
+                direccion.nombre.toLowerCase().includes(searchLower) ||
+                direccion.codigo.toLowerCase().includes(searchLower) ||
+                direccion.descripcion?.toLowerCase().includes(searchLower)
+            );
+        }
+
+        // Aplicar filtros
+        filters.forEach(filter => {
+            if (filter.key === 'procesos_count') {
+                const count = parseInt(filter.value);
+                if (count === 0) {
+                    filtered = filtered.filter(d => d.procesos_apoyo_count === 0);
+                } else if (count > 0) {
+                    filtered = filtered.filter(d => d.procesos_apoyo_count > 0);
+                }
+            }
+            if (filter.key === 'codigo') {
+                const code = String(filter.value).toLowerCase();
+                filtered = filtered.filter(d => d.codigo.toLowerCase().includes(code));
+            }
+            // filtro color eliminado
+            if (filter.key === 'orden_min') {
+                const min = Number(filter.value);
+                if (!Number.isNaN(min)) filtered = filtered.filter(d => (d.orden ?? 0) >= min);
+            }
+            if (filter.key === 'orden_max') {
+                const max = Number(filter.value);
+                if (!Number.isNaN(max)) filtered = filtered.filter(d => (d.orden ?? 0) <= max);
+            }
+        });
+
+        setFilteredDirecciones(filtered);
     };
 
     const handleSubmit = async (formData) => {
@@ -98,8 +162,7 @@ const Direcciones = () => {
                 
                 // Mostrar mensaje de éxito
                 const action = modalMode === 'create' ? 'creada' : 'actualizada';
-                setSuccessMessage(`Dirección "${formData.nombre}" ${action} exitosamente`);
-                setTimeout(() => setSuccessMessage(''), 5000);
+                showSuccess(`Dirección "${formData.nombre}" ${action} exitosamente`);
             }
         } catch (error) {
             console.error('Error al guardar dirección:', error);
@@ -109,6 +172,7 @@ const Direcciones = () => {
                 setErrors(error.errors);
             } else {
                 setErrors({ general: 'Error al guardar la dirección' });
+                showError('Error al guardar la dirección');
             }
         } finally {
             setFormLoading(false);
@@ -154,6 +218,16 @@ const Direcciones = () => {
     const handleDelete = (direccion) => {
         console.log('🔍 handleDelete llamado con:', direccion);
         
+        // Verificar si la dirección tiene documentos asociados antes de mostrar el modal
+        const hasDocuments = direccion.estadisticas?.total_documentos > 0;
+        
+        if (hasDocuments) {
+            // Si tiene documentos, mostrar notificación de advertencia
+            showWarning(`No se puede eliminar la dirección "${direccion.nombre}" porque tiene ${direccion.estadisticas.total_documentos} documento(s) asociado(s).\n\nPrimero debes eliminar o mover todos los documentos asociados a esta dirección.`);
+            return;
+        }
+        
+        // Si no tiene documentos, proceder con el modal de confirmación
         const deleteDireccion = async () => {
             try {
                 const response = await apiRequest(`/api/direcciones/${direccion.id}`, {
@@ -161,11 +235,19 @@ const Direcciones = () => {
                 });
                 if (response.success) {
                     fetchDirecciones();
-                    setSuccessMessage(`Dirección "${direccion.nombre}" eliminada exitosamente`);
-                    setTimeout(() => setSuccessMessage(''), 5000);
+                    showSuccess(`Dirección "${direccion.nombre}" eliminada exitosamente`);
                 }
             } catch (error) {
                 console.error('Error al eliminar dirección:', error);
+                // Mostrar mensaje de error específico al usuario
+                let errorMsg = 'Error al eliminar la dirección';
+                if (error.message) {
+                    errorMsg = error.message;
+                } else if (error.response?.data?.message) {
+                    errorMsg = error.response.data.message;
+                }
+                
+                showError(`Error: ${errorMsg}`);
             }
         };
 
@@ -216,25 +298,11 @@ const Direcciones = () => {
         );
     }
 
+
+    
     return (
         <div className={styles.direccionesContainer}>
-            {/* Mensaje de éxito */}
-            {successMessage && (
-                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                            <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                        </div>
-                        <div className="ml-3">
-                            <p className="text-sm font-medium text-green-800">
-                                {successMessage}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            )}
+
             
             {/* Header */}
             <div className={styles.header}>
@@ -259,9 +327,64 @@ const Direcciones = () => {
                 )}
             </div>
 
+            {/* Barra de búsqueda y filtros */}
+            <SearchFilterBar
+                onSearch={handleSearch}
+                onFiltersChange={handleFiltersChange}
+                placeholder="Buscar direcciones por nombre, código o descripción..."
+                searchValue={searchTerm}
+                loading={loading}
+                showAdvancedFilters={true}
+                advancedFilters={[
+                    {
+                        key: 'procesos_count',
+                        label: 'Procesos de Apoyo',
+                        type: 'select',
+                        value: activeFilters.find(f => f.key === 'procesos_count')?.value || '',
+                        options: [
+                            { value: '0', label: 'Sin procesos' },
+                            { value: '1', label: 'Con procesos' }
+                        ]
+                    },
+                    {
+                        key: 'codigo',
+                        label: 'Código',
+                        type: 'text',
+                        value: activeFilters.find(f => f.key === 'codigo')?.value || '',
+                        placeholder: 'Ej: ADM, FIN, COM'
+                    },
+                    
+                    {
+                        key: 'orden_min',
+                        label: 'Orden desde',
+                        type: 'number',
+                        value: activeFilters.find(f => f.key === 'orden_min')?.value ?? ''
+                    },
+                    {
+                        key: 'orden_max',
+                        label: 'Orden hasta',
+                        type: 'number',
+                        value: activeFilters.find(f => f.key === 'orden_max')?.value ?? ''
+                    }
+                ]}
+                onAdvancedFilterChange={(key, value) => {
+                    const newFilters = activeFilters.filter(f => f.key !== key);
+                    if (value !== '' && value !== undefined && value !== null) {
+                        let label = '';
+                        if (key === 'procesos_count') label = value === '0' ? 'Sin procesos' : 'Con procesos';
+                        else if (key === 'codigo') label = `Código: ${value}`;
+                        else if (key === 'orden_min') label = `Orden ≥ ${value}`;
+                        else if (key === 'orden_max') label = `Orden ≤ ${value}`;
+                        else label = String(value);
+                        newFilters.push({ key, value, label });
+                    }
+                    handleFiltersChange(newFilters);
+                }}
+            />
+
             {/* Grid de Direcciones */}
             <div className={styles.direccionesGrid}>
-                {direcciones.map((direccion) => (
+                {filteredDirecciones.map((direccion) => (
                     <DireccionCard
                         key={direccion.id}
                         direccion={direccion}
@@ -273,7 +396,7 @@ const Direcciones = () => {
             </div>
 
             {/* Estado vacío */}
-            {direcciones.length === 0 && !loading && (
+            {filteredDirecciones.length === 0 && !loading && (
                 <div className="text-center py-12">
                     <BuildingIcon className="w-16 h-16 mx-auto text-gray-300 mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -319,6 +442,12 @@ const Direcciones = () => {
                 cancelText={modalState.cancelText}
                 type={modalState.type}
                 icon={modalState.icon}
+            />
+
+            {/* Contenedor de Notificaciones */}
+            <NotificationContainer
+                notifications={notifications}
+                onRemove={removeNotification}
             />
         </div>
     );

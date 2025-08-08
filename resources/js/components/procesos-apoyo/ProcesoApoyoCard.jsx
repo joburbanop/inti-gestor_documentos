@@ -58,7 +58,7 @@ const ProcesoApoyoCard = ({ proceso, onEdit, onDelete }) => {
                 )}
 
                 {/* Dirección asociada */}
-                {proceso.direccion && (
+                {proceso.direccion ? (
                     <div className={styles.direccionInfo}>
                         <span className={styles.direccionLabel}>Dirección:</span>
                         <span 
@@ -71,6 +71,13 @@ const ProcesoApoyoCard = ({ proceso, onEdit, onDelete }) => {
                             {proceso.direccion.nombre}
                         </span>
                     </div>
+                ) : (
+                    <div className={styles.direccionInfo}>
+                        <span className={styles.direccionLabel}>Dirección:</span>
+                        <span className={styles.direccionNombre} style={{ color: '#6B7280', backgroundColor: '#6B728020' }}>
+                            Sin dirección
+                        </span>
+                    </div>
                 )}
             </div>
 
@@ -81,12 +88,6 @@ const ProcesoApoyoCard = ({ proceso, onEdit, onDelete }) => {
                         {proceso.estadisticas?.total_documentos || 0}
                     </span>
                     <span className={styles.statLabel}>DOCUMENTOS</span>
-                </div>
-                <div className={styles.statItem}>
-                    <span className={styles.statNumber}>
-                        {proceso.orden || 0}
-                    </span>
-                    <span className={styles.statLabel}>ORDEN</span>
                 </div>
             </div>
         </div>

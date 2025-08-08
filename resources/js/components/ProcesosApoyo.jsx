@@ -4,7 +4,10 @@ import styles from '../styles/components/ProcesosApoyo.module.css';
 import ProcesoApoyoCard from './procesos-apoyo/ProcesoApoyoCard';
 import ProcesoApoyoModal from './procesos-apoyo/ProcesoApoyoModal';
 import ConfirmModal from './common/ConfirmModal';
+import NotificationContainer from './common/NotificationContainer';
 import useConfirmModal from '../hooks/useConfirmModal';
+import useNotifications from '../hooks/useNotifications';
+import SearchFilterBar from './common/SearchFilterBar';
 import { WarningIcon } from './icons/ModalIcons';
 
 const ProcesosApoyo = () => {
@@ -15,17 +18,23 @@ const ProcesosApoyo = () => {
     const [selectedProceso, setSelectedProceso] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [modalMode, setModalMode] = useState('edit');
-    const [successMessage, setSuccessMessage] = useState('');
     const [errors, setErrors] = useState({});
     const [formData, setFormData] = useState({
         nombre: '',
         descripcion: '',
         codigo: '',
-        direccion_id: '',
-        orden: 0
+        direccion_id: ''
     });
 
+    // Estados para filtrado y búsqueda
+    const [searchTerm, setSearchTerm] = useState('');
+    const [activeFilters, setActiveFilters] = useState([]);
+    const [filteredProcesos, setFilteredProcesos] = useState([]);
+    const [direccionesOptions, setDireccionesOptions] = useState([]);
+
     const { modalState, showConfirmModal, hideConfirmModal } = useConfirmModal();
+    const { notifications, showSuccess, showError, showWarning, removeNotification } = useNotifications();
+    const [deletingIds, setDeletingIds] = useState(new Set());
 
     // Cargar procesos de apoyo
     const fetchProcesosApoyo = async () => {
@@ -35,6 +44,7 @@ const ProcesosApoyo = () => {
             
             if (response.success) {
                 setProcesosApoyo(response.data);
+                setFilteredProcesos(response.data);
             }
         } catch (error) {
             console.error('Error al cargar procesos de apoyo:', error);
@@ -43,9 +53,70 @@ const ProcesosApoyo = () => {
         }
     };
 
+    // Cargar opciones de direcciones para filtros
+    const fetchDireccionesOptions = async () => {
+        try {
+            const response = await apiRequest('/api/direcciones');
+            if (response.success) {
+                setDireccionesOptions(response.data.map(d => ({
+                    value: d.id.toString(),
+                    label: d.nombre
+                })));
+            }
+        } catch (error) {
+            console.error('Error al cargar direcciones:', error);
+        }
+    };
+
+    // Función de búsqueda
+    const handleSearch = (term) => {
+        setSearchTerm(term);
+        applyFilters(term, activeFilters);
+    };
+
+    // Función de filtros
+    const handleFiltersChange = (filters) => {
+        setActiveFilters(filters);
+        applyFilters(searchTerm, filters);
+    };
+
+    // Utilidad para computar filtrado sobre una lista
+    const computeFiltered = (list, search, filters) => {
+        let filtered = [...list];
+        if (search.trim()) {
+            const searchLower = search.toLowerCase();
+            filtered = filtered.filter(proceso =>
+                proceso.nombre.toLowerCase().includes(searchLower) ||
+                proceso.codigo.toLowerCase().includes(searchLower) ||
+                proceso.descripcion?.toLowerCase().includes(searchLower) ||
+                proceso.direccion?.nombre.toLowerCase().includes(searchLower)
+            );
+        }
+        filters.forEach(filter => {
+            if (filter.key === 'direccion_id') {
+                filtered = filtered.filter(p => p.direccion?.id.toString() === filter.value);
+            }
+            if (filter.key === 'documentos_count') {
+                const count = parseInt(filter.value);
+                if (count === 0) {
+                    filtered = filtered.filter(p => (p.estadisticas?.total_documentos || 0) === 0);
+                } else if (count > 0) {
+                    filtered = filtered.filter(p => (p.estadisticas?.total_documentos || 0) > 0);
+                }
+            }
+        });
+        return filtered;
+    };
+
+    // Aplicar filtros
+    const applyFilters = (search, filters) => {
+        setFilteredProcesos(computeFiltered(procesosApoyo, search, filters));
+    };
+
     // Cargar datos al montar el componente
     useEffect(() => {
         fetchProcesosApoyo();
+        fetchDireccionesOptions();
     }, []);
 
     // Manejar envío del formulario
@@ -74,12 +145,15 @@ const ProcesosApoyo = () => {
             
             if (response.success) {
                 setShowModal(false);
-                fetchProcesosApoyo();
                 resetForm();
+                // Limpiar búsqueda y filtros para que el nuevo elemento sea visible
+                setSearchTerm('');
+                setActiveFilters([]);
+                // Recargar lista y aplicar filtros vacíos
+                await fetchProcesosApoyo();
                 
                 const action = modalMode === 'create' ? 'creado' : 'actualizado';
-                setSuccessMessage(`Proceso de apoyo "${formData.nombre}" ${action} exitosamente`);
-                setTimeout(() => setSuccessMessage(''), 5000);
+                showSuccess(`Proceso de apoyo "${formData.nombre}" ${action} exitosamente`);
             }
         } catch (error) {
             console.error('Error al guardar proceso de apoyo:', error);
@@ -88,6 +162,7 @@ const ProcesosApoyo = () => {
                 setErrors(error.errors);
             } else {
                 setErrors({ general: 'Error al guardar el proceso de apoyo' });
+                showError('Error al guardar el proceso de apoyo');
             }
         } finally {
             setFormLoading(false);
@@ -102,8 +177,7 @@ const ProcesosApoyo = () => {
             nombre: proceso.nombre,
             descripcion: proceso.descripcion || '',
             codigo: proceso.codigo || '',
-            direccion_id: proceso.direccion?.id || '',
-            orden: proceso.orden || 0
+            direccion_id: proceso.direccion?.id || ''
         });
         setModalMode('edit');
         setShowModal(true);
@@ -113,18 +187,53 @@ const ProcesosApoyo = () => {
     const handleDelete = (proceso) => {
         console.log('🔍 handleDelete llamado con:', proceso);
         
+        // Verificar si el proceso tiene documentos asociados antes de mostrar el modal
+        const hasDocuments = proceso.estadisticas?.total_documentos > 0;
+        
+        if (hasDocuments) {
+            // Si tiene documentos, mostrar notificación de advertencia
+            showWarning(`No se puede eliminar el proceso "${proceso.nombre}" porque tiene ${proceso.estadisticas.total_documentos} documento(s) asociado(s).\n\nPrimero debes eliminar o mover todos los documentos asociados a este proceso.`);
+            return;
+        }
+        
         const deleteProceso = async () => {
             try {
-                const response = await apiRequest(`/api/procesos-apoyo/${proceso.id}`, {
-                    method: 'DELETE'
-                });
+                // Evitar dobles clics/duplicados
+                if (deletingIds.has(proceso.id)) return;
+                setDeletingIds(prev => new Set(prev).add(proceso.id));
+
+                const response = await apiRequest(`/api/procesos-apoyo/${proceso.id}`, { method: 'DELETE' });
+
                 if (response.success) {
-                    fetchProcesosApoyo();
-                    setSuccessMessage(`Proceso de apoyo "${proceso.nombre}" eliminado exitosamente`);
-                    setTimeout(() => setSuccessMessage(''), 5000);
+                    // Actualización optimista sin esperar fetch completo
+                    setProcesosApoyo(prev => {
+                        const updated = prev.filter(p => p.id !== proceso.id);
+                        setFilteredProcesos(computeFiltered(updated, searchTerm, activeFilters));
+                        return updated;
+                    });
+                    showSuccess(`Proceso de apoyo "${proceso.nombre}" eliminado exitosamente`);
                 }
             } catch (error) {
-                console.error('Error al eliminar proceso de apoyo:', error);
+                // Si el backend responde "no encontrado", lo tratamos como eliminado (idempotente)
+                const msg = (error?.message || '').toLowerCase();
+                if (msg.includes('no encontrado')) {
+                    setProcesosApoyo(prev => {
+                        const updated = prev.filter(p => p.id !== proceso.id);
+                        setFilteredProcesos(computeFiltered(updated, searchTerm, activeFilters));
+                        return updated;
+                    });
+                    showSuccess(`Proceso de apoyo "${proceso.nombre}" ya no existe. Lista actualizada.`);
+                } else {
+                    console.error('Error al eliminar proceso de apoyo:', error);
+                    showError(`Error al eliminar proceso de apoyo: ${error.message}`);
+                }
+            } finally {
+                setDeletingIds(prev => {
+                    const next = new Set(prev);
+                    next.delete(proceso.id);
+                    return next;
+                });
+                hideConfirmModal();
             }
         };
 
@@ -145,8 +254,7 @@ const ProcesosApoyo = () => {
             nombre: '',
             descripcion: '',
             codigo: '',
-            direccion_id: '',
-            orden: 0
+            direccion_id: ''
         });
     };
 
@@ -176,23 +284,7 @@ const ProcesosApoyo = () => {
 
     return (
         <div className={styles.procesosApoyoContainer}>
-            {/* Mensaje de éxito */}
-            {successMessage && (
-                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                            <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                        </div>
-                        <div className="ml-3">
-                            <p className="text-sm font-medium text-green-800">
-                                {successMessage}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            )}
+
             
             {/* Header */}
             <div className={styles.header}>
@@ -215,6 +307,45 @@ const ProcesosApoyo = () => {
                 </div>
             </div>
 
+            {/* Barra de búsqueda y filtros */}
+            <SearchFilterBar
+                onSearch={handleSearch}
+                onFiltersChange={handleFiltersChange}
+                placeholder="Buscar procesos por nombre, código, descripción o dirección..."
+                searchValue={searchTerm}
+                loading={loading}
+                showAdvancedFilters={true}
+                advancedFilters={[
+                    {
+                        key: 'direccion_id',
+                        label: 'Dirección',
+                        type: 'select',
+                        value: activeFilters.find(f => f.key === 'direccion_id')?.value || '',
+                        options: direccionesOptions
+                    },
+                    {
+                        key: 'documentos_count',
+                        label: 'Documentos',
+                        type: 'select',
+                        value: activeFilters.find(f => f.key === 'documentos_count')?.value || '',
+                        options: [
+                            { value: '0', label: 'Sin documentos' },
+                            { value: '1', label: 'Con documentos' }
+                        ]
+                    }
+                ]}
+                onAdvancedFilterChange={(key, value) => {
+                    const newFilters = activeFilters.filter(f => f.key !== key);
+                    if (value) {
+                        const label = key === 'direccion_id' 
+                            ? direccionesOptions.find(d => d.value === value)?.label || 'Dirección'
+                            : value === '0' ? 'Sin documentos' : 'Con documentos';
+                        newFilters.push({ key, value, label });
+                    }
+                    handleFiltersChange(newFilters);
+                }}
+            />
+
             {/* Loading */}
             {loading ? (
                 <div className="text-center py-12">
@@ -225,7 +356,7 @@ const ProcesosApoyo = () => {
                 <>
                     {/* Lista de procesos de apoyo */}
                     <div className={styles.procesosGrid}>
-                        {procesosApoyo.map((proceso) => (
+                        {filteredProcesos.map((proceso) => (
                             <ProcesoApoyoCard
                                 key={proceso.id}
                                 proceso={proceso}
@@ -236,7 +367,7 @@ const ProcesosApoyo = () => {
                     </div>
 
                     {/* Mensaje cuando no hay procesos */}
-                    {procesosApoyo.length === 0 && (
+                    {filteredProcesos.length === 0 && (
                         <div className="text-center py-12">
                             <div className="text-gray-400 mb-4">
                                 <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -270,6 +401,12 @@ const ProcesosApoyo = () => {
 
             {/* Modal de confirmación */}
             <ConfirmModal {...modalState} onClose={hideConfirmModal} />
+
+            {/* Contenedor de notificaciones */}
+            <NotificationContainer 
+                notifications={notifications} 
+                onRemove={removeNotification} 
+            />
         </div>
     );
 };

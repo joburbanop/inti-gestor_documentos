@@ -5,6 +5,7 @@ import Dashboard from './Dashboard';
 import UserDashboard from './UserDashboard';
 import Direcciones from './Direcciones';
 import ProcesosApoyo from './ProcesosApoyo';
+import Documentos from './Documentos';
 import CreateDireccion from './crud/CreateDireccion';
 import { INTILED_COLORS } from '../config/colors';
 
@@ -52,12 +53,7 @@ const HashRouter = () => {
             case 'procesos':
                 return <ProcesosApoyo />;
             case 'documentos':
-                return <div className="text-center py-12">
-                    <h2 className="text-2xl font-bold mb-4" style={{ color: INTILED_COLORS.azul }}>
-                        Gestión de Documentos
-                    </h2>
-                    <p className="text-gray-600">Componente en desarrollo...</p>
-                </div>;
+                return <Documentos />;
             case 'buscar':
                 return <div className="text-center py-12">
                     <h2 className="text-2xl font-bold mb-4" style={{ color: INTILED_COLORS.azul }}>

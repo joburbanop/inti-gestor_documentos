@@ -19,6 +19,7 @@
         "vite": "^7.0.4"
     },
     "dependencies": {
+        "@heroicons/react": "^2.2.0",
         "@vitejs/plugin-react": "^4.7.0",
         "prop-types": "^15.8.1",
         "react": "^19.1.1",

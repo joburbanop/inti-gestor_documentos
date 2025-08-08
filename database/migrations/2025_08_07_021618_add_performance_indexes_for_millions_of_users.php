@@ -82,9 +82,9 @@ return new class extends Migration
             if (!Schema::hasIndex('personal_access_tokens', 'tokens_tokenable_index')) {
                 $table->index(['tokenable_type', 'tokenable_id'], 'tokens_tokenable_index');
             }
-            if (!Schema::hasIndex('personal_access_tokens', 'tokens_name_type_index')) {
-                $table->index(['name', 'tokenable_type'], 'tokens_name_type_index');
-            }
+            // Evitar índice sobre columna TEXT/BLOB sin longitud en MySQL
+            // El campo "name" puede ser TEXT dependiendo de la migración base.
+            // Para máxima compatibilidad, omitimos índice compuesto con "name".
             if (!Schema::hasIndex('personal_access_tokens', 'tokens_expires_index')) {
                 $table->index(['expires_at'], 'tokens_expires_index');
             }

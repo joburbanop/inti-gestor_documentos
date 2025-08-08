@@ -19,13 +19,11 @@ class ProcesoApoyo extends Model
         'descripcion',
         'direccion_id',
         'codigo',
-        'orden',
         'activo'
     ];
 
     protected $casts = [
-        'activo' => 'boolean',
-        'orden' => 'integer'
+        'activo' => 'boolean'
     ];
 
     /**
@@ -57,7 +55,8 @@ class ProcesoApoyo extends Model
      */
     public function scopeOrdenados(Builder $query): Builder
     {
-        return $query->orderBy('orden');
+        // Ordenar por nombre para consistencia tras eliminar "orden"
+        return $query->orderBy('nombre');
     }
 
     /**

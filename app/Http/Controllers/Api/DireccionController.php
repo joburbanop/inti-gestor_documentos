@@ -37,7 +37,7 @@ class DireccionController extends Controller
                             'nombre' => $direccion->nombre,
                             'descripcion' => $direccion->descripcion,
                             'codigo' => $direccion->codigo,
-                            'orden' => $direccion->orden,
+                            // 'orden' eliminado de la API
                             'color' => $direccion->color,
                             'estadisticas' => [
                                 'total_procesos' => $direccion->procesos_apoyo_count,
@@ -49,7 +49,6 @@ class DireccionController extends Controller
                                     'nombre' => $proceso->nombre,
                                     'descripcion' => $proceso->descripcion,
                                     'codigo' => $proceso->codigo,
-                                    'orden' => $proceso->orden,
                                 ];
                             })
                         ];
@@ -100,7 +99,6 @@ class DireccionController extends Controller
                 'nombre' => $direccion->nombre,
                 'descripcion' => $direccion->descripcion,
                 'codigo' => $direccion->codigo,
-                'orden' => $direccion->orden,
                 'estadisticas' => $direccion->estadisticas,
                 'procesos_apoyo' => $direccion->procesosApoyo->map(function ($proceso) {
                     return [
@@ -108,7 +106,7 @@ class DireccionController extends Controller
                         'nombre' => $proceso->nombre,
                         'descripcion' => $proceso->descripcion,
                         'codigo' => $proceso->codigo,
-                        'orden' => $proceso->orden,
+                    // 'orden' eliminado
                         'estadisticas' => $proceso->estadisticas,
                     ];
                 }),
@@ -181,7 +179,6 @@ class DireccionController extends Controller
                 'codigo' => 'required|string|max:10|unique:direcciones,codigo',
                 'procesos_apoyo' => 'nullable|array',
                 'procesos_apoyo.*' => 'integer|exists:procesos_apoyo,id',
-                'orden' => 'nullable|integer|min:0'
             ], [
                 'nombre.required' => 'El nombre es obligatorio',
                 'nombre.unique' => 'Ya existe una dirección con ese nombre',
@@ -202,9 +199,8 @@ class DireccionController extends Controller
             }
 
             // Preparar datos para inserción
-            $data = $request->only(['nombre', 'descripcion', 'codigo', 'orden']);
+            $data = $request->only(['nombre', 'descripcion', 'codigo']);
             $data['activo'] = true;
-            $data['orden'] = $data['orden'] ?? 0;
             $procesosApoyoIds = $request->input('procesos_apoyo', []);
 
             \Log::info('Datos validados correctamente, creando dirección', $data);
@@ -243,7 +239,6 @@ class DireccionController extends Controller
                     'descripcion' => $direccion->descripcion,
                     'codigo' => $direccion->codigo,
                     'procesos_apoyo' => $direccion->procesos_apoyo,
-                    'orden' => $direccion->orden,
                     'activo' => $direccion->activo
                 ],
                 'message' => 'Dirección creada exitosamente'
@@ -298,7 +293,6 @@ class DireccionController extends Controller
                 'codigo' => 'required|string|max:10|unique:direcciones,codigo,' . $id,
                 'procesos_apoyo' => 'nullable|array',
                 'procesos_apoyo.*' => 'integer|exists:procesos_apoyo,id',
-                'orden' => 'nullable|integer|min:0',
                 'activo' => 'boolean'
             ]);
 
@@ -339,6 +333,12 @@ class DireccionController extends Controller
             Cache::forget('dashboard_estadisticas');
             Cache::forget('total_direcciones');
             Cache::forget('procesos_apoyo_todos_optimized');
+            // Importante: invalidar caches de procesos afectados para que no queden con la antigua dirección
+            Cache::forget('procesos_apoyo_activos');
+            Cache::forget("procesos_apoyo_direccion_{$id}");
+            Cache::forget("direccion_procesos_{$id}");
+            // Forzar invalidación de listados paginados de procesos
+            Cache::increment('procesos_apoyo_cache_version');
 
             return response()->json([
                 'success' => true,

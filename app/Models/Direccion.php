@@ -19,14 +19,12 @@ class Direccion extends Model
         'descripcion',
         'codigo',
         'color',
-        'orden',
         'activo',
         'procesos_apoyo'
     ];
 
     protected $casts = [
         'activo' => 'boolean',
-        'orden' => 'integer',
         'procesos_apoyo' => 'array'
     ];
 
@@ -63,7 +61,7 @@ class Direccion extends Model
     {
         return $this->hasMany(ProcesoApoyo::class, 'direccion_id')
                     ->where('activo', true)
-                    ->orderBy('orden');
+                    ->orderBy('nombre');
     }
 
     /**
@@ -80,7 +78,6 @@ class Direccion extends Model
                                 'id' => $proceso->id,
                                 'nombre' => $proceso->nombre,
                                 'codigo' => $proceso->codigo,
-                                'orden' => $proceso->orden,
                                 'total_documentos' => $proceso->documentos_count
                             ];
                         });
@@ -108,7 +105,8 @@ class Direccion extends Model
      */
     public function scopeOrdenadas(Builder $query): Builder
     {
-        return $query->orderBy('orden');
+        // Ya no dependemos de columna orden; ordenar por nombre
+        return $query->orderBy('nombre');
     }
 
     /**

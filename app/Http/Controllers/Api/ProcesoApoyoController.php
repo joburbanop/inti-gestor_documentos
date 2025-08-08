@@ -80,7 +80,9 @@ class ProcesoApoyoController extends Controller
             $search = $request->get('search', '');
             $direccionId = $request->get('direccion_id');
 
-            $cacheKey = "procesos_apoyo_paginated_{$perPage}_{$page}_{$search}_{$direccionId}";
+            // Usar versión de caché para invalidar listados al crear/actualizar/eliminar
+            $version = Cache::get('procesos_apoyo_cache_version', 1);
+            $cacheKey = "procesos_apoyo_paginated_{$perPage}_{$page}_{$search}_{$direccionId}_v{$version}";
             
             $procesos = Cache::remember($cacheKey, 300, function () use ($perPage, $search, $direccionId) {
                 $query = ProcesoApoyo::activos()
@@ -111,13 +113,13 @@ class ProcesoApoyoController extends Controller
                     'nombre' => $proceso->nombre,
                     'descripcion' => $proceso->descripcion,
                     'codigo' => $proceso->codigo,
-                    'orden' => $proceso->orden,
-                    'direccion' => [
+                    // 'orden' eliminado
+                    'direccion' => $proceso->direccion ? [
                         'id' => $proceso->direccion->id,
                         'nombre' => $proceso->direccion->nombre,
                         'codigo' => $proceso->direccion->codigo,
                         'color' => $proceso->direccion->color,
-                    ],
+                    ] : null,
                     'estadisticas' => [
                         'total_documentos' => $proceso->documentos_count,
                     ]
@@ -167,7 +169,7 @@ class ProcesoApoyoController extends Controller
                             'nombre' => $proceso->nombre,
                             'descripcion' => $proceso->descripcion,
                             'codigo' => $proceso->codigo,
-                            'orden' => $proceso->orden,
+                            // 'orden' eliminado
                             'estadisticas' => [
                                 'total_documentos' => $proceso->documentos_count,
                             ]
@@ -214,7 +216,7 @@ class ProcesoApoyoController extends Controller
                 'nombre' => $proceso->nombre,
                 'descripcion' => $proceso->descripcion,
                 'codigo' => $proceso->codigo,
-                'orden' => $proceso->orden,
+                // 'orden' eliminado
                 'direccion' => [
                     'id' => $proceso->direccion->id,
                     'nombre' => $proceso->direccion->nombre,
@@ -285,7 +287,7 @@ class ProcesoApoyoController extends Controller
                 'descripcion' => 'nullable|string|max:1000',
                 'direccion_id' => 'required|exists:direcciones,id',
                 'codigo' => 'nullable|string|max:20|unique:procesos_apoyo,codigo',
-                'orden' => 'nullable|integer|min:0'
+                    // 'orden' eliminado completamente
             ], [
                 'nombre.required' => 'El nombre es obligatorio',
                 'nombre.unique' => 'Ya existe un proceso con ese nombre',
@@ -304,9 +306,9 @@ class ProcesoApoyoController extends Controller
             }
 
             // Preparar datos para inserción
-            $data = $request->only(['nombre', 'descripcion', 'direccion_id', 'codigo', 'orden']);
+            $data = $request->only(['nombre', 'descripcion', 'direccion_id', 'codigo']);
             $data['activo'] = true;
-            $data['orden'] = $data['orden'] ?? 0;
+            
 
             \Log::info('Datos validados correctamente, creando proceso de apoyo', $data);
             
@@ -322,6 +324,13 @@ class ProcesoApoyoController extends Controller
             Cache::forget("procesos_apoyo_direccion_{$data['direccion_id']}");
             Cache::forget('procesos_apoyo_todos_optimized');
             Cache::forget('dashboard_estadisticas');
+            Cache::forget('total_procesos');
+            // Invalidar caches de la dirección afectada
+            Cache::forget('direcciones_activas');
+            Cache::forget("direccion_{$proceso->direccion_id}");
+            Cache::forget("direccion_estadisticas_{$proceso->direccion_id}");
+            Cache::forget("direccion_procesos_{$proceso->direccion_id}");
+            Cache::increment('procesos_apoyo_cache_version');
 
             return response()->json([
                 'success' => true,
@@ -331,7 +340,7 @@ class ProcesoApoyoController extends Controller
                     'descripcion' => $proceso->descripcion,
                     'codigo' => $proceso->codigo,
                     'direccion_id' => $proceso->direccion_id,
-                    'orden' => $proceso->orden,
+                // 'orden' eliminado
                     'activo' => $proceso->activo
                 ],
                 'message' => 'Proceso de apoyo creado exitosamente'
@@ -379,13 +388,13 @@ class ProcesoApoyoController extends Controller
             }
 
             $proceso = ProcesoApoyo::findOrFail($id);
+            $oldDireccionId = $proceso->direccion_id;
 
             $validator = Validator::make($request->all(), [
                 'nombre' => 'required|string|max:255',
                 'descripcion' => 'nullable|string',
                 'direccion_id' => 'required|exists:direcciones,id',
                 'codigo' => 'nullable|string|max:20',
-                'orden' => 'nullable|integer|min:0',
                 'activo' => 'boolean'
             ]);
 
@@ -398,11 +407,29 @@ class ProcesoApoyoController extends Controller
             }
 
             $proceso->update($request->all());
+            $newDireccionId = $proceso->direccion_id;
 
-            // Limpiar cache
+            // Limpiar cache (listados y dashboard)
             Cache::forget('procesos_apoyo_activos');
-            Cache::forget("procesos_apoyo_direccion_{$proceso->direccion_id}");
+            // procesos por dirección (nueva y anterior si cambió)
+            Cache::forget("procesos_apoyo_direccion_{$newDireccionId}");
+            if ($oldDireccionId && $oldDireccionId !== $newDireccionId) {
+                Cache::forget("procesos_apoyo_direccion_{$oldDireccionId}");
+            }
             Cache::forget("proceso_apoyo_{$id}");
+            Cache::forget('dashboard_estadisticas');
+            Cache::forget('total_procesos');
+            // caches de direcciones (nueva y anterior)
+            Cache::forget('direcciones_activas');
+            Cache::forget("direccion_{$newDireccionId}");
+            Cache::forget("direccion_estadisticas_{$newDireccionId}");
+            Cache::forget("direccion_procesos_{$newDireccionId}");
+            if ($oldDireccionId && $oldDireccionId !== $newDireccionId) {
+                Cache::forget("direccion_{$oldDireccionId}");
+                Cache::forget("direccion_estadisticas_{$oldDireccionId}");
+                Cache::forget("direccion_procesos_{$oldDireccionId}");
+            }
+            Cache::increment('procesos_apoyo_cache_version');
 
             return response()->json([
                 'success' => true,
@@ -458,6 +485,9 @@ class ProcesoApoyoController extends Controller
             Cache::forget('procesos_apoyo_activos');
             Cache::forget("procesos_apoyo_direccion_{$direccionId}");
             Cache::forget("proceso_apoyo_{$id}");
+            Cache::forget('dashboard_estadisticas');
+            Cache::forget('total_procesos');
+            Cache::increment('procesos_apoyo_cache_version');
 
             return response()->json([
                 'success' => true,

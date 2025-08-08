@@ -1,0 +1,550 @@
+/* Contenedor principal */
+.searchFilterContainer {
+    width: 100%;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #fafbfc 0%, #f5f7fa 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(31, 68, 139, 0.08);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+/* Barra de búsqueda principal */
+.searchBarContainer {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.searchInputWrapper {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: white;
+    border: 2px solid #d1d5db;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.searchInputWrapper:hover {
+    border-color: #9ca3af;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.searchInputWrapper.focused {
+    border-color: #1F448B;
+    box-shadow: 0 0 0 4px rgba(31, 68, 139, 0.15), 0 4px 16px rgba(31, 68, 139, 0.1);
+}
+
+.searchIcon {
+    width: 20px;
+    height: 20px;
+    color: #6b7280;
+    margin-left: 1rem;
+    flex-shrink: 0;
+}
+
+.searchInput {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 0.875rem 1rem;
+    font-size: 1rem;
+    background: transparent;
+    color: #374151;
+}
+
+.searchInput::placeholder {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.searchInput:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.clearButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #f3f4f6;
+    border-radius: 8px;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-right: 0.75rem;
+}
+
+.clearButton:hover {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.clearButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.loadingSpinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    margin-right: 0.75rem;
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #e5e7eb;
+    border-top: 2px solid #1F448B;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Botón de filtros */
+.filterToggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.25rem;
+    background: white;
+    border: 2px solid #d1d5db;
+    border-radius: 12px;
+    color: #374151;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.1);
+    position: relative;
+    min-width: 120px;
+}
+
+.filterToggle:hover {
+    border-color: #9ca3af;
+    color: #1F448B;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.filterToggle.active {
+    background: linear-gradient(135deg, #1F448B 0%, #2d5aa0 100%);
+    border-color: #1F448B;
+    color: white;
+    box-shadow: 0 0 0 4px rgba(31, 68, 139, 0.15), 0 4px 16px rgba(31, 68, 139, 0.2);
+}
+
+.filterToggle:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.filterButtonText {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+}
+
+
+
+/* Chips de filtros activos */
+.activeFiltersContainer {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.activeFilters {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.filterChip {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: #1F448B;
+    color: white;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.filterChip:hover {
+    background: #1a3a7a;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.filterChipLabel {
+    white-space: nowrap;
+}
+
+.filterChipRemove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border: none;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filterChipRemove:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.filterChipRemove:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.clearAllButton {
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    color: #6b7280;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.clearAllButton:hover {
+    background: #f9fafb;
+    border-color: #9ca3af;
+    color: #374151;
+}
+
+.clearAllButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Filtros inline */
+.inlineFilters {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.inlineFilterItem {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 150px;
+}
+
+.inlineFilterLabel {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.inlineFilterSelect {
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: white;
+    color: #374151;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.inlineFilterSelect:hover {
+    border-color: #9ca3af;
+}
+
+.inlineFilterSelect:focus {
+    outline: none;
+    border-color: #1F448B;
+    box-shadow: 0 0 0 2px rgba(31, 68, 139, 0.1);
+}
+
+/* Inputs inline (texto/número) */
+.inlineFilterInput {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: white;
+    color: #111827;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.inlineFilterInput::placeholder {
+    color: #9ca3af;
+}
+
+.inlineFilterInput:hover {
+    border-color: #9ca3af;
+}
+
+.inlineFilterInput:focus {
+    outline: none;
+    border-color: #1F448B;
+    box-shadow: 0 0 0 2px rgba(31, 68, 139, 0.1);
+}
+
+.advancedFilterGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    border-radius: 8px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
+}
+
+.advancedFilterGroup:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+}
+
+.advancedFilterLabel {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.25rem;
+}
+
+.advancedFilterSelect {
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: white;
+    color: #374151;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.advancedFilterSelect:hover {
+    border-color: #9ca3af;
+}
+
+.advancedFilterSelect:focus {
+    outline: none;
+    border-color: #1F448B;
+    box-shadow: 0 0 0 3px rgba(31, 68, 139, 0.1);
+}
+
+.advancedFilterSelect:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #f9fafb;
+}
+
+.checkboxGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.checkboxLabel {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: #374151;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.checkboxLabel:hover {
+    background: #f8fafc;
+    color: #1F448B;
+}
+
+.checkbox {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #d1d5db;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.checkbox:hover {
+    border-color: #1F448B;
+    background: #f8fafc;
+}
+
+.checkbox:checked {
+    background: #1F448B;
+    border-color: #1F448B;
+    box-shadow: 0 2px 4px rgba(31, 68, 139, 0.2);
+}
+
+.checkbox:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.checkbox:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(31, 68, 139, 0.1);
+}
+
+.checkbox:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.checkboxText {
+    user-select: none;
+    font-weight: 500;
+}
+
+/* Atajo de teclado */
+.keyboardHint {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-top: 0.5rem;
+}
+
+.kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 0.25rem;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #374151;
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .searchBarContainer {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .searchInputWrapper {
+        width: 100%;
+    }
+
+    .filterToggle {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .activeFiltersContainer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .activeFilters {
+        width: 100%;
+    }
+
+    .clearAllButton {
+        align-self: flex-start;
+    }
+
+    .inlineFilters {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .inlineFilterItem {
+        min-width: auto;
+    }
+
+    .keyboardHint {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .searchFilterContainer {
+        margin-bottom: 1.5rem;
+    }
+
+    .searchInput {
+        font-size: 0.875rem;
+        padding: 0.75rem;
+    }
+
+    .filterChip {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.625rem;
+    }
+
+    .advancedFiltersHeader {
+        padding: 0.75rem 1rem;
+    }
+
+    .advancedFiltersContent {
+        padding: 1rem;
+    }
+} 

@@ -41,6 +41,25 @@ Route::middleware('api.auth')->group(function () {
     Route::get('/documentos/buscar', [DocumentoController::class, 'buscar']);
     Route::get('/documentos/recientes', [DocumentoController::class, 'recientes']);
     Route::get('/documentos/estadisticas', [DocumentoController::class, 'estadisticas']);
+    // Sugerencias de etiquetas (autosuggest simple desde documentos existentes)
+    Route::get('/documentos/etiquetas/sugerencias', function (Request $request) {
+        $q = trim($request->get('q', ''));
+        $limit = min((int) $request->get('limit', 10), 50);
+        $tags = \App\Models\Documento::query()
+            ->whereNotNull('etiquetas')
+            ->select('etiquetas')
+            ->limit(500)
+            ->get()
+            ->flatMap(function ($doc) { return collect($doc->etiquetas ?? []); })
+            ->filter()
+            ->map(fn($t) => (string) $t)
+            ->unique()
+            ->values();
+        if ($q !== '') {
+            $tags = $tags->filter(fn($t) => stripos($t, $q) !== false)->values();
+        }
+        return response()->json(['success' => true, 'data' => $tags->take($limit)]);
+    });
     
     // Rutas de Documentos (apiResource debe ir DESPUÉS de las rutas específicas)
     Route::apiResource('documentos', DocumentoController::class);

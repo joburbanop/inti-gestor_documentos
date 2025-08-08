@@ -116,16 +116,25 @@ export const AuthProvider = ({ children }) => {
             throw new Error('No autenticado');
         }
         
+        const ignoreAuthErrors = options.ignoreAuthErrors === true;
+        const isFormData = options && options.body instanceof FormData;
+
         const config = {
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
                 'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json',
+                ...(ignoreAuthErrors ? { 'X-Ignore-Auth-Errors': '1' } : {}),
                 ...options.headers
             },
             ...options
         };
+
+        // Si es FormData, no establecer Content-Type para permitir boundary automático
+        if (isFormData) {
+            try { delete config.headers['Content-Type']; } catch (e) {}
+        }
 
         console.log('🔍 Debug - URL de petición:', url.startsWith('/api') ? url : `/api${url}`);
         console.log('🔍 Debug - Headers:', config.headers);
@@ -152,10 +161,15 @@ export const AuthProvider = ({ children }) => {
                 console.log('❌ Debug - Error en respuesta:', response.status, data);
                 // Si es un error 401, manejar específicamente
                 if (response.status === 401) {
-                    console.log('❌ Debug - Error 401, haciendo logout');
-                    localStorage.removeItem('auth_token');
-                    dispatch({ type: AUTH_ACTIONS.LOGOUT });
-                    throw new Error('No autenticado');
+                    if (ignoreAuthErrors) {
+                        console.log('⚠️ Debug - 401 ignorado por configuración de la petición');
+                        throw new Error('No autenticado');
+                    } else {
+                        console.log('❌ Debug - Error 401, haciendo logout');
+                        localStorage.removeItem('auth_token');
+                        dispatch({ type: AUTH_ACTIONS.LOGOUT });
+                        throw new Error('No autenticado');
+                    }
                 }
                 throw new Error(data.message || 'Error en la petición');
             }
@@ -164,10 +178,14 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
             console.log('❌ Debug - Error capturado:', error.message);
             // Si es un error de red o 401, hacer logout
-            if (error.message === 'No autenticado' || error.name === 'TypeError') {
-                console.log('❌ Debug - Error de autenticación, haciendo logout');
-                localStorage.removeItem('auth_token');
-                dispatch({ type: AUTH_ACTIONS.LOGOUT });
+            if (!ignoreAuthErrors) {
+                if (error.message === 'No autenticado' || error.name === 'TypeError') {
+                    console.log('❌ Debug - Error de autenticación, haciendo logout');
+                    localStorage.removeItem('auth_token');
+                    dispatch({ type: AUTH_ACTIONS.LOGOUT });
+                }
+            } else {
+                console.log('⚠️ Debug - Error de autenticación ignorado para esta petición');
             }
             throw error;
         }
@@ -303,6 +321,21 @@ export const AuthProvider = ({ children }) => {
             
             // Solo hacer logout si es una petición a la API y el status es 401
             if (response.status === 401 && args[0] && typeof args[0] === 'string' && args[0].includes('/api/')) {
+                // Respetar bandera para ignorar errores de auth
+                const init = args[1] || {};
+                let hasIgnoreHeader = false;
+                if (init.headers) {
+                    try {
+                        if (init.headers instanceof Headers) {
+                            hasIgnoreHeader = init.headers.get('X-Ignore-Auth-Errors') === '1';
+                        } else if (typeof init.headers === 'object') {
+                            hasIgnoreHeader = init.headers['X-Ignore-Auth-Errors'] === '1' || init.headers['x-ignore-auth-errors'] === '1';
+                        }
+                    } catch (e) {}
+                }
+                if (hasIgnoreHeader) {
+                    return response;
+                }
                 // Verificar si la respuesta es JSON antes de procesarla
                 const contentType = response.headers.get('content-type');
                 if (contentType && contentType.includes('application/json')) {

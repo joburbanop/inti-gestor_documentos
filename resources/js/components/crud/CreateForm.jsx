@@ -36,7 +36,15 @@ const CreateForm = ({
     }, [initialData]);
 
     const handleInputChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value, type, files } = e.target;
+        if (type === 'file') {
+            const file = files && files.length > 0 ? files[0] : null;
+            setFormData(prev => ({
+                ...prev,
+                [name]: file
+            }));
+            return;
+        }
         setFormData(prev => ({
             ...prev,
             [name]: value
@@ -294,6 +302,25 @@ const CreateForm = ({
                                 </button>
                             )}
                         </div>
+                        {fieldError && (
+                            <span className="errorText">{fieldError}</span>
+                        )}
+                    </div>
+                );
+
+            case 'file':
+                return (
+                    <div className="formGroup" key={name}>
+                        <label htmlFor={name} className="formLabel">
+                            {label} {required && '*'}
+                        </label>
+                        <input
+                            type="file"
+                            id={name}
+                            name={name}
+                            onChange={handleInputChange}
+                            className={`formInput ${fieldError ? 'inputError' : ''}`}
+                        />
                         {fieldError && (
                             <span className="errorText">{fieldError}</span>
                         )}
