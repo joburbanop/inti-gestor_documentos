@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
     DirectionsIcon, 
     ProcessIcon, 
@@ -11,8 +12,10 @@ import {
 
 const QuickActionCard = React.memo(({ title, description, icon, hash, colorClass, onClick, styles = {} }) => (
     <button
-        onClick={() => onClick ? onClick(hash) : (window.location.hash = hash)}
+        type="button"
+        onClick={() => { if (onClick) onClick(hash); }}
         className={styles.quickActionCard || ''}
+        aria-label={`Ir a ${title}`}
     >
         <div className={styles.quickActionContent || ''}>
             <div className={`${styles.quickActionIcon || ''} ${styles[colorClass] || ''}`}>
@@ -44,6 +47,14 @@ const QuickActionsSection = ({
     styles = {},
     className = ""
 }) => {
+    const navigate = useNavigate();
+
+    // Navegación por defecto usando React Router si no se provee onActionClick
+    const handleActionClick = useCallback((hash) => {
+        if (!hash) return;
+        const normalized = hash.startsWith('/') ? hash : `/${hash}`;
+        navigate(normalized);
+    }, [navigate]);
     // Configuración por defecto si no se proporciona actionsConfig
     const defaultActions = [
         ...(showDirections ? [{
@@ -102,7 +113,7 @@ const QuickActionsSection = ({
                         icon={action.icon}
                         hash={action.hash}
                         colorClass={action.colorClass}
-                        onClick={onActionClick}
+                        onClick={onActionClick || handleActionClick}
                         styles={styles}
                     />
                 ))}

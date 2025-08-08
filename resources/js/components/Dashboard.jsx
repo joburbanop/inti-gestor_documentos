@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import StatsSection from './dashboard/StatsSection';
 import QuickActionsSection from './dashboard/QuickActionsSection';
@@ -7,6 +8,7 @@ import styles from '../styles/components/Dashboard.module.css';
 
 const Dashboard = () => {
     const { apiRequest } = useAuth();
+    const navigate = useNavigate();
     const [stats, setStats] = useState({
         total_documentos: 0,
         total_direcciones: 0,
@@ -164,6 +166,7 @@ const Dashboard = () => {
                     actionsConfig={actionsConfig}
                     styles={styles}
                     isUserDashboard={false}
+                    onActionClick={(hash) => { if (hash) navigate(hash.startsWith('/') ? hash : `/${hash}`); }}
                 />
             </div>
         </div>

@@ -20,6 +20,7 @@ const CreateForm = ({
     fields = [],
     onSubmit,
     onCancel,
+    onChange,
     initialData = {},
     loading = false,
     errors = {},
@@ -39,16 +40,22 @@ const CreateForm = ({
         const { name, value, type, files } = e.target;
         if (type === 'file') {
             const file = files && files.length > 0 ? files[0] : null;
-            setFormData(prev => ({
-                ...prev,
-                [name]: file
-            }));
+            setFormData(prev => {
+                const updated = { ...prev, [name]: file };
+                if (onChange) {
+                    try { onChange(updated); } catch (_) {}
+                }
+                return updated;
+            });
             return;
         }
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        setFormData(prev => {
+            const updated = { ...prev, [name]: value };
+            if (onChange) {
+                try { onChange(updated); } catch (_) {}
+            }
+            return updated;
+        });
     };
 
     const toggleMultiSelect = (fieldName) => {
@@ -270,6 +277,7 @@ const CreateForm = ({
                                 value={fieldValue}
                                 onChange={handleInputChange}
                                 className={`formSelect ${fieldError ? 'inputError' : ''}`}
+                                disabled={field.disabled}
                             >
                                 <option value="">{placeholder}</option>
                                 {options.map((option) => (
@@ -307,7 +315,13 @@ const CreateForm = ({
                             name={name}
                             onChange={handleInputChange}
                             className={`formInput ${fieldError ? 'inputError' : ''}`}
+                            accept={field.accept}
                         />
+                        {field.helpText && (
+                            <div className="helpText">
+                                {field.helpText}
+                            </div>
+                        )}
                         {fieldError && (
                             <span className="errorText">{fieldError}</span>
                         )}
@@ -330,6 +344,7 @@ const CreateForm = ({
                                     className={`formInput ${fieldError ? 'inputError' : ''}`}
                                     placeholder={placeholder}
                                     maxLength={maxLength}
+                                    disabled={field.disabled}
                                 />
                                 {field.hasAddButton && (
                                     <button
