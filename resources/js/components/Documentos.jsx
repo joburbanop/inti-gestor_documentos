@@ -138,7 +138,7 @@ const Documentos = () => {
         alert(res.message || 'No se pudo abrir la vista previa');
       }
     } catch (e) {
-      console.error('Error al abrir vista previa:', e);
+      // Silenciado en producción
       alert(e.message || 'Error al abrir vista previa');
     }
   };
@@ -160,7 +160,7 @@ const Documentos = () => {
         alert(res.message || 'No se pudo generar la descarga');
       }
     } catch (e) {
-      console.error('Error al descargar documento:', e);
+      // Silenciado en producción
       alert(e.message || 'Error al descargar documento');
     }
   };
@@ -195,11 +195,10 @@ const Documentos = () => {
               ignoreAuthErrors: true 
             });
           } catch (e) {
-            // Ignorar errores de estadísticas, no es crítico
-            console.log('No se pudieron actualizar estadísticas:', e);
+            // Ignorar errores de estadísticas
           }
         } catch (e) { 
-          console.error('Error al eliminar documento:', e);
+          // Silenciado
         }
       }
     });

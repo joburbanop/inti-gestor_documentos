@@ -22,38 +22,27 @@ const DireccionModal = ({
     // Cargar procesos de apoyo para el select
     useEffect(() => {
         if (show) {
-            console.log('🔍 Modal abierto, cargando procesos...');
-            console.log('🔍 Modal - mode:', mode);
-            console.log('🔍 Modal - formData completo:', formData);
+            // Debug removido
             
             loadProcesosOptions();
             
             // Verificar formData en modo edición
             if (mode === 'edit') {
-                console.log('🔍 DireccionModal - formData en modo editar:', formData);
-                console.log('🔍 DireccionModal - procesos_apoyo en formData:', formData.procesos_apoyo);
-                console.log('🔍 DireccionModal - tipo de procesos_apoyo:', typeof formData.procesos_apoyo);
-                console.log('🔍 DireccionModal - es array?', Array.isArray(formData.procesos_apoyo));
+                // Debug removido
             }
         }
     }, [show, mode, formData]);
 
     const loadProcesosOptions = async () => {
         try {
-            console.log('🔍 Cargando procesos de apoyo...');
             const response = await apiRequest('/api/procesos-apoyo/todos');
-            
-            console.log('🔍 Respuesta completa:', response);
-            
             if (response.success) {
-                console.log('✅ Procesos cargados:', response.data.length);
-                console.log('✅ Datos de procesos:', response.data);
                 setProcesosOptions(response.data);
             } else {
-                console.error('❌ Error en respuesta:', response.message);
+                //
             }
         } catch (error) {
-            console.error('❌ Error al cargar procesos:', error);
+            //
         }
     };
 

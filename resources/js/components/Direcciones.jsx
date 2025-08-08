@@ -70,7 +70,7 @@ const Direcciones = () => {
                 setFilteredDirecciones(response.data);
             }
         } catch (error) {
-            console.error('Error al cargar direcciones:', error);
+            //
         } finally {
             setLoading(false);
         }
@@ -135,20 +135,17 @@ const Direcciones = () => {
             setFormLoading(true);
             setErrors({});
             
-            console.log('🔍 Enviando datos del formulario:', formData);
             
             let response;
             
             if (modalMode === 'create') {
                 // Crear nueva dirección
-                console.log('🔍 Creando nueva dirección...');
                 response = await apiRequest('/api/direcciones', {
                     method: 'POST',
                     body: JSON.stringify(formData)
                 });
             } else {
                 // Editar dirección existente
-                console.log('🔍 Editando dirección existente...');
                 response = await apiRequest(`/api/direcciones/${selectedDireccion.id}`, {
                     method: 'PUT',
                     body: JSON.stringify(formData)
@@ -165,7 +162,7 @@ const Direcciones = () => {
                 showSuccess(`Dirección "${formData.nombre}" ${action} exitosamente`);
             }
         } catch (error) {
-            console.error('Error al guardar dirección:', error);
+            //
             
             // Manejar errores de validación
             if (error.message === 'Error de validación' && error.errors) {
@@ -180,8 +177,7 @@ const Direcciones = () => {
     };
 
     const handleEdit = (direccion) => {
-        console.log('🔍 handleEdit llamado con:', direccion);
-        console.log('🔍 Procesos de apoyo de la dirección:', direccion.procesos_apoyo);
+        
         
         setSelectedDireccion(direccion);
         
@@ -189,7 +185,7 @@ const Direcciones = () => {
         const procesosIds = direccion.procesos_apoyo ? 
             direccion.procesos_apoyo.map(proceso => proceso.id) : [];
         
-        console.log('🔍 IDs de procesos extraídos:', procesosIds);
+        
         
         setFormData({
             nombre: direccion.nombre,
@@ -202,6 +198,7 @@ const Direcciones = () => {
         setModalMode('edit');
         setShowModal(true);
         
+        /*
         console.log('🔍 Modal configurado para editar:', { 
             mode: 'edit', 
             show: true, 
@@ -212,11 +209,11 @@ const Direcciones = () => {
                 color: direccion.color || '#1F448B',
                 procesos_apoyo: procesosIds
             }
-        });
+        });*/
     };
 
     const handleDelete = (direccion) => {
-        console.log('🔍 handleDelete llamado con:', direccion);
+        
         
         // Verificar si la dirección tiene documentos asociados antes de mostrar el modal
         const hasDocuments = direccion.estadisticas?.total_documentos > 0;
@@ -238,7 +235,7 @@ const Direcciones = () => {
                     showSuccess(`Dirección "${direccion.nombre}" eliminada exitosamente`);
                 }
             } catch (error) {
-                console.error('Error al eliminar dirección:', error);
+                //
                 // Mostrar mensaje de error específico al usuario
                 let errorMsg = 'Error al eliminar la dirección';
                 if (error.message) {

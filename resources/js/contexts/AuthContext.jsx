@@ -104,13 +104,10 @@ export const AuthProvider = ({ children }) => {
     const apiRequest = async (url, options = {}) => {
         const token = state.token;
         
-        // Debug: Verificar token
-        console.log('🔍 Debug - Token disponible:', !!token);
-        console.log('🔍 Debug - Token (primeros 20 chars):', token ? token.substring(0, 20) + '...' : 'No token');
+        // Debug removido
         
         // Verificar si hay token antes de hacer la petición
         if (!token) {
-            console.log('❌ Debug - No hay token, haciendo logout');
             localStorage.removeItem('auth_token');
             dispatch({ type: AUTH_ACTIONS.LOGOUT });
             throw new Error('No autenticado');
@@ -136,14 +133,12 @@ export const AuthProvider = ({ children }) => {
             try { delete config.headers['Content-Type']; } catch (e) {}
         }
 
-        console.log('🔍 Debug - URL de petición:', url.startsWith('/api') ? url : `/api${url}`);
-        console.log('🔍 Debug - Headers:', config.headers);
+        // Debug removido
 
         try {
             const response = await fetch(url.startsWith('/api') ? url : `/api${url}`, config);
             
-            console.log('🔍 Debug - Status de respuesta:', response.status);
-            console.log('🔍 Debug - Headers de respuesta:', Object.fromEntries(response.headers.entries()));
+            // Debug removido
             
             // Verificar si la respuesta es JSON
             const contentType = response.headers.get('content-type');
@@ -151,21 +146,16 @@ export const AuthProvider = ({ children }) => {
             
             if (contentType && contentType.includes('application/json')) {
                 data = await response.json();
-                console.log('🔍 Debug - Datos de respuesta:', data);
             } else {
-                console.log('❌ Debug - Respuesta no es JSON');
                 throw new Error('Respuesta no válida del servidor');
             }
 
             if (!response.ok) {
-                console.log('❌ Debug - Error en respuesta:', response.status, data);
                 // Si es un error 401, manejar específicamente
                 if (response.status === 401) {
                     if (ignoreAuthErrors) {
-                        console.log('⚠️ Debug - 401 ignorado por configuración de la petición');
                         throw new Error('No autenticado');
                     } else {
-                        console.log('❌ Debug - Error 401, haciendo logout');
                         localStorage.removeItem('auth_token');
                         dispatch({ type: AUTH_ACTIONS.LOGOUT });
                         throw new Error('No autenticado');
@@ -176,16 +166,14 @@ export const AuthProvider = ({ children }) => {
 
             return data;
         } catch (error) {
-            console.log('❌ Debug - Error capturado:', error.message);
             // Si es un error de red o 401, hacer logout
             if (!ignoreAuthErrors) {
                 if (error.message === 'No autenticado' || error.name === 'TypeError') {
-                    console.log('❌ Debug - Error de autenticación, haciendo logout');
                     localStorage.removeItem('auth_token');
                     dispatch({ type: AUTH_ACTIONS.LOGOUT });
                 }
             } else {
-                console.log('⚠️ Debug - Error de autenticación ignorado para esta petición');
+                //
             }
             throw error;
         }
@@ -209,22 +197,12 @@ export const AuthProvider = ({ children }) => {
             const data = await response.json();
 
             if (data.success) {
-                // Debug: Verificar datos del login
-                console.log('🔍 Login - Datos recibidos:', {
-                    hasToken: !!data.data.token,
-                    tokenPreview: data.data.token ? data.data.token.substring(0, 20) + '...' : 'No token',
-                    user: data.data.user
-                });
+                // Debug removido
                 
                 // Guardar token inmediatamente para acceso rápido
                 localStorage.setItem('auth_token', data.data.token);
                 
-                // Verificar que se guardó correctamente
-                const savedToken = localStorage.getItem('auth_token');
-                console.log('🔍 Login - Token guardado:', {
-                    saved: !!savedToken,
-                    matches: savedToken === data.data.token
-                });
+                // Debug removido
                 
                 // Dispatch inmediato sin esperar verificaciones adicionales
                 dispatch({

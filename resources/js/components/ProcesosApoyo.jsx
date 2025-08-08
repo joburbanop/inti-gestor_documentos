@@ -47,7 +47,7 @@ const ProcesosApoyo = () => {
                 setFilteredProcesos(response.data);
             }
         } catch (error) {
-            console.error('Error al cargar procesos de apoyo:', error);
+            //
         } finally {
             setLoading(false);
         }
@@ -64,7 +64,7 @@ const ProcesosApoyo = () => {
                 })));
             }
         } catch (error) {
-            console.error('Error al cargar direcciones:', error);
+            //
         }
     };
 
@@ -125,18 +125,18 @@ const ProcesosApoyo = () => {
             setFormLoading(true);
             setErrors({});
             
-            console.log('🔍 Enviando datos del formulario:', formData);
+            //
             
             let response;
             
             if (modalMode === 'create') {
-                console.log('🔍 Creando nuevo proceso de apoyo...');
+                //
                 response = await apiRequest('/api/procesos-apoyo', {
                     method: 'POST',
                     body: JSON.stringify(formData)
                 });
             } else {
-                console.log('🔍 Editando proceso de apoyo existente...');
+                //
                 response = await apiRequest(`/api/procesos-apoyo/${selectedProceso.id}`, {
                     method: 'PUT',
                     body: JSON.stringify(formData)
@@ -156,7 +156,7 @@ const ProcesosApoyo = () => {
                 showSuccess(`Proceso de apoyo "${formData.nombre}" ${action} exitosamente`);
             }
         } catch (error) {
-            console.error('Error al guardar proceso de apoyo:', error);
+            //
             
             if (error.message === 'Error de validación' && error.errors) {
                 setErrors(error.errors);
@@ -171,7 +171,7 @@ const ProcesosApoyo = () => {
 
     // Manejar edición
     const handleEdit = (proceso) => {
-        console.log('🔍 handleEdit llamado con:', proceso);
+        //
         setSelectedProceso(proceso);
         setFormData({
             nombre: proceso.nombre,
@@ -185,7 +185,7 @@ const ProcesosApoyo = () => {
 
     // Manejar eliminación
     const handleDelete = (proceso) => {
-        console.log('🔍 handleDelete llamado con:', proceso);
+        //
         
         // Verificar si el proceso tiene documentos asociados antes de mostrar el modal
         const hasDocuments = proceso.estadisticas?.total_documentos > 0;

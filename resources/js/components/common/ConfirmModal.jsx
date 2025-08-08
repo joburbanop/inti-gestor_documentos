@@ -14,7 +14,7 @@ const ConfirmModal = ({
 }) => {
     if (!isOpen) return null;
     
-    console.log('🔍 ConfirmModal renderizando con estilos inline');
+    //
 
     const handleBackdropClick = (e) => {
         if (e.target === e.currentTarget) {

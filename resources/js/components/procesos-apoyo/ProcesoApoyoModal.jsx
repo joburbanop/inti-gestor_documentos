@@ -21,38 +21,32 @@ const ProcesoApoyoModal = ({
     // Cargar direcciones para el select
     useEffect(() => {
         if (show) {
-            console.log('🔍 Modal abierto, cargando direcciones...');
-            console.log('🔍 Modal - mode:', mode);
-            console.log('🔍 Modal - formData completo:', formData);
+            // Debug removido
             
             loadDireccionesOptions();
             
             // Verificar formData en modo edición
             if (mode === 'edit') {
-                console.log('🔍 ProcesoApoyoModal - formData en modo editar:', formData);
-                console.log('🔍 ProcesoApoyoModal - direccion_id en formData:', formData.direccion_id);
+                // Debug removido
             }
         }
     }, [show, mode, formData]);
 
     const loadDireccionesOptions = async () => {
         try {
-            console.log('🔍 Cargando direcciones...');
+            //
             const response = await apiRequest('/api/direcciones');
-            
-            console.log('🔍 Respuesta completa direcciones:', response);
-            
+
             if (response.success) {
-                console.log('✅ Direcciones cargadas:', response.data.length);
                 setDireccionesOptions(response.data.map(direccion => ({
                     value: direccion.id,
                     label: `${direccion.nombre} (${direccion.codigo})`
                 })));
             } else {
-                console.error('❌ Error en respuesta direcciones:', response.message);
+                //
             }
         } catch (error) {
-            console.error('❌ Error al cargar direcciones:', error);
+            //
         }
     };
 

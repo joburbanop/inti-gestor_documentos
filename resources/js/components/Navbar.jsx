@@ -61,8 +61,6 @@ const Navbar = ({ title = "Intranet Inti" }) => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // Debug: Log del usuario
-    console.log('Navbar - User:', user);
-    console.log('Navbar - User is_admin:', user?.is_admin);
 
     const handleLogout = () => {
         logout();
@@ -103,7 +101,7 @@ const Navbar = ({ title = "Intranet Inti" }) => {
                                 alt="Intiled Logo" 
                                 className={styles.logo}
                                 onError={(e) => {
-                                    console.log('Error loading logo image');
+        // Silenciar logs de carga de logo
                                     e.target.style.display = 'none';
                                 }}
                             />

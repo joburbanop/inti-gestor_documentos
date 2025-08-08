@@ -10,13 +10,7 @@ const CreateDireccion = () => {
     const [procesosOptions, setProcesosOptions] = useState([]);
     const [showProcessModal, setShowProcessModal] = useState(false);
 
-    // Debug: Verificar estado de autenticación
-    console.log('🔍 CreateDireccion - Estado de autenticación:', {
-        isAuthenticated,
-        hasToken: !!token,
-        tokenPreview: token ? token.substring(0, 20) + '...' : 'No token',
-        localStorageToken: localStorage.getItem('auth_token') ? 'Presente' : 'Ausente'
-    });
+    //
 
     // Cargar opciones de procesos de apoyo
     useEffect(() => {
@@ -66,11 +60,7 @@ const CreateDireccion = () => {
             setLoading(true);
             setErrors({});
             
-            // Debug: Verificar que el token esté disponible antes de la petición
-            console.log('🔍 handleSubmit - Token antes de petición:', {
-                hasToken: !!token,
-                tokenPreview: token ? token.substring(0, 20) + '...' : 'No token'
-            });
+            //
             
             const response = await apiRequest('/direcciones', {
                 method: 'POST',
@@ -78,7 +68,7 @@ const CreateDireccion = () => {
             });
 
             if (response.success) {
-                console.log('✅ Dirección creada exitosamente, redirigiendo...');
+      
                 // Redirigir inmediatamente a la lista de direcciones con mensaje de éxito
                 window.location.href = '/#direcciones?success=created';
             } else {
