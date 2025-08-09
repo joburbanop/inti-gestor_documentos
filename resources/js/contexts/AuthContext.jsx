@@ -102,7 +102,7 @@ export const AuthProvider = ({ children }) => {
 
     // Función para hacer peticiones a la API
     const apiRequest = async (url, options = {}) => {
-        const token = state.token;
+        const token = state.token || localStorage.getItem('auth_token');
         
         // Debug removido
         

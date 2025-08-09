@@ -6,6 +6,7 @@ import UserDashboard from './UserDashboard';
 import Direcciones from './Direcciones';
 import ProcesosApoyo from './ProcesosApoyo';
 import Documentos from './Documentos';
+import DocumentoPreview from './documentos/DocumentoPreview';
 import Administracion from './Administracion';
 import CreateDireccion from './crud/CreateDireccion';
 import { INTILED_COLORS } from '../config/colors';
@@ -32,6 +33,7 @@ const AppRouter = () => {
             <Route path="/direcciones" element={<Direcciones />} />
             <Route path="/procesos" element={<ProcesosApoyo />} />
             <Route path="/documentos" element={<Documentos />} />
+            <Route path="/documentos/:id/preview" element={<DocumentoPreview />} />
             <Route path="/administracion" element={<Administracion />} />
             <Route path="/direcciones/crear" element={<CreateDireccion />} />
             <Route path="*" element={<Navigate to="/" replace />} />

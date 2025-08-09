@@ -30,6 +30,71 @@ const CreateForm = ({
     const [formData, setFormData] = useState(initialData);
     const [multiSelectOpen, setMultiSelectOpen] = useState(null);
 
+    // Componente interno para gestionar entrada de etiquetas con píldoras
+    const TagsInput = ({ name, value = [], placeholder, disabled = false }) => {
+        const [inputValue, setInputValue] = useState('');
+
+        const addTag = (raw) => {
+            if (!raw) return;
+            const tag = String(raw).trim();
+            if (tag.length === 0) return;
+            setFormData(prev => {
+                const current = Array.isArray(prev[name]) ? prev[name] : [];
+                if (current.some(t => String(t).toLowerCase() === tag.toLowerCase())) {
+                    return prev;
+                }
+                const updated = { ...prev, [name]: [...current, tag] };
+                if (onChange) { try { onChange(updated); } catch (_) {} }
+                return updated;
+            });
+            setInputValue('');
+        };
+
+        const removeTag = (tagToRemove) => {
+            setFormData(prev => {
+                const current = Array.isArray(prev[name]) ? prev[name] : [];
+                const updated = { ...prev, [name]: current.filter(t => t !== tagToRemove) };
+                if (onChange) { try { onChange(updated); } catch (_) {} }
+                return updated;
+            });
+        };
+
+        const onKeyDown = (e) => {
+            if (disabled) return;
+            if (e.key === 'Enter' || e.key === ',') {
+                e.preventDefault();
+                addTag(inputValue);
+            } else if (e.key === 'Backspace' && inputValue === '') {
+                // Borrar la última etiqueta con backspace si input está vacío
+                const current = Array.isArray(value) ? value : [];
+                if (current.length > 0) removeTag(current[current.length - 1]);
+            }
+        };
+
+        return (
+            <div className="tagsContainer">
+                <div className="tagsPills">
+                    {(Array.isArray(value) ? value : []).map((tag) => (
+                        <span key={tag} className="tagPill">
+                            {tag}
+                            <button type="button" className="tagRemove" onClick={() => removeTag(tag)} aria-label={`Eliminar etiqueta ${tag}`}>×</button>
+                        </span>
+                    ))}
+                    <input
+                        type="text"
+                        className="tagsInput"
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        onKeyDown={onKeyDown}
+                        onBlur={() => addTag(inputValue)}
+                        placeholder={placeholder}
+                        disabled={disabled}
+                    />
+                </div>
+            </div>
+        );
+    };
+
     // Actualizar formData cuando cambie initialData
     useEffect(() => {
   //
@@ -186,6 +251,24 @@ const CreateForm = ({
                                 </span>
                             </div>
                         )}
+                        {fieldError && (
+                            <span className="errorText">{fieldError}</span>
+                        )}
+                    </div>
+                );
+
+            case 'tags':
+                return (
+                    <div className="formGroup" key={name}>
+                        <label htmlFor={name} className="formLabel">
+                            {label} {required && '*'}
+                        </label>
+                        <TagsInput
+                            name={name}
+                            value={Array.isArray(fieldValue) ? fieldValue : []}
+                            placeholder={placeholder}
+                            disabled={field.disabled}
+                        />
                         {fieldError && (
                             <span className="errorText">{fieldError}</span>
                         )}

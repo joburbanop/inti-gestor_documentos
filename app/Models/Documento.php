@@ -157,10 +157,6 @@ class Documento extends Model
         if (!$user) {
             return false;
         }
-        // Si es restringido, solo el autor o un admin
-        if (strtolower((string) $this->confidencialidad) === 'restringido') {
-            return $user->is_admin || $user->id === (int) $this->subido_por;
-        }
         // Público / Interno: cualquier usuario autenticado puede ver/descargar
         return true;
     }

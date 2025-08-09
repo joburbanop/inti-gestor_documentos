@@ -21,7 +21,7 @@ const DocumentCard = ({ documento, onView, onEdit, onDelete, onDownload, busy = 
             <DownloadIcon className="w-4 h-4" />
           </button>
           <button 
-            onClick={() => onView && onView(documento)} 
+            onClick={() => onView ? onView(documento) : window.open(`/documentos/${documento.id}/preview`, '_blank', 'noopener,noreferrer')} 
             disabled={busy} 
             title="Ver documento" 
             className={styles.viewButton}
@@ -75,11 +75,16 @@ const DocumentCard = ({ documento, onView, onEdit, onDelete, onDownload, busy = 
               {documento.confidencialidad}
             </span>
           )}
-          {Array.isArray(documento.etiquetas) && documento.etiquetas.slice(0, 3).map((tag, idx) => (
-            <span key={idx} className={styles.chip}>
+          {Array.isArray(documento.etiquetas) && documento.etiquetas.slice(0, 4).map((tag, idx) => (
+            <span key={tag} className={styles.chip} title={`Etiqueta: ${tag}`}>
               #{tag}
             </span>
           ))}
+          {Array.isArray(documento.etiquetas) && documento.etiquetas.length > 4 && (
+            <span className={`${styles.chip} ${styles.chipGray}`} title={`+${documento.etiquetas.length - 4} etiquetas más`}>
+              +{documento.etiquetas.length - 4}
+            </span>
+          )}
         </div>
 
         <div className={styles.documentInfo}>

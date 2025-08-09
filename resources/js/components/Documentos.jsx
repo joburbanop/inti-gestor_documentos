@@ -27,8 +27,7 @@ const TIPO_OPTIONS = [
 const CONF_OPTS = [
   { value: '', label: 'Todas las confidencialidades' },
   { value: 'Publico', label: 'Público' },
-  { value: 'Interno', label: 'Interno' },
-  { value: 'Restringido', label: 'Restringido' }
+  { value: 'Interno', label: 'Interno' }
 ];
 
 const EXTENSION_OPTIONS = [
@@ -223,14 +222,14 @@ const Documentos = () => {
 
   const handleView = async (documento) => {
     try {
-      const res = await apiRequest(`/api/documentos/${documento.id}/vista-previa`);
+      const res = await apiRequest(`/api/documentos/${documento.id}/vista-previa`, { method: 'GET' });
       if (res.success && res.data?.url) {
-        window.open(res.data.url, '_blank');
+        const newWin = window.open(res.data.url, '_blank', 'noopener,noreferrer');
+        if (!newWin) alert('Permite las ventanas emergentes para ver el documento.');
       } else {
         alert(res.message || 'No se pudo abrir la vista previa');
       }
     } catch (e) {
-      // Silenciado en producción
       alert(e.message || 'Error al abrir vista previa');
     }
   };
@@ -312,14 +311,8 @@ const Documentos = () => {
         fd.append('direccion_id', data.direccion_id || '');
         fd.append('proceso_apoyo_id', data.proceso_apoyo_id || '');
         if (data.tipo) fd.append('tipo', data.tipo);
-        
-        // Convertir texto de etiquetas a array
-        let tags = Array.isArray(data.etiquetas) ? data.etiquetas : [];
-        if (data.etiquetas_texto && typeof data.etiquetas_texto === 'string') {
-          const extra = data.etiquetas_texto.split(',').map(s => s.trim()).filter(Boolean);
-          tags = Array.from(new Set([ ...tags, ...extra ]));
-        }
-        tags.forEach((t, i) => fd.append(`etiquetas[${i}]`, t));
+        // Etiquetas: ahora vienen como array en data.etiquetas
+        (Array.isArray(data.etiquetas) ? data.etiquetas : []).forEach((t, i) => fd.append(`etiquetas[${i}]`, t));
         if (data.confidencialidad) fd.append('confidencialidad', data.confidencialidad);
 
         res = await apiRequest('/api/documentos', { method: 'POST', body: fd });
@@ -333,14 +326,7 @@ const Documentos = () => {
           tipo: data.tipo || '',
           confidencialidad: data.confidencialidad || ''
         };
-        
-        // Convertir texto de etiquetas a array
-        let tags = Array.isArray(data.etiquetas) ? data.etiquetas : [];
-        if (data.etiquetas_texto && typeof data.etiquetas_texto === 'string') {
-          const extra = data.etiquetas_texto.split(',').map(s => s.trim()).filter(Boolean);
-          tags = Array.from(new Set([ ...tags, ...extra ]));
-        }
-        updateData.etiquetas = tags;
+        updateData.etiquetas = Array.isArray(data.etiquetas) ? data.etiquetas : [];
 
         res = await apiRequest(`/api/documentos/${data.id}`, { 
           method: 'PUT', 

@@ -12,28 +12,20 @@ import {
 } from '../icons/DashboardIcons';
 
 const TIPO_OPTIONS = [
-  { value: 'Política', label: 'Política' },
-  { value: 'Procedimiento', label: 'Procedimiento' },
   { value: 'Formato', label: 'Formato' },
-  { value: 'Registro', label: 'Registro' },
-  { value: 'Informe', label: 'Informe' },
-  { value: 'Plano', label: 'Plano' },
-  { value: 'Acta', label: 'Acta' },
-  { value: 'Contrato', label: 'Contrato' },
-  { value: 'Fotografía', label: 'Fotografía' },
-  { value: 'Otro', label: 'Otro' }
+  { value: 'Informe', label: 'Informe' }
 ];
 
 const CONF_OPTS = [
   { value: 'Publico', label: 'Público' },
-  { value: 'Interno', label: 'Interno' },
-  { value: 'Restringido', label: 'Restringido' }
+  { value: 'Interno', label: 'Interno' }
 ];
 
 const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loading = false, errors = {} }) => {
   const { apiRequest } = useAuth();
   const [direccionesOptions, setDireccionesOptions] = useState([]);
   const [procesosOptions, setProcesosOptions] = useState([]);
+  const [tipoOptions, setTipoOptions] = useState(TIPO_OPTIONS);
   const [localData, setLocalData] = useState(formData || {});
 
   useEffect(() => {
@@ -81,6 +73,17 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
   }, [localData?.direccion_id, show, apiRequest]);
 
   if (!show) return null;
+
+  const handleAddTipo = () => {
+    const nuevo = window.prompt('Escribe el nuevo tipo de documento:');
+    if (!nuevo) return;
+    const val = String(nuevo).trim();
+    if (!val) return;
+    if (!tipoOptions.find(o => String(o.value).toLowerCase() === val.toLowerCase())) {
+      setTipoOptions(prev => [...prev, { value: val, label: val }]);
+    }
+    setLocalData(prev => ({ ...prev, tipo: val }));
+  };
 
   const fields = [
     {
@@ -142,9 +145,11 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
           label: 'Tipo de Documento', 
           type: 'select', 
           required: false, 
-          options: TIPO_OPTIONS, 
+          options: tipoOptions, 
           placeholder: 'Selecciona la categoría del documento',
-          helpText: 'Categoría que mejor describe el tipo de documento'
+          hasAddButton: true,
+          addButtonText: 'Agregar tipo',
+          onAddClick: handleAddTipo
         }
       ]
     },
@@ -158,7 +163,7 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
           type: 'select', 
           options: CONF_OPTS, 
           placeholder: 'Define quién puede acceder al documento',
-          helpText: 'Público: Todos los usuarios | Interno: Solo empleados | Restringido: Acceso limitado'
+          
         }
       ]
     },
@@ -167,11 +172,10 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
       icon: TagIcon,
       fields: [
         { 
-          name: 'etiquetas_texto', 
+          name: 'etiquetas', 
           label: 'Etiquetas', 
-          type: 'text', 
-          placeholder: 'Ej: proyecto tumaco, fotografía, 2025, contrato, presupuesto',
-          helpText: 'Palabras clave separadas por comas para facilitar la búsqueda'
+          type: 'tags', 
+          placeholder: 'Ej: proyecto tumaco, fotografía, 2025'
         }
       ]
     }

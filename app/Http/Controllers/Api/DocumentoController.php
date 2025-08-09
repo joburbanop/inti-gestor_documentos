@@ -1,5 +1,7 @@
 <?php
 
+
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -214,7 +216,7 @@ class DocumentoController extends Controller
                 'tipo' => 'nullable|string|max:50',
                 'etiquetas' => 'nullable|array',
                 'etiquetas.*' => 'string|max:50',
-                'confidencialidad' => 'nullable|string|in:Publico,Interno,Restringido'
+                'confidencialidad' => 'nullable|string|in:Publico,Interno'
 
             ], [
                 'titulo.required' => 'El título es obligatorio',
@@ -301,7 +303,7 @@ class DocumentoController extends Controller
                 'tipo' => 'nullable|string|max:50',
                 'etiquetas' => 'nullable|array',
                 'etiquetas.*' => 'string|max:50',
-                'confidencialidad' => 'nullable|string|in:Publico,Interno,Restringido',
+                'confidencialidad' => 'nullable|string|in:Publico,Interno',
 
             ]);
 
@@ -496,12 +498,12 @@ class DocumentoController extends Controller
     /**
      * Vista previa de un documento (sin contar como descarga)
      */
-    public function vistaPrevia(int $id): JsonResponse
+    public function vistaPrevia(int $id)
     {
         try {
             $documento = Documento::findOrFail($id);
 
-            // Verificar permisos (puedes flexibilizar según confidencialidad si lo necesitas)
+            // Verificar permisos
             if (!$documento->esDescargablePor(auth()->user())) {
                 return response()->json([
                     'success' => false,
@@ -517,31 +519,56 @@ class DocumentoController extends Controller
                 ], 404);
             }
 
-            // Generar URL pública/temporal sin attachment
+            // Obtener el tipo MIME del archivo
             $disk = Storage::disk('public');
+            $mimeType = $disk->mimeType($documento->ruta_archivo);
+            $path = method_exists($disk, 'path') ? $disk->path($documento->ruta_archivo) : storage_path('app/public/'.ltrim($documento->ruta_archivo, '/'));
+
+            // Para ciertos tipos de archivo, devolver el archivo directamente con headers de vista previa
+            $viewableTypes = [
+                'application/pdf',
+                'image/jpeg',
+                'image/png',
+                'image/gif',
+                'image/webp',
+                'text/plain',
+                'text/html',
+                'text/csv'
+            ];
+
+            if (in_array($mimeType, $viewableTypes)) {
+                // Devolver el archivo directamente con headers apropiados para vista previa
+                return response()->file($path, [
+                    'Content-Type' => $mimeType,
+                    'Content-Disposition' => 'inline; filename="' . $documento->nombre_original . '"',
+                    'Cache-Control' => 'private, max-age=300',
+                    'X-Frame-Options' => 'SAMEORIGIN'
+                ]);
+            }
+
+            // Para otros tipos, devolver URL con instrucciones de que se abra en nueva pestaña
+            // Generar URL pública segura (temporal si está disponible)
             $url = null;
             try {
                 if (method_exists($disk, 'temporaryUrl')) {
-                    $url = $disk->temporaryUrl(
-                        $documento->ruta_archivo,
-                        now()->addMinutes(5),
-                        [
-                            'ResponseContentDisposition' => 'inline; filename="' . $documento->nombre_original . '"'
-                        ]
-                    );
+                    $url = $disk->temporaryUrl($documento->ruta_archivo, now()->addMinutes(5), [
+                        'ResponseContentDisposition' => 'inline; filename="' . $documento->nombre_original . '"'
+                    ]);
                 }
-            } catch (\Throwable $e) {
-                // Ignorar y hacer fallback
-            }
-
+            } catch (\Throwable $e) {}
             if (!$url) {
                 $url = '/storage/' . ltrim($documento->ruta_archivo, '/');
             }
-
+            
             return response()->json([
                 'success' => true,
-                'data' => [ 'url' => $url ],
-                'message' => 'URL de vista previa generada'
+                'data' => [ 
+                    'url' => $url,
+                    'tipo_archivo' => $documento->tipo_archivo,
+                    'nombre_original' => $documento->nombre_original,
+                    'viewable' => false
+                ],
+                'message' => 'Este tipo de archivo se descargará. Para visualizar, usa una aplicación compatible.'
             ], 200);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
