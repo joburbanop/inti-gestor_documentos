@@ -985,8 +985,9 @@ html, body {
 /* ===== ESTILOS PARA SELECT CON BOTÓN ===== */
 .selectWithButton {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 0.5rem;
+    width: 100%;
 }
 
 .selectWithButton .multiSelectContainer {
@@ -996,15 +997,20 @@ html, body {
 .selectWithButton .multiSelectDisplay {
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
+    width: 100%;
 }
 
 .selectWithButton .formSelect {
     flex: 1;
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
+    width: 100%;
 }
 
 .selectWithButton .addButton {
     margin-top: 0;
-    align-self: flex-start;
+    align-self: center;
+    flex-shrink: 0;
+    min-width: 2.5rem;
+    height: 2.5rem;
 }

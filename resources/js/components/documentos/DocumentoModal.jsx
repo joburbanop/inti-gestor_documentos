@@ -32,11 +32,11 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
     if (!show) return;
     (async () => {
       try {
-        const d = await apiRequest('/api/direcciones');
+        const d = await apiRequest('/direcciones');
         if (d.success) setDireccionesOptions(d.data.map(x => ({ value: x.id, label: x.nombre })));
         const dirId = (formData && formData.direccion_id) || localData?.direccion_id;
         if (dirId) {
-          const p = await apiRequest(`/api/direcciones/${dirId}/procesos-apoyo`);
+          const p = await apiRequest(`/direcciones/${dirId}/procesos-apoyo`);
           if (p.success) {
             setProcesosOptions((p.data || []).map(x => ({ value: x.id, label: x.nombre })));
           } else {
@@ -59,7 +59,7 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
     }
     (async () => {
       try {
-        const p = await apiRequest(`/api/direcciones/${dirId}/procesos-apoyo`);
+        const p = await apiRequest(`/direcciones/${dirId}/procesos-apoyo`);
         if (p.success) {
           setProcesosOptions((p.data || []).map(x => ({ value: x.id, label: x.nombre })));
           setLocalData(prev => ({ ...prev, proceso_apoyo_id: '' }));
@@ -83,6 +83,69 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
       setTipoOptions(prev => [...prev, { value: val, label: val }]);
     }
     setLocalData(prev => ({ ...prev, tipo: val }));
+  };
+
+  const handleAddDireccion = async () => {
+    const nombre = window.prompt('Escribe el nombre de la nueva dirección:');
+    if (!nombre) return;
+    const codigo = window.prompt('Escribe el código de la dirección (opcional):');
+    
+    try {
+      const res = await apiRequest('/direcciones', {
+        method: 'POST',
+        body: JSON.stringify({
+          nombre: nombre.trim(),
+          codigo: codigo ? codigo.trim() : null,
+          descripcion: '',
+          color: '#1F448B'
+        })
+      });
+      
+      if (res.success) {
+        const nuevaDireccion = { value: res.data.id, label: res.data.nombre };
+        setDireccionesOptions(prev => [...prev, nuevaDireccion]);
+        setLocalData(prev => ({ ...prev, direccion_id: res.data.id, proceso_apoyo_id: '' }));
+        alert('Dirección creada exitosamente');
+      } else {
+        alert(res.message || 'Error al crear la dirección');
+      }
+    } catch (e) {
+      alert('Error al crear la dirección: ' + e.message);
+    }
+  };
+
+  const handleAddProceso = async () => {
+    if (!localData?.direccion_id) {
+      alert('Primero selecciona una dirección');
+      return;
+    }
+    
+    const nombre = window.prompt('Escribe el nombre del nuevo proceso de apoyo:');
+    if (!nombre) return;
+    const codigo = window.prompt('Escribe el código del proceso (opcional):');
+    
+    try {
+      const res = await apiRequest('/procesos-apoyo', {
+        method: 'POST',
+        body: JSON.stringify({
+          nombre: nombre.trim(),
+          codigo: codigo ? codigo.trim() : null,
+          descripcion: '',
+          direccion_id: localData.direccion_id
+        })
+      });
+      
+      if (res.success) {
+        const nuevoProceso = { value: res.data.id, label: res.data.nombre };
+        setProcesosOptions(prev => [...prev, nuevoProceso]);
+        setLocalData(prev => ({ ...prev, proceso_apoyo_id: res.data.id }));
+        alert('Proceso de apoyo creado exitosamente');
+      } else {
+        alert(res.message || 'Error al crear el proceso de apoyo');
+      }
+    } catch (e) {
+      alert('Error al crear el proceso de apoyo: ' + e.message);
+    }
   };
 
   const fields = [
@@ -128,7 +191,9 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
           required: true, 
           options: direccionesOptions, 
           placeholder: 'Selecciona la dirección responsable',
-          helpText: 'Dirección administrativa responsable del documento'
+          hasAddButton: true,
+          addButtonText: 'Agregar dirección',
+          onAddClick: handleAddDireccion
         },
         { 
           name: 'proceso_apoyo_id', 
@@ -138,7 +203,9 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
           options: procesosOptions, 
           disabled: !localData?.direccion_id,
           placeholder: 'Selecciona el proceso relacionado',
-          helpText: 'Proceso específico al que pertenece el documento'
+          hasAddButton: true,
+          addButtonText: 'Agregar proceso',
+          onAddClick: handleAddProceso
         },
         { 
           name: 'tipo', 
@@ -216,5 +283,4 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
   );
 };
 
-export default DocumentoModal;
-
+export default DocumentoModal; 
