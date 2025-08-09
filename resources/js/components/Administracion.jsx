@@ -109,23 +109,10 @@ const Administracion = () => {
 
     // Verificar autenticación al cargar el componente
     useEffect(() => {
-        console.log('🔍 Administracion: Verificando autenticación...', {
-            isAuthenticated: auth.isAuthenticated,
-            token: auth.token ? 'Presente' : 'Ausente',
-            user: auth.user,
-            isLoading: auth.isLoading
-        });
-        
         if (!auth.isAuthenticated || !auth.token) {
-            console.log('❌ Usuario no autenticado');
             setError('Debes iniciar sesión para acceder a la administración. Haz clic en "Iniciar Sesión" en la barra de navegación.');
             return;
         }
-        
-        console.log('✅ Usuario autenticado:', {
-            user: auth.user,
-            token: auth.token ? 'Presente' : 'Ausente'
-        });
         
         loadData();
     }, [auth.isAuthenticated, auth.token]);
@@ -133,13 +120,6 @@ const Administracion = () => {
     const loadData = async () => {
         setLoading(true);
         setError(null);
-        
-        // Debug: Verificar estado de autenticación
-        console.log('Estado de autenticación:', { 
-            isAuthenticated: auth.isAuthenticated, 
-            token: auth.token ? 'Presente' : 'Ausente',
-            user: auth.user 
-        });
         
         try {
             const [usuariosRes, rolesRes, statsRes] = await Promise.all([
@@ -153,7 +133,6 @@ const Administracion = () => {
             setStats(statsRes.data || {});
         } catch (err) {
             setError('Error al cargar los datos: ' + err.message);
-            console.error('Error loading admin data:', err);
         } finally {
             setLoading(false);
         }
@@ -306,8 +285,23 @@ const Administracion = () => {
     return (
         <div className={styles.container}>
             <div className={styles.header}>
-                <h1 className={styles.title}>Panel de Administración</h1>
-                <p className={styles.subtitle}>Gestiona usuarios, roles y permisos del sistema</p>
+                <div className={styles.headerContent}>
+                    <div>
+                        <h1 className={styles.title}>Panel de Administración</h1>
+                        <p className={styles.subtitle}>Gestiona usuarios, roles y permisos del sistema</p>
+                    </div>
+                    <button 
+                        onClick={loadData}
+                        disabled={loading}
+                        className={styles.refreshButton}
+                        title="Actualizar datos"
+                    >
+                        <svg style={{ width: '20px', height: '20px', color: 'white' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        {loading ? 'Actualizando...' : 'Actualizar'}
+                    </button>
+                </div>
             </div>
 
             {error && (

@@ -63,7 +63,7 @@ class AuthController extends Controller
 
                 // Rotación/expiración de tokens Sanctum: revocar tokens antiguos y emitir uno nuevo con expiración
                 try { $user->tokens()->where('name', 'auth-token')->delete(); } catch (\Throwable $e) {}
-                $token = $user->createToken('auth-token', ['*'], now()->addDays(7))->plainTextToken;
+                $token = $user->createToken('auth-token', ['*'], now()->addHours(4))->plainTextToken; // Reducido de 7 días a 4 horas
 
                 // Respuesta mínima para máxima velocidad
                 return response()->json([

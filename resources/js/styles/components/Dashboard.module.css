@@ -2,6 +2,8 @@
 
 .dashboardContainer {
     padding: 2rem 0;
+    will-change: auto;
+    transform: translateZ(0);
 }
 
 .dashboardHeader {
@@ -166,14 +168,15 @@
     padding: 1.5rem;
     border-radius: 1rem;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
     position: relative;
     overflow: hidden;
     color: white;
+    will-change: transform;
 }
 
 .statCard:hover {
-    transform: translateY(-5px);
+    transform: translateY(-5px) translateZ(0);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
 }
 
@@ -241,15 +244,16 @@
     padding: 1.5rem;
     border-radius: 1rem;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
     border: 1px solid #e5e7eb;
     background: white;
     cursor: pointer;
     text-align: left;
+    will-change: transform;
 }
 
 .quickActionCard:hover {
-    transform: translateY(-3px);
+    transform: translateY(-3px) translateZ(0);
     box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
 }
 

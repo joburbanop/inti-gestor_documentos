@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Navbar from './Navbar';
+// import SessionTimeoutWarning from './common/SessionTimeoutWarning'; // TEMPORALMENTE DESHABILITADO
 import styles from '../styles/components/Layout.module.css';
 
 const Layout = ({ children, title = "Intranet Inti" }) => {
@@ -10,6 +11,7 @@ const Layout = ({ children, title = "Intranet Inti" }) => {
             <main className={styles.mainContent}>
                 {children}
             </main>
+            {/* <SessionTimeoutWarning /> TEMPORALMENTE DESHABILITADO */}
         </div>
     );
 };

@@ -4,12 +4,29 @@
     max-width: 1400px;
     margin: 0 auto;
     min-height: calc(100vh - 80px);
+    will-change: auto;
+    transform: translateZ(0);
 }
 
 /* Header */
 .header {
-    text-align: center;
     margin-bottom: 3rem;
+}
+
+.headerContent {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2rem;
+}
+
+.headerContent > div:first-child {
+    flex: 1;
+}
+
+.headerContent > div:first-child h1,
+.headerContent > div:first-child p {
+    text-align: left;
 }
 
 .title {
@@ -83,9 +100,10 @@
     display: flex;
     align-items: center;
     gap: 1.5rem;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
     position: relative;
     overflow: hidden;
+    will-change: transform;
 }
 
 .statCard::before {
@@ -99,7 +117,7 @@
 }
 
 .statCard:hover {
-    transform: translateY(-4px);
+    transform: translateY(-4px) translateZ(0);
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
 }
 
@@ -227,6 +245,39 @@
     width: 18px;
     height: 18px;
     margin-right: 8px;
+}
+
+/* Botón de actualización */
+.refreshButton {
+    background: linear-gradient(135deg, #1F448B, #2a5bb8);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(31, 68, 139, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+.refreshButton:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(31, 68, 139, 0.4);
+}
+
+.refreshButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.refreshButton svg {
+    width: 20px;
+    height: 20px;
 }
 
 /* Overlay y modal de formularios */

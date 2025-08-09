@@ -25,7 +25,8 @@ use Illuminate\Support\Facades\Route;
 Route::post('/login', [AuthController::class, 'login']);
 
 // Rutas protegidas
-Route::middleware('api.auth')->group(function () {
+Route::middleware(['api.auth'])->group(function () {
+    // \App\Http\Middleware\CheckUserActivity::class TEMPORALMENTE DESHABILITADO
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/verify', [AuthController::class, 'verify']);
@@ -67,9 +68,11 @@ Route::middleware('api.auth')->group(function () {
     });
     
     // Rutas de Documentos (apiResource debe ir DESPUÉS de las rutas específicas)
-    Route::apiResource('documentos', DocumentoController::class);
-    Route::post('/documentos/{id}/descargar', [DocumentoController::class, 'descargar'])->name('documentos.descargar');
-    Route::get('/documentos/{id}/vista-previa', [DocumentoController::class, 'vistaPrevia'])->name('documentos.vista-previa');
+    Route::middleware(\App\Http\Middleware\HandleLargeUploads::class)->group(function () {
+        Route::apiResource('documentos', DocumentoController::class);
+        Route::post('/documentos/{id}/descargar', [DocumentoController::class, 'descargar'])->name('documentos.descargar');
+        Route::get('/documentos/{id}/vista-previa', [DocumentoController::class, 'vistaPrevia'])->name('documentos.vista-previa');
+    });
 
     // Rutas de Administración (solo para administradores)
     Route::middleware('admin')->group(function () {

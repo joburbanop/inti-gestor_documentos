@@ -23,8 +23,8 @@ class DocumentoController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $query = Documento::with(['direccion', 'procesoApoyo', 'subidoPor'])
-                ->orderBy('created_at', 'desc');
+            $perPage = min(max((int) $request->get('per_page', 15), 1), 50);
+            $query = Documento::with(['direccion', 'procesoApoyo', 'subidoPor']);
 
             // Filtros
             if ($request->has('direccion_id')) {
@@ -37,6 +37,62 @@ class DocumentoController extends Controller
 
 
 
+            // Búsqueda por término (Scout si está disponible, si no fallback a scopeBuscar)
+            $q = trim((string) ($request->get('q', $request->get('termino', ''))));
+            $useScout = $q !== '' && class_exists(\Laravel\Scout\Builder::class) && config('scout.driver') === 'meilisearch';
+            $scoutIds = null;
+            if ($useScout) {
+                try {
+                    // Búsqueda tolerante a errores con filtros aplicados
+                    $filters = [];
+                    if ($request->filled('tipo')) { $filters[] = 'tipo = "'.$request->tipo.'"'; }
+                    if ($request->filled('confidencialidad')) { $filters[] = 'confidencialidad = "'.$request->confidencialidad.'"'; }
+                    if ($request->has('etiquetas')) {
+                        foreach ((array) $request->get('etiquetas') as $tg) {
+                            $tg = trim((string) $tg);
+                            if ($tg !== '') { $filters[] = 'etiquetas = "'.$tg.'"'; }
+                        }
+                    }
+                    if ($request->filled('etiqueta')) { $filters[] = 'etiquetas = "'.$request->etiqueta.'"'; }
+                    if ($request->filled('direccion_id')) { $filters[] = 'direccion.id = '.$request->direccion_id; }
+                    if ($request->filled('proceso_apoyo_id')) { $filters[] = 'proceso.id = '.$request->proceso_apoyo_id; }
+                    if ($request->filled('tipo_archivo')) { $filters[] = 'tipo_archivo = "'.$request->tipo_archivo.'"'; }
+
+                    $builder = \App\Models\Documento::search($q);
+                    if (!empty($filters)) {
+                        $builder->where(implode(' AND ', $filters));
+                    }
+                    // Nota: luego haremos el query Eloquent con IDs preservando orden aproximado
+                    $hits = $builder->take(1000)->keys();
+                    $scoutIds = $hits->all();
+                    if (!empty($scoutIds)) {
+                        $query->whereIn('id', $scoutIds);
+                    } else {
+                        // sin hits, devolver vacío con paginación
+                        $documentos = collect([]);
+                        $paginator = new \Illuminate\Pagination\LengthAwarePaginator([], 0, $perPage);
+                        return response()->json([
+                            'success' => true,
+                            'data' => [
+                                'documentos' => [],
+                                'pagination' => [
+                                    'current_page' => 1,
+                                    'last_page' => 0,
+                                    'per_page' => $perPage,
+                                    'total' => 0,
+                                ]
+                            ],
+                            'message' => 'Sin resultados'
+                        ], 200);
+                    }
+                } catch (\Throwable $e) {
+                    // Fallback seguro
+                    $query->buscar($q);
+                }
+            } elseif ($q !== '' && mb_strlen($q) >= 2) {
+                $query->buscar($q);
+            }
+
             // Filtros por metadatos
             if ($request->filled('tipo')) {
                 $query->where('tipo', $request->tipo);
@@ -44,10 +100,40 @@ class DocumentoController extends Controller
             if ($request->filled('confidencialidad')) {
                 $query->where('confidencialidad', $request->confidencialidad);
             }
-            // responsable_id eliminado
-            // filtros de fecha eliminados
+            // Rango de fechas de creación
+            if ($request->filled('fechaDesde')) {
+                $query->whereDate('created_at', '>=', $request->get('fechaDesde'));
+            }
+            if ($request->filled('fechaHasta')) {
+                $query->whereDate('created_at', '<=', $request->get('fechaHasta'));
+            }
+            // Umbrales de tamaño (bytes) y descargas
+            if ($request->filled('tamanoMin')) {
+                $query->where('tamaño_archivo', '>=', (int) $request->get('tamanoMin'));
+            }
+            if ($request->filled('tamanoMax')) {
+                $query->where('tamaño_archivo', '<=', (int) $request->get('tamanoMax'));
+            }
+            if ($request->filled('descargasMin')) {
+                $query->where('contador_descargas', '>=', (int) $request->get('descargasMin'));
+            }
+            // Filtrar por usuario que subió
+            $subidoPor = $request->get('subido_por', $request->get('subidoPor'));
+            if (!empty($subidoPor)) {
+                $query->where('subido_por', (int) $subidoPor);
+            }
             if ($request->filled('etiqueta')) {
                 $query->whereJsonContains('etiquetas', $request->etiqueta);
+            }
+            // Búsqueda por múltiples etiquetas (todas deben estar presentes)
+            if ($request->has('etiquetas')) {
+                $tags = (array) $request->get('etiquetas');
+                foreach ($tags as $tag) {
+                    $tag = trim((string) $tag);
+                    if ($tag !== '') {
+                        $query->whereJsonContains('etiquetas', $tag);
+                    }
+                }
             }
 
             // Filtro por tipo de archivo (MIME) si se envía
@@ -62,12 +148,12 @@ class DocumentoController extends Controller
             }
 
             // Ordenamiento configurable
-            $allowedSortBy = ['created_at', 'updated_at', 'titulo'];
+            $allowedSortBy = ['created_at', 'updated_at', 'titulo', 'contador_descargas', 'tamaño_archivo'];
             $sortBy = in_array($request->get('sort_by'), $allowedSortBy) ? $request->get('sort_by') : 'created_at';
             $sortOrder = strtolower($request->get('sort_order', 'desc')) === 'asc' ? 'asc' : 'desc';
             $query->orderBy($sortBy, $sortOrder);
 
-            $documentos = $query->paginate(15);
+            $documentos = $query->paginate($perPage)->appends($request->query());
 
             $data = $documentos->getCollection()->map(function ($documento) {
                 return [
@@ -206,11 +292,20 @@ class DocumentoController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        // Configurar límites de PHP dinámicamente para esta petición
+        if (function_exists('ini_set')) {
+            ini_set('upload_max_filesize', '50M');
+            ini_set('post_max_size', '50M');
+            ini_set('max_execution_time', '300');
+            ini_set('max_input_time', '300');
+            ini_set('memory_limit', '256M');
+        }
+        
         try {
             $validator = Validator::make($request->all(), [
                 'titulo' => 'required|string|max:255',
                 'descripcion' => 'nullable|string',
-                'archivo' => 'required|file|max:10240', // 10MB máximo
+                'archivo' => 'required|file|max:8192', // 8MB máximo (temporalmente reducido)
                 'direccion_id' => 'required|exists:direcciones,id',
                 'proceso_apoyo_id' => 'required|exists:procesos_apoyo,id',
                 'tipo' => 'nullable|string|max:50',
@@ -221,7 +316,7 @@ class DocumentoController extends Controller
             ], [
                 'titulo.required' => 'El título es obligatorio',
                 'archivo.required' => 'El archivo es obligatorio',
-                'archivo.max' => 'El archivo no puede ser mayor a 10MB',
+                'archivo.max' => 'El archivo no puede ser mayor a 8MB (temporalmente)',
                 'direccion_id.required' => 'La dirección es obligatoria',
                 'proceso_apoyo_id.required' => 'El proceso de apoyo es obligatorio'
             ]);
@@ -537,13 +632,20 @@ class DocumentoController extends Controller
             ];
 
             if (in_array($mimeType, $viewableTypes)) {
-                // Devolver el archivo directamente con headers apropiados para vista previa
-                return response()->file($path, [
-                    'Content-Type' => $mimeType,
-                    'Content-Disposition' => 'inline; filename="' . $documento->nombre_original . '"',
-                    'Cache-Control' => 'private, max-age=300',
-                    'X-Frame-Options' => 'SAMEORIGIN'
-                ]);
+                // Para archivos visualizables, devolver URL en lugar de archivo directo
+                $url = '/storage/' . ltrim($documento->ruta_archivo, '/');
+                
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'url' => $url,
+                        'tipo_archivo' => $documento->tipo_archivo,
+                        'nombre_original' => $documento->nombre_original,
+                        'viewable' => true,
+                        'mime_type' => $mimeType
+                    ],
+                    'message' => 'Vista previa disponible'
+                ], 200);
             }
 
             // Para otros tipos, devolver URL con instrucciones de que se abra en nueva pestaña
@@ -736,27 +838,19 @@ class DocumentoController extends Controller
     public function estadisticas(): JsonResponse
     {
         try {
-            // Cache ultra rápido - 2 minutos para datos más frescos
-            $estadisticas = Cache::remember('dashboard_estadisticas', 120, function () {
-                // Consultas optimizadas con índices - cache más corto para datos que cambian
-                $totalDocumentos = Cache::remember('total_documentos', 60, function () {
-                    return Documento::count();
-                });
-                
-                $totalDirecciones = Cache::remember('total_direcciones', 60, function () {
-                    return Direccion::where('activo', true)->count();
-                });
-                
-                $totalProcesos = Cache::remember('total_procesos', 60, function () {
-                    return ProcesoApoyo::where('activo', true)->count();
-                });
+            // TEMPORALMENTE SIN CACHÉ para datos frescos
+            // $estadisticas = Cache::remember('dashboard_estadisticas', 120, function () {
+                // Consultas directas sin caché para datos actualizados
+                $totalDocumentos = Documento::count();
+                $totalDirecciones = Direccion::where('activo', true)->count();
+                $totalProcesos = ProcesoApoyo::where('activo', true)->count();
 
-                return [
+                $estadisticas = [
                     'total_documentos' => $totalDocumentos,
                     'total_direcciones' => $totalDirecciones,
                     'total_procesos' => $totalProcesos
                 ];
-            });
+            // });
 
             return response()->json([
                 'success' => true,

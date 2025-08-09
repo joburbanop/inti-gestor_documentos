@@ -53,16 +53,16 @@ const Dashboard = () => {
     }, [apiRequest]);
 
     useEffect(() => {
-        // Cargar datos siempre al montar el componente
+        // Cargar datos solo al montar el componente
         fetchDashboardData();
         
-        // Configurar actualización automática cada 30 segundos
-        const intervalId = setInterval(() => {
-            fetchDashboardData();
-        }, 30000);
-        
-        // Limpiar intervalo al desmontar
-        return () => clearInterval(intervalId);
+        // No actualizar automáticamente para evitar recargas
+        // El usuario puede actualizar manualmente si es necesario
+    }, [fetchDashboardData]);
+
+    // Función para actualizar manualmente
+    const handleRefresh = useCallback(() => {
+        fetchDashboardData();
     }, [fetchDashboardData]);
 
     // Configuración optimizada de estadísticas con memoización

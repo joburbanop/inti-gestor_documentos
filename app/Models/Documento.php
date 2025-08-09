@@ -42,6 +42,36 @@ class Documento extends Model
     ];
 
     /**
+     * Campos para el índice de búsqueda (Scout)
+     * TEMPORALMENTE DESHABILITADO - Laravel Scout no está instalado
+     */
+    /*
+    public function toSearchableArray(): array
+    {
+        $this->loadMissing(['direccion:id,nombre,codigo', 'procesoApoyo:id,nombre,codigo']);
+        return [
+            'id' => $this->id,
+            'titulo' => (string) $this->titulo,
+            'descripcion' => (string) $this->descripcion,
+            'nombre_original' => (string) $this->nombre_original,
+            'tipo' => (string) $this->tipo,
+            'confidencialidad' => (string) $this->confidencialidad,
+            'etiquetas' => array_values($this->etiquetas ?? []),
+            'direccion' => [
+                'id' => optional($this->direccion)->id,
+                'nombre' => optional($this->direccion)->nombre,
+                'codigo' => optional($this->direccion)->codigo,
+            ],
+            'proceso' => [
+                'id' => optional($this->procesoApoyo)->id,
+                'nombre' => optional($this->procesoApoyo)->nombre,
+                'codigo' => optional($this->procesoApoyo)->codigo,
+            ],
+        ];
+    }
+    */
+
+    /**
      * Boot del modelo
      */
     protected static function boot()
@@ -104,9 +134,34 @@ class Documento extends Model
      */
     public function scopeBuscar(Builder $query, string $termino): Builder
     {
-        return $query->where(function ($q) use ($termino) {
-            $q->where('titulo', 'like', "%{$termino}%")
-              ->orWhere('descripcion', 'like', "%{$termino}%");
+        // Separar en tokens para permitir búsqueda AND entre palabras
+        $tokens = collect(preg_split('/\s+/', trim($termino)))->filter();
+
+        // Estrategia OR entre tokens para ser más tolerante
+        return $query->where(function (Builder $outerOr) use ($tokens) {
+            foreach ($tokens as $token) {
+                $outerOr->orWhere(function (Builder $q) use ($token) {
+                    $like = "%{$token}%";
+                    $q->where('titulo', 'like', $like)
+                      ->orWhere('descripcion', 'like', $like)
+                      ->orWhere('nombre_original', 'like', $like)
+                      // Coincidencia exacta de etiqueta
+                      ->orWhereJsonContains('etiquetas', (string) $token)
+                      // Buscar por nombre de dirección
+                      ->orWhereHas('direccion', function (Builder $dq) use ($like) {
+                          $dq->where('nombre', 'like', $like)
+                             ->orWhere('codigo', 'like', $like);
+                      })
+                      // Buscar por nombre/código del proceso de apoyo
+                      ->orWhereHas('procesoApoyo', function (Builder $pq) use ($like) {
+                          $pq->where('nombre', 'like', $like)
+                             ->orWhere('codigo', 'like', $like);
+                      })
+                      // Tipo y confidencialidad como campos de texto
+                      ->orWhere('tipo', 'like', $like)
+                      ->orWhere('confidencialidad', 'like', $like);
+                });
+            }
         });
     }
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import SearchFilterBar from './common/SearchFilterBar';
 import DocumentCard from './documentos/DocumentCard';
@@ -73,17 +73,30 @@ const Documentos = () => {
     extension: '',
     fechaDesde: '',
     fechaHasta: '',
-    direccion: '',
-    proceso: '',
+    direccion_id: '',
+    proceso_apoyo_id: '',
     subidoPor: '',
     tamanoMin: '',
     tamanoMax: '',
-    descargasMin: ''
+    descargasMin: '',
+    sort_by: '',
+    sort_order: ''
   });
+
+  // Opciones dinámicas para selects en cascada
+  const [direccionesOptions, setDireccionesOptions] = useState([{ value: '', label: 'Todas las direcciones' }]);
+  const [procesosOptions, setProcesosOptions] = useState([{ value: '', label: 'Todos los procesos' }]);
+  const abortRef = useRef(null);
 
   const fetchDocumentos = async () => {
     try {
       setLoading(true);
+      // Cancelar solicitud anterior en vuelo
+      if (abortRef.current) {
+        try { abortRef.current.abort(); } catch (_) {}
+      }
+      const controller = new AbortController();
+      abortRef.current = controller;
       const params = new URLSearchParams();
       
       // Filtros básicos
@@ -100,15 +113,22 @@ const Documentos = () => {
         }
       });
 
+      // Término de búsqueda (server-side)
+      const q = searchTerm.trim();
+      if (q) params.set('q', q);
+
       const qs = params.toString();
       const url = qs ? `/api/documentos?${qs}` : '/api/documentos';
-      const res = await apiRequest(url);
+      const res = await apiRequest(url, { signal: controller.signal });
       if (res.success) {
         setDocumentos(res.data.documentos || res.data || []);
       } else {
         setDocumentos([]);
       }
     } catch (e) {
+      if (e.name === 'AbortError') {
+        return; // solicitud cancelada, no actualizar estado
+      }
       console.error('Error al cargar documentos:', e);
       setDocumentos([]);
     } finally {
@@ -119,19 +139,53 @@ const Documentos = () => {
   useEffect(() => {
     fetchDocumentos();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(activeFilters), JSON.stringify(advancedFilterValues)]);
+  }, [JSON.stringify(activeFilters), JSON.stringify(advancedFilterValues), searchTerm]);
 
-  const filteredDocs = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
-    if (!term) return documentos;
-    return (documentos || []).filter(d => {
-      const inTitulo = (d.titulo || '').toLowerCase().includes(term);
-      const inDesc = (d.descripcion || '').toLowerCase().includes(term);
-      const inTags = Array.isArray(d.etiquetas) ? d.etiquetas.join(' ').toLowerCase().includes(term) : false;
-      const inNombreOriginal = (d.nombre_original || '').toLowerCase().includes(term);
-      return inTitulo || inDesc || inTags || inNombreOriginal;
-    });
-  }, [searchTerm, documentos]);
+  // Cargar direcciones al inicio
+  useEffect(() => {
+    (async () => {
+      try {
+        const d = await apiRequest('/direcciones');
+        if (d.success) {
+          const opts = [{ value: '', label: 'Todas las direcciones' }].concat(
+            (d.data || []).map(x => ({ value: x.id, label: x.nombre }))
+          );
+          setDireccionesOptions(opts);
+        }
+      } catch {}
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Cargar procesos cuando cambia la dirección seleccionada (cascada)
+  useEffect(() => {
+    const dirId = advancedFilterValues.direccion_id;
+    if (!dirId) {
+      setProcesosOptions([{ value: '', label: 'Todos los procesos' }]);
+      setAdvancedFilterValues(prev => ({ ...prev, proceso_apoyo_id: '' }));
+      return;
+    }
+    (async () => {
+      try {
+        const p = await apiRequest(`/direcciones/${dirId}/procesos-apoyo`);
+        if (p.success) {
+          const opts = [{ value: '', label: 'Todos los procesos' }].concat(
+            (p.data || []).map(x => ({ value: x.id, label: x.nombre }))
+          );
+          setProcesosOptions(opts);
+          setAdvancedFilterValues(prev => ({ ...prev, proceso_apoyo_id: '' }));
+        } else {
+          setProcesosOptions([{ value: '', label: 'Todos los procesos' }]);
+        }
+      } catch {
+        setProcesosOptions([{ value: '', label: 'Todos los procesos' }]);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [advancedFilterValues.direccion_id]);
+
+  // Resultados vienen ya filtrados desde el servidor
+  const filteredDocs = documentos;
 
   const handleSearch = (val) => setSearchTerm(val);
   const handleFiltersChange = (filters) => setActiveFilters(filters);
@@ -160,17 +214,33 @@ const Documentos = () => {
       extension: '',
       fechaDesde: '',
       fechaHasta: '',
-      direccion: '',
-      proceso: '',
+      direccion_id: '',
+      proceso_apoyo_id: '',
       subidoPor: '',
       tamanoMin: '',
       tamanoMax: '',
-      descargasMin: ''
+      descargasMin: '',
+      sort_by: '',
+      sort_order: ''
     });
     setSearchTerm('');
   };
 
   const advancedFilters = [
+    {
+      key: 'direccion_id',
+      label: 'Dirección',
+      type: 'select',
+      options: direccionesOptions,
+      value: advancedFilterValues.direccion_id
+    },
+    {
+      key: 'proceso_apoyo_id',
+      label: 'Proceso de Apoyo',
+      type: 'select',
+      options: procesosOptions,
+      value: advancedFilterValues.proceso_apoyo_id
+    },
     {
       key: 'tipo',
       label: 'Tipo de Documento',
@@ -217,6 +287,31 @@ const Documentos = () => {
       type: 'number',
       placeholder: 'Ej: 5',
       value: advancedFilterValues.descargasMin
+    },
+    {
+      key: 'sort_by',
+      label: 'Ordenar por',
+      type: 'select',
+      options: [
+        { value: '', label: 'Por defecto (Fecha creación)' },
+        { value: 'created_at', label: 'Fecha de creación' },
+        { value: 'updated_at', label: 'Fecha de actualización' },
+        { value: 'titulo', label: 'Nombre (A-Z)' },
+        { value: 'contador_descargas', label: 'Más descargados' },
+        { value: 'tamaño_archivo', label: 'Tamaño de archivo' }
+      ],
+      value: advancedFilterValues.sort_by
+    },
+    {
+      key: 'sort_order',
+      label: 'Orden',
+      type: 'select',
+      options: [
+        { value: '', label: 'Descendente' },
+        { value: 'asc', label: 'Ascendente' },
+        { value: 'desc', label: 'Descendente' }
+      ],
+      value: advancedFilterValues.sort_order
     }
   ];
 
@@ -224,13 +319,30 @@ const Documentos = () => {
     try {
       const res = await apiRequest(`/api/documentos/${documento.id}/vista-previa`, { method: 'GET' });
       if (res.success && res.data?.url) {
-        const newWin = window.open(res.data.url, '_blank', 'noopener,noreferrer');
-        if (!newWin) alert('Permite las ventanas emergentes para ver el documento.');
+        // Construir URL completa con el token de autenticación
+        const token = localStorage.getItem('auth_token');
+        const fullUrl = `${window.location.origin}${res.data.url}`;
+        
+        // Para archivos visualizables, abrir en nueva pestaña
+        if (res.data.viewable) {
+          const newWin = window.open(fullUrl, '_blank', 'noopener,noreferrer');
+          if (!newWin) {
+            alert('Permite las ventanas emergentes para ver el documento.');
+          }
+        } else {
+          // Para archivos no visualizables, mostrar mensaje
+          alert('Este tipo de archivo no se puede previsualizar. Se abrirá para descarga.');
+          const newWin = window.open(fullUrl, '_blank', 'noopener,noreferrer');
+          if (!newWin) {
+            alert('Permite las ventanas emergentes para descargar el documento.');
+          }
+        }
       } else {
         alert(res.message || 'No se pudo abrir la vista previa');
       }
     } catch (e) {
-      alert(e.message || 'Error al abrir vista previa');
+      console.error('Error en vista previa:', e);
+      alert('Error al abrir vista previa: ' + (e.message || 'Error desconocido'));
     }
   };
 
