@@ -47,6 +47,8 @@ Route::middleware(['api.auth'])->group(function () {
     Route::get('/documentos/buscar', [DocumentoController::class, 'buscar']);
     Route::get('/documentos/recientes', [DocumentoController::class, 'recientes']);
     Route::get('/documentos/estadisticas', [DocumentoController::class, 'estadisticas']);
+    Route::get('/documentos/estadisticas-extensiones', [DocumentoController::class, 'estadisticasExtensiones']);
+    Route::get('/documentos/extensiones-disponibles', [DocumentoController::class, 'extensionesDisponibles']);
     // Sugerencias de etiquetas (autosuggest simple desde documentos existentes)
     Route::get('/documentos/etiquetas/sugerencias', function (Request $request) {
         $q = trim($request->get('q', ''));

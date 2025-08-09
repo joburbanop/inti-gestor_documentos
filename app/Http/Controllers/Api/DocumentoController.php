@@ -37,6 +37,38 @@ class DocumentoController extends Controller
                 $query->porProceso($request->proceso_apoyo_id);
             }
 
+            // Filtro por extensión
+            if ($request->has('extension')) {
+                \Log::info('🔍 Aplicando filtro extension:', ['extension' => $request->extension]);
+                $query->porExtension($request->extension);
+            }
+
+            // Filtro por múltiples extensiones
+            if ($request->has('extensiones') && is_array($request->extensiones)) {
+                \Log::info('🔍 Aplicando filtro extensiones:', ['extensiones' => $request->extensiones]);
+                $query->porExtensiones($request->extensiones);
+            }
+
+            // Filtro por tipo de documento
+            if ($request->has('tipo_documento')) {
+                \Log::info('🔍 Aplicando filtro tipo_documento:', ['tipo_documento' => $request->tipo_documento]);
+                $query->porTipoDocumento($request->tipo_documento);
+            }
+
+            // Filtro por extensiones (array)
+            if ($request->has('extensiones') && is_array($request->extensiones)) {
+                \Log::info('🔍 Aplicando filtro extensiones:', ['extensiones' => $request->extensiones]);
+                $query->porExtensiones($request->extensiones);
+            }
+
+            // Filtro por tipos de documento (array)
+            if ($request->has('tipos_documento') && is_array($request->tipos_documento)) {
+                \Log::info('🔍 Aplicando filtro tipos_documento:', ['tipos_documento' => $request->tipos_documento]);
+                foreach ($request->tipos_documento as $tipo) {
+                    $query->porTipoDocumento($tipo);
+                }
+            }
+
 
 
             // Búsqueda por término (Scout si está disponible, si no fallback a scopeBuscar)
@@ -167,6 +199,7 @@ class DocumentoController extends Controller
                     'titulo' => $documento->titulo,
                     'descripcion' => $documento->descripcion,
                     'tipo_archivo' => $documento->tipo_archivo,
+                    'extension' => $documento->extension,
                     'tamaño_formateado' => $documento->tamaño_formateado,
                     'contador_descargas' => $documento->contador_descargas,
 
@@ -888,6 +921,100 @@ class DocumentoController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al obtener estadísticas',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtener estadísticas de extensiones
+     */
+    public function estadisticasExtensiones(): JsonResponse
+    {
+        try {
+            // Obtener estadísticas frescas sin caché para datos actualizados
+            $extensiones = Documento::getEstadisticasExtensiones();
+            $extensionesPopulares = Documento::getExtensionesPopulares(10);
+            $porTipoDocumento = Documento::getEstadisticasPorTipoDocumento();
+
+            \Log::info('🔍 DocumentoController: Estadísticas de extensiones generadas', [
+                'total_extensiones' => count($extensiones),
+                'extensiones_populares' => count($extensionesPopulares),
+                'tipos_documento' => array_keys($porTipoDocumento)
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'extensiones_detalladas' => $extensiones,
+                    'extensiones_populares' => $extensionesPopulares,
+                    'por_tipo_documento' => $porTipoDocumento,
+                    'total_extensiones_unicas' => count($extensiones),
+                    'timestamp' => now()->toISOString()
+                ],
+                'message' => 'Estadísticas de extensiones obtenidas exitosamente'
+            ], 200);
+
+        } catch (\Exception $e) {
+            \Log::error('🔍 DocumentoController: Error al obtener estadísticas de extensiones', [
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener estadísticas de extensiones',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtener extensiones disponibles
+     */
+    public function extensionesDisponibles(): JsonResponse
+    {
+        try {
+            $extensiones = Documento::selectRaw('DISTINCT extension')
+                                   ->whereNotNull('extension')
+                                   ->where('extension', '!=', '')
+                                   ->orderBy('extension')
+                                   ->pluck('extension')
+                                   ->toArray();
+
+            $tiposDocumento = [
+                'pdf' => ['pdf'],
+                'imagen' => ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'],
+                'documento' => ['doc', 'docx', 'txt', 'rtf', 'odt'],
+                'hoja_calculo' => ['xls', 'xlsx', 'csv', 'ods'],
+                'presentacion' => ['ppt', 'pptx', 'odp'],
+                'archivo_comprimido' => ['zip', 'rar', '7z', 'tar', 'gz'],
+                'video' => ['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv'],
+                'audio' => ['mp3', 'wav', 'aac', 'ogg', 'flac']
+            ];
+
+            \Log::info('🔍 DocumentoController: Extensiones disponibles obtenidas', [
+                'total_extensiones' => count($extensiones),
+                'extensiones' => $extensiones
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'extensiones' => $extensiones,
+                    'tipos_documento' => $tiposDocumento,
+                    'timestamp' => now()->toISOString()
+                ],
+                'message' => 'Extensiones disponibles obtenidas exitosamente'
+            ], 200);
+
+        } catch (\Exception $e) {
+            \Log::error('🔍 DocumentoController: Error al obtener extensiones disponibles', [
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener extensiones disponibles',
                 'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }

@@ -117,11 +117,16 @@ const Documentos = () => {
       const q = searchTerm.trim();
       if (q) params.set('q', q);
 
+      // Solicitar más documentos por página (máximo 100)
+      params.set('per_page', '100');
+
       const qs = params.toString();
-      const url = qs ? `/api/documentos?${qs}` : '/api/documentos';
+      const url = `/api/documentos?${qs}`;
       const res = await apiRequest(url, { signal: controller.signal });
       if (res.success) {
-        setDocumentos(res.data.documentos || res.data || []);
+        const docs = res.data.documentos || res.data || [];
+        console.log('📄 Documentos: Cargados', docs.length, 'documentos desde:', url);
+        setDocumentos(docs);
       } else {
         setDocumentos([]);
       }

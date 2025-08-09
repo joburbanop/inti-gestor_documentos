@@ -37,7 +37,7 @@ return new class extends Migration
             try { $table->index(['direccion_id', 'created_at'], 'documentos_direccion_created_index'); } catch (\Throwable $e) {}
             try { $table->index(['proceso_apoyo_id'], 'documentos_proceso_index'); } catch (\Throwable $e) {}
             try { $table->index(['tipo_archivo'], 'documentos_tipo_index'); } catch (\Throwable $e) {}
-            try { $table->index(['titulo'], 'documentos_titulo_index'); } catch (\Throwable $e) {}
+            // try { $table->index(['titulo'], 'documentos_titulo_index'); } catch (\Throwable $e) {} // Ya existe
             try { $table->index(['created_at'], 'documentos_created_index'); } catch (\Throwable $e) {}
             try { $table->index(['subido_por'], 'documentos_subido_por_index'); } catch (\Throwable $e) {}
         });

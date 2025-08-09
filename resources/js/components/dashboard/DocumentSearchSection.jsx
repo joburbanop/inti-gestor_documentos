@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ExtensionFilter from './ExtensionFilter';
 import styles from '../../styles/components/Dashboard.module.css';
 
 // Iconos modernos y legibles
@@ -31,10 +32,13 @@ const DocumentSearchSection = ({
     onFilterChange, 
     filters = {},
     searchPlaceholder = "Buscar documentos...",
-    showFilters = true 
+    showFilters = true,
+    showExtensionFilter = true
 }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [localFilters, setLocalFilters] = useState(filters);
+    const [selectedExtensions, setSelectedExtensions] = useState([]);
+    const [selectedTypes, setSelectedTypes] = useState([]);
 
     const handleSearch = (e) => {
         e.preventDefault();
@@ -43,6 +47,29 @@ const DocumentSearchSection = ({
 
     const handleFilterChange = (key, value) => {
         const newFilters = { ...localFilters, [key]: value };
+        setLocalFilters(newFilters);
+        onFilterChange && onFilterChange(newFilters);
+    };
+
+    const handleExtensionFilterChange = ({ extensiones, tipos }) => {
+        setSelectedExtensions(extensiones);
+        setSelectedTypes(tipos);
+        
+        // Actualizar filtros locales
+        const newFilters = { ...localFilters };
+        
+        if (extensiones.length > 0) {
+            newFilters.extensiones = extensiones;
+        } else {
+            delete newFilters.extensiones;
+        }
+        
+        if (tipos.length > 0) {
+            newFilters.tipos_documento = tipos;
+        } else {
+            delete newFilters.tipos_documento;
+        }
+        
         setLocalFilters(newFilters);
         onFilterChange && onFilterChange(newFilters);
     };
@@ -114,6 +141,15 @@ const DocumentSearchSection = ({
                         </select>
                     </div>
                 </div>
+            )}
+
+            {/* Filtro por extensión */}
+            {showExtensionFilter && (
+                <ExtensionFilter
+                    onFilterChange={handleExtensionFilterChange}
+                    selectedExtensions={selectedExtensions}
+                    selectedTypes={selectedTypes}
+                />
             )}
         </div>
     );

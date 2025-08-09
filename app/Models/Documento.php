@@ -21,6 +21,7 @@ class Documento extends Model
         'nombre_original',
         'ruta_archivo',
         'tipo_archivo',
+        'extension',
         'tamaño_archivo',
         'direccion_id',
         'proceso_apoyo_id',
@@ -228,5 +229,101 @@ class Documento extends Model
                     ->orderBy('created_at', 'desc')
                     ->limit($limit)
                     ->get();
+    }
+
+    /**
+     * Scope para filtrar por extensión específica
+     */
+    public function scopePorExtension(Builder $query, string $extension): Builder
+    {
+        return $query->where('extension', strtolower($extension))
+                    ->whereNotNull('extension')
+                    ->where('extension', '!=', '');
+    }
+
+    /**
+     * Scope para filtrar por múltiples extensiones
+     */
+    public function scopePorExtensiones(Builder $query, array $extensiones): Builder
+    {
+        return $query->whereIn('extension', array_map('strtolower', $extensiones))
+                    ->whereNotNull('extension')
+                    ->where('extension', '!=', '');
+    }
+
+    /**
+     * Scope para filtrar por tipo de documento
+     */
+    public function scopePorTipoDocumento(Builder $query, string $tipo): Builder
+    {
+        $tiposDocumento = [
+            'pdf' => ['pdf'],
+            'imagen' => ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'],
+            'documento' => ['doc', 'docx', 'txt', 'rtf', 'odt'],
+            'hoja_calculo' => ['xls', 'xlsx', 'csv', 'ods'],
+            'presentacion' => ['ppt', 'pptx', 'odp'],
+            'archivo_comprimido' => ['zip', 'rar', '7z', 'tar', 'gz'],
+            'video' => ['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv'],
+            'audio' => ['mp3', 'wav', 'aac', 'ogg', 'flac']
+        ];
+
+        $extensiones = $tiposDocumento[$tipo] ?? [];
+        return $this->scopePorExtensiones($query, $extensiones);
+    }
+
+    /**
+     * Obtener estadísticas de extensiones
+     */
+    public static function getEstadisticasExtensiones(): array
+    {
+        return self::selectRaw('extension, COUNT(*) as total')
+                  ->whereNotNull('extension')
+                  ->where('extension', '!=', '')
+                  ->groupBy('extension')
+                  ->orderBy('total', 'desc')
+                  ->get()
+                  ->toArray();
+    }
+
+    /**
+     * Obtener extensiones más populares
+     */
+    public static function getExtensionesPopulares(int $limit = 10): array
+    {
+        return self::selectRaw('extension, COUNT(*) as total')
+                  ->whereNotNull('extension')
+                  ->where('extension', '!=', '')
+                  ->groupBy('extension')
+                  ->orderBy('total', 'desc')
+                  ->limit($limit)
+                  ->get()
+                  ->toArray();
+    }
+
+    /**
+     * Obtener estadísticas por tipo de documento
+     */
+    public static function getEstadisticasPorTipoDocumento(): array
+    {
+        $tiposDocumento = [
+            'pdf' => ['pdf'],
+            'imagen' => ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'],
+            'documento' => ['doc', 'docx', 'txt', 'rtf', 'odt'],
+            'hoja_calculo' => ['xls', 'xlsx', 'csv', 'ods'],
+            'presentacion' => ['ppt', 'pptx', 'odp'],
+            'archivo_comprimido' => ['zip', 'rar', '7z', 'tar', 'gz'],
+            'video' => ['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv'],
+            'audio' => ['mp3', 'wav', 'aac', 'ogg', 'flac']
+        ];
+
+        $estadisticas = [];
+        foreach ($tiposDocumento as $tipo => $extensiones) {
+            $total = self::whereIn('extension', $extensiones)->count();
+            if ($total > 0) {
+                $estadisticas[$tipo] = $total;
+            }
+        }
+
+        return $estadisticas;
     }
 } 

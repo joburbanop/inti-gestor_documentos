@@ -4,6 +4,7 @@ import userStyles from '../styles/components/UserDashboard.module.css';
 
 // Componentes modulares
 import HierarchicalFilters from './dashboard/HierarchicalFilters';
+import ExtensionFilter from './dashboard/ExtensionFilter';
 
 // Iconos SVG
 import { PdfIcon, ExcelIcon, WordIcon, SearchIcon } from './icons/DashboardIcons';
@@ -15,6 +16,8 @@ const UserDashboard = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filters, setFilters] = useState({});
     const [allDocuments, setAllDocuments] = useState([]);
+    const [selectedExtensions, setSelectedExtensions] = useState([]);
+    const [selectedTypes, setSelectedTypes] = useState([]);
     const typingTimerRef = useRef(null);
     const searchAbortRef = useRef(null);
     const [stats, setStats] = useState({
@@ -22,6 +25,14 @@ const UserDashboard = () => {
         filtered: 0,
         byType: {},
         byDirection: {}
+    });
+    
+    // Estado de paginación
+    const [pagination, setPagination] = useState({
+        currentPage: 1,
+        lastPage: 1,
+        perPage: 10,
+        total: 0
     });
 
     // Cargar todos los documentos al montar el componente
@@ -32,9 +43,11 @@ const UserDashboard = () => {
     const loadAllDocuments = async () => {
         try {
             setSearchLoading(true);
-            const response = await apiRequest('/api/documentos');
+            // Solicitar todos los documentos (máximo 100 por página)
+            const response = await apiRequest('/api/documentos?per_page=100');
             if (response.success) {
                 const docs = response.data?.documentos || response.data || [];
+                console.log('📄 UserDashboard: Cargados', docs.length, 'documentos');
                 setAllDocuments(docs);
                 calculateStats(docs);
             }
@@ -90,11 +103,12 @@ const UserDashboard = () => {
         }, 500);
     };
 
-    const performSearch = async () => {
+    const performSearchWithFilters = async (customFilters = null) => {
         try {
             setSearchLoading(true);
             
-            console.log('🔍 UserDashboard: performSearch iniciado con filtros:', filters);
+            const filtersToUse = customFilters || filters;
+            console.log('🔍 UserDashboard: performSearchWithFilters iniciado con filtros:', filtersToUse);
             
             // Construir parámetros de búsqueda
             const params = new URLSearchParams();
@@ -105,48 +119,54 @@ const UserDashboard = () => {
             }
             
             // Filtros jerárquicos (normalizar a números)
-            const dirId = Number(filters.direccionId);
+            const dirId = Number(filtersToUse.direccionId);
             if (Number.isFinite(dirId) && dirId > 0) {
                 params.append('direccion_id', String(dirId));
             }
 
-            const procId = Number(filters.procesoId);
+            const procId = Number(filtersToUse.procesoId);
             if (Number.isFinite(procId) && procId > 0) {
                 params.append('proceso_apoyo_id', String(procId));
             }
             
-            if (filters.tipoArchivo) {
-                params.append('tipo_archivo', filters.tipoArchivo);
+            if (filtersToUse.tipoArchivo) {
+                params.append('tipo_archivo', filtersToUse.tipoArchivo);
             }
 
             // Filtros avanzados
-            if (filters.tipo) {
-                params.append('tipo', filters.tipo);
+            if (filtersToUse.tipo) {
+                params.append('tipo', filtersToUse.tipo);
             }
             
-            if (filters.confidencialidad) {
-                params.append('confidencialidad', filters.confidencialidad);
+            if (filtersToUse.confidencialidad) {
+                params.append('confidencialidad', filtersToUse.confidencialidad);
             }
             
-            if (filters.etiqueta) {
-                params.append('etiqueta', filters.etiqueta);
+            if (filtersToUse.etiqueta) {
+                params.append('etiqueta', filtersToUse.etiqueta);
             }
             
-            if (filters.fechaDesde) {
-                params.append('fecha_desde', filters.fechaDesde);
+            if (filtersToUse.fechaDesde) {
+                params.append('fecha_desde', filtersToUse.fechaDesde);
             }
             
-            if (filters.fechaHasta) {
-                params.append('fecha_hasta', filters.fechaHasta);
+            if (filtersToUse.fechaHasta) {
+                params.append('fecha_hasta', filtersToUse.fechaHasta);
             }
             
-            if (filters.extension) {
-                params.append('extension', filters.extension);
+            if (filtersToUse.extensiones && filtersToUse.extensiones.length > 0) {
+                filtersToUse.extensiones.forEach(ext => {
+                    params.append('extensiones[]', ext);
+                });
             }
             
             // Ordenamiento por defecto (más recientes primero)
             params.append('sort_by', 'created_at');
             params.append('sort_order', 'desc');
+            
+            // Agregar parámetros de paginación
+            params.append('per_page', '10');
+            params.append('page', pagination.currentPage.toString());
 
             // Si no hay término de búsqueda y no hay filtros, usar el endpoint index
             let url = '/api/documentos';
@@ -187,7 +207,20 @@ const UserDashboard = () => {
                         // Ignorar errores de fallback
                     }
                 }
+                
+                // Actualizar resultados y paginación
                 setSearchResults(results);
+                
+                // Actualizar información de paginación si está disponible
+                if (response.data?.pagination) {
+                    setPagination({
+                        currentPage: response.data.pagination.current_page,
+                        lastPage: response.data.pagination.last_page,
+                        perPage: response.data.pagination.per_page,
+                        total: response.data.pagination.total
+                    });
+                }
+                
                 setStats(prev => ({ ...prev, filtered: results.length }));
             }
         } catch (error) {
@@ -197,6 +230,30 @@ const UserDashboard = () => {
             setStats(prev => ({ ...prev, filtered: 0 }));
         } finally {
             setSearchLoading(false);
+        }
+    };
+
+    const performSearch = async () => {
+        return performSearchWithFilters();
+    };
+
+    // Funciones de paginación
+    const goToPage = async (page) => {
+        if (page >= 1 && page <= pagination.lastPage && page !== pagination.currentPage) {
+            setPagination(prev => ({ ...prev, currentPage: page }));
+            await performSearchWithFilters();
+        }
+    };
+
+    const goToNextPage = async () => {
+        if (pagination.currentPage < pagination.lastPage) {
+            await goToPage(pagination.currentPage + 1);
+        }
+    };
+
+    const goToPrevPage = async () => {
+        if (pagination.currentPage > 1) {
+            await goToPage(pagination.currentPage - 1);
         }
     };
 
@@ -212,6 +269,9 @@ const UserDashboard = () => {
         setFilters(newFilters);
         const hasAnyFilter = Object.values(newFilters).some(v => v && v !== '');
         console.log('🔍 UserDashboard: ¿Tiene filtros?', hasAnyFilter);
+        
+        // Resetear a página 1 cuando cambian los filtros
+        setPagination(prev => ({ ...prev, currentPage: 1 }));
         
         // Cancelar cualquier búsqueda en curso al cambiar filtros jerárquicos
         if (searchAbortRef.current) {
@@ -230,18 +290,66 @@ const UserDashboard = () => {
         }
     };
 
+    const handleExtensionFilterChange = ({ extensiones, tipos }) => {
+        console.log('🔍 UserDashboard: handleExtensionFilterChange llamado con:', { extensiones, tipos });
+        setSelectedExtensions(extensiones);
+        setSelectedTypes(tipos);
+        
+        // Resetear a página 1 cuando cambian los filtros
+        setPagination(prev => ({ ...prev, currentPage: 1 }));
+        
+        // Actualizar filtros locales
+        const newFilters = { ...filters };
+        
+        if (extensiones.length > 0) {
+            newFilters.extensiones = extensiones;
+        } else {
+            delete newFilters.extensiones;
+        }
+        
+        if (tipos.length > 0) {
+            newFilters.tipos_documento = tipos;
+        } else {
+            delete newFilters.tipos_documento;
+        }
+        
+        setFilters(newFilters);
+        
+        // Cancelar cualquier búsqueda en curso
+        if (searchAbortRef.current) {
+            try { searchAbortRef.current.abort(); } catch (e) {}
+        }
+        
+        // Ejecutar búsqueda inmediata con los nuevos filtros
+        setSearchLoading(true);
+        setSearchResults([]);
+        
+        // Usar los nuevos filtros directamente en lugar de depender del estado
+        performSearchWithFilters(newFilters);
+    };
+
     const clearAllFilters = () => {
         setFilters({});
         setSearchTerm('');
+        setSelectedExtensions([]);
+        setSelectedTypes([]);
         setSearchResults([]);
+        setPagination({
+            currentPage: 1,
+            lastPage: 1,
+            perPage: 10,
+            total: 0
+        });
         setStats(prev => ({ ...prev, filtered: prev.total }));
     };
 
     // Debounce de búsqueda por texto
     useEffect(() => {
         if (searchTerm && searchTerm.trim().length >= 3) {
+            // Resetear a página 1 cuando cambia el término de búsqueda
+            setPagination(prev => ({ ...prev, currentPage: 1 }));
             scheduleSearch();
-        } else if (!Object.values(filters).some(v => v && v !== '')) {
+        } else if (!Object.values(filters).some(v => v && v !== '') && !selectedExtensions.length && !selectedTypes.length) {
             setSearchResults([]);
             setStats(prev => ({ ...prev, filtered: prev.total }));
         }
@@ -306,51 +414,6 @@ const UserDashboard = () => {
 
     return (
         <div className={userStyles.userDashboardContainer}>
-            {/* Header Simple */}
-            <div className={userStyles.userHeader}>
-                <h1 className={userStyles.userTitle}>Portal Documental</h1>
-                <p className={userStyles.userSubtitle}>
-                    Bienvenido, {user?.name}. Encuentra cualquier documento en máximo 3 clics con nuestros filtros avanzados.
-                </p>
-            </div>
-
-            {/* Estadísticas rápidas */}
-            <div className={userStyles.statsContainer}>
-                <div className={userStyles.statCard}>
-                    <div className={userStyles.statIcon}>
-                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                    </div>
-                    <div className={userStyles.statContent}>
-                        <h3>{stats.total}</h3>
-                        <p>Documentos Totales</p>
-                    </div>
-                </div>
-                <div className={userStyles.statCard}>
-                    <div className={userStyles.statIcon}>
-                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                    </div>
-                    <div className={userStyles.statContent}>
-                        <h3>{stats.filtered}</h3>
-                        <p>Resultados</p>
-                    </div>
-                </div>
-                <div className={userStyles.statCard}>
-                    <div className={userStyles.statIcon}>
-                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                        </svg>
-                    </div>
-                    <div className={userStyles.statContent}>
-                        <h3>{Object.keys(stats.byType).length}</h3>
-                        <p>Tipos de Archivo</p>
-                    </div>
-                </div>
-            </div>
-
             {/* Búsqueda de documentos - Sección principal mejorada */}
             <div className={userStyles.userSearchSection}>
                 <div className={userStyles.searchHeader}>
@@ -402,6 +465,14 @@ const UserDashboard = () => {
                     filters={filters}
                     onDocumentsLoad={setSearchResults}
                 />
+
+                {/* Filtro por Extensión */}
+                <ExtensionFilter
+                    onFilterChange={handleExtensionFilterChange}
+                    selectedExtensions={selectedExtensions}
+                    selectedTypes={selectedTypes}
+                    customStyles={userStyles}
+                />
             </div>
 
             {/* Resultados de búsqueda */}
@@ -409,7 +480,7 @@ const UserDashboard = () => {
                 <div className={userStyles.userDocumentResults}>
                     <div className={userStyles.userDocumentResultsHeader}>
                         <h2 className={userStyles.userDocumentResultsTitle}>
-                            Documentos Encontrados ({searchResults.length})
+                            Documentos Encontrados ({pagination.total})
                         </h2>
                         <button
                             onClick={clearAllFilters}
@@ -475,6 +546,96 @@ const UserDashboard = () => {
                             </div>
                         ))}
                     </div>
+                    
+                    {/* Paginación */}
+                    {pagination.lastPage > 1 && (
+                        <div className={userStyles.paginationContainer}>
+                            <div className={userStyles.paginationInfo}>
+                                <span>Página {pagination.currentPage} de {pagination.lastPage}</span>
+                                <span>•</span>
+                                <span>Mostrando {searchResults.length} de {pagination.total} documentos</span>
+                            </div>
+                            
+                            <div className={userStyles.paginationControls}>
+                                <button
+                                    onClick={goToPrevPage}
+                                    disabled={pagination.currentPage === 1}
+                                    className={`${userStyles.paginationButton} ${userStyles.paginationPrev}`}
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                    Anterior
+                                </button>
+                                
+                                <div className={userStyles.paginationNumbers}>
+                                    {/* Primera página */}
+                                    {pagination.currentPage > 3 && (
+                                        <button
+                                            onClick={() => goToPage(1)}
+                                            className={userStyles.paginationNumber}
+                                        >
+                                            1
+                                        </button>
+                                    )}
+                                    
+                                    {/* Elipsis si hay gap */}
+                                    {pagination.currentPage > 4 && (
+                                        <span className={userStyles.paginationEllipsis}>...</span>
+                                    )}
+                                    
+                                    {/* Páginas alrededor de la actual */}
+                                    {Array.from({ length: Math.min(5, pagination.lastPage) }, (_, i) => {
+                                        const page = Math.max(1, Math.min(
+                                            pagination.lastPage,
+                                            pagination.currentPage - 2 + i
+                                        ));
+                                        
+                                        if (page >= 1 && page <= pagination.lastPage) {
+                                            return (
+                                                <button
+                                                    key={page}
+                                                    onClick={() => goToPage(page)}
+                                                    className={`${userStyles.paginationNumber} ${
+                                                        page === pagination.currentPage ? userStyles.paginationActive : ''
+                                                    }`}
+                                                >
+                                                    {page}
+                                                </button>
+                                            );
+                                        }
+                                        return null;
+                                    })}
+                                    
+                                    {/* Elipsis si hay gap */}
+                                    {pagination.currentPage < pagination.lastPage - 3 && (
+                                        <span className={userStyles.paginationEllipsis}>...</span>
+                                    )}
+                                    
+                                    {/* Última página */}
+                                    {pagination.currentPage < pagination.lastPage - 2 && (
+                                        <button
+                                            onClick={() => goToPage(pagination.lastPage)}
+                                            className={userStyles.paginationNumber}
+                                        >
+                                            {pagination.lastPage}
+                                        </button>
+                                    )}
+                                </div>
+                                
+                                <button
+                                    onClick={goToNextPage}
+                                    disabled={pagination.currentPage === pagination.lastPage}
+                                    className={`${userStyles.paginationButton} ${userStyles.paginationNext}`}
+                                >
+                                    Siguiente
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 

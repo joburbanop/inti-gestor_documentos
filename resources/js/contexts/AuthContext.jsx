@@ -121,10 +121,11 @@ export const AuthProvider = ({ children }) => {
     const apiRequest = async (url, options = {}) => {
         const token = state.token || localStorage.getItem('auth_token');
         
-        // Debug removido
+        console.log('🔍 AuthContext: apiRequest iniciado', { url, hasToken: !!token, tokenLength: token?.length });
         
         // Verificar si hay token antes de hacer la petición
         if (!token) {
+            console.log('🔍 AuthContext: No hay token, haciendo logout');
             localStorage.removeItem('auth_token');
             dispatch({ type: AUTH_ACTIONS.LOGOUT });
             throw new Error('No autenticado');
@@ -155,7 +156,12 @@ export const AuthProvider = ({ children }) => {
         try {
             const response = await fetch(url.startsWith('/api') ? url : `/api/${url.replace(/^\//, '')}`, config);
             
-            // Debug removido
+            console.log('🔍 AuthContext: Respuesta recibida', { 
+                url, 
+                status: response.status, 
+                statusText: response.statusText,
+                headers: Object.fromEntries(response.headers.entries())
+            });
             
             // Verificar si la respuesta es JSON
             const contentType = response.headers.get('content-type');

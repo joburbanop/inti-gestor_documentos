@@ -19,9 +19,21 @@ class ApiAuthenticate extends Middleware
      */
     public function handle($request, Closure $next, ...$guards)
     {
+        \Log::info('🔍 ApiAuthenticate: Verificando autenticación', [
+            'url' => $request->url(),
+            'method' => $request->method(),
+            'headers' => $request->headers->all(),
+            'has_token' => $request->bearerToken() ? 'Sí' : 'No'
+        ]);
+        
         try {
             return parent::handle($request, $next, 'sanctum');
         } catch (\Exception $e) {
+            \Log::error('🔍 ApiAuthenticate: Error de autenticación', [
+                'error' => $e->getMessage(),
+                'url' => $request->url()
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => 'No autenticado',
