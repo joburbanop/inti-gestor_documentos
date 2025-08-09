@@ -1,0 +1,635 @@
+/* HierarchicalFilters.module.css - Estilos responsive para filtros en cascada - COLOR CLARO FORZADO */
+
+.filtersContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: #f8f9fa !important;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.filtersContainer:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Layout responsive para filtros */
+.filtersRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    align-items: end;
+}
+
+/* Grupo de filtro individual */
+.filterGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0; /* Permite que el contenido se ajuste */
+}
+
+/* Etiqueta del filtro */
+.filterLabel {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151 !important;
+    margin-bottom: 0.25rem;
+    line-height: 1.25;
+}
+
+/* Select personalizado */
+.filterSelect {
+    padding: 0.75rem 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151 !important;
+    background-color: #ffffff !important;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    min-height: 44px; /* Mejora la accesibilidad táctil */
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 1.25rem;
+    padding-right: 2.5rem;
+}
+
+.filterSelect:hover {
+    border-color: #1F448B;
+    box-shadow: 0 0 0 3px rgba(31, 68, 139, 0.1);
+}
+
+.filterSelect:focus {
+    outline: none;
+    border-color: #1F448B;
+    box-shadow: 0 0 0 3px rgba(31, 68, 139, 0.2);
+}
+
+.filterSelect:disabled {
+    background-color: #f9fafb !important;
+    color: #9ca3af !important;
+    cursor: not-allowed;
+    border-color: #e5e7eb;
+}
+
+/* Opciones del select */
+.filterSelect option {
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    color: #374151 !important;
+    background-color: #ffffff !important;
+}
+
+/* Indicador de carga */
+.loadingIndicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background-color: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.loadingSpinner {
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid #e2e8f0;
+    border-top: 2px solid #1F448B;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Mensaje de estado */
+.statusMessage {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.statusMessage.info {
+    background-color: #ffffff;
+    color: #374151;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.statusMessage.success {
+    background-color: #ffffff;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.statusMessage.warning {
+    background-color: #ffffff;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.statusMessage.error {
+    background-color: #ffffff;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Contador de resultados */
+.resultsCounter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background-color: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: #374151;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.resultsCount {
+    font-weight: 600;
+    color: #1F448B;
+}
+
+/* Botón de limpiar filtros */
+.clearFiltersButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: #ffffff;
+    color: #374151;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.clearFiltersButton:hover {
+    background-color: #f8f9fa;
+    color: #1F448B;
+    border-color: #1F448B;
+    box-shadow: 0 2px 6px rgba(31, 68, 139, 0.2);
+}
+
+.clearFiltersButton:active {
+    transform: translateY(1px);
+}
+
+/* Responsive Design */
+
+/* Tablets (768px y superior) */
+@media (min-width: 768px) {
+    .filtersContainer {
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .filtersRow {
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+    
+    .filterLabel {
+        font-size: 1rem;
+    }
+    
+    .filterSelect {
+        font-size: 1rem;
+        padding: 0.875rem 1.25rem;
+        min-height: 48px;
+    }
+}
+
+/* Desktop (1024px y superior) */
+@media (min-width: 1024px) {
+    .filtersContainer {
+        padding: 2.5rem;
+        margin-bottom: 2.5rem;
+    }
+    
+    .filtersRow {
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+    
+    .filterGroup {
+        gap: 0.75rem;
+    }
+    
+    .filterLabel {
+        font-size: 1.125rem;
+    }
+    
+    .filterSelect {
+        font-size: 1.125rem;
+        padding: 1rem 1.5rem;
+        min-height: 52px;
+    }
+}
+
+/* Pantallas grandes (1280px y superior) */
+@media (min-width: 1280px) {
+    .filtersContainer {
+        padding: 3rem;
+        margin-bottom: 3rem;
+    }
+    
+    .filtersRow {
+        grid-template-columns: 1fr 1fr;
+        gap: 2.5rem;
+    }
+}
+
+/* Móviles pequeños (menos de 480px) */
+@media (max-width: 479px) {
+    .filtersContainer {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 8px;
+    }
+    
+    .filtersRow {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .filterGroup {
+        gap: 0.375rem;
+    }
+    
+    .filterLabel {
+        font-size: 0.8125rem;
+    }
+    
+    .filterSelect {
+        font-size: 0.8125rem;
+        padding: 0.625rem 0.875rem;
+        min-height: 40px;
+    }
+    
+    .loadingIndicator {
+        padding: 0.75rem;
+        font-size: 0.8125rem;
+    }
+    
+    .statusMessage {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.8125rem;
+    }
+    
+    .resultsCounter {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.8125rem;
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+    }
+}
+
+/* Móviles medianos (480px - 767px) */
+@media (min-width: 480px) and (max-width: 767px) {
+    .filtersContainer {
+        padding: 1.25rem;
+        margin-bottom: 1.25rem;
+    }
+    
+    .filtersRow {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .filterGroup {
+        gap: 0.5rem;
+    }
+    
+    .filterLabel {
+        font-size: 0.875rem;
+    }
+    
+    .filterSelect {
+        font-size: 0.875rem;
+        padding: 0.75rem 1rem;
+        min-height: 44px;
+    }
+}
+
+/* Orientación landscape en móviles */
+@media (max-width: 767px) and (orientation: landscape) {
+    .filtersContainer {
+        padding: 1rem 1.5rem;
+    }
+    
+    .filtersRow {
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+}
+
+/* Accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+    .filtersContainer,
+    .filterSelect,
+    .clearFiltersButton {
+        transition: none;
+    }
+    
+    .loadingSpinner {
+        animation: none;
+    }
+}
+
+/* Modo oscuro (si se implementa en el futuro) */
+@media (prefers-color-scheme: dark) {
+    .filtersContainer {
+        background: #374151;
+        border-color: #4b5563;
+        color: #f9fafb;
+    }
+    
+    .filterLabel {
+        color: #d1d5db;
+    }
+    
+    .filterSelect {
+        background-color: #374151;
+        border-color: #4b5563;
+        color: #f9fafb;
+    }
+    
+    .filterSelect:hover {
+        border-color: #1F448B;
+    }
+    
+    .filterSelect:focus {
+        border-color: #1F448B;
+    }
+    
+    .filterSelect:disabled {
+        background-color: #4b5563;
+        color: #6b7280;
+        border-color: #374151;
+    }
+    
+    .loadingIndicator {
+        background-color: #111827;
+        border-color: #374151;
+        color: #9ca3af;
+    }
+    
+    .statusMessage.info {
+        background-color: #1e3a8a;
+        color: #dbeafe;
+        border-color: #3b82f6;
+    }
+    
+    .statusMessage.success {
+        background-color: #14532d;
+        color: #bbf7d0;
+        border-color: #22c55e;
+    }
+    
+    .statusMessage.warning {
+        background-color: #78350f;
+        color: #fef3c7;
+        border-color: #f59e0b;
+    }
+    
+    .statusMessage.error {
+        background-color: #7f1d1d;
+        color: #fecaca;
+        border-color: #ef4444;
+    }
+    
+    .resultsCounter {
+        background-color: #111827;
+        border-color: #374151;
+        color: #9ca3af;
+    }
+    
+    .clearFiltersButton {
+        background-color: #374151;
+        color: #d1d5db;
+        border-color: #4b5563;
+    }
+    
+    .clearFiltersButton:hover {
+        background-color: #4b5563;
+        color: #f9fafb;
+        border-color: #6b7280;
+    }
+}
+
+/* Estados de foco para accesibilidad */
+.filterSelect:focus-visible {
+    outline: 2px solid #1F448B;
+    outline-offset: 2px;
+}
+
+.clearFiltersButton:focus-visible {
+    outline: 2px solid #1F448B;
+    outline-offset: 2px;
+}
+
+/* Animaciones suaves */
+.filtersContainer {
+    animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Estados de carga */
+.filtersContainer.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.filtersContainer.loading .filterSelect {
+    background-color: #ffffff;
+    cursor: wait;
+}
+
+/* Mejoras de rendimiento */
+.filtersContainer {
+    will-change: transform;
+    transform: translateZ(0);
+}
+
+.filterSelect {
+    will-change: border-color, box-shadow;
+}
+
+/* Impresión */
+@media print {
+    .filtersContainer {
+        box-shadow: none;
+        border: 1px solid #000;
+        background: #fff;
+        color: #000;
+    }
+    
+    .filterSelect {
+        border: 1px solid #000;
+        background: #fff;
+        color: #000;
+    }
+    
+    .loadingIndicator,
+    .clearFiltersButton {
+        display: none;
+    }
+}
+
+/* FORZAR COLOR CLARO - Override cualquier estilo oscuro */
+.filtersContainer {
+    background-color: #f8f9fa !important;
+    background: #f8f9fa !important;
+}
+
+.filtersContainer * {
+    color: #374151 !important;
+}
+
+.filterLabel {
+    color: #374151 !important;
+}
+
+/* Mantener colores específicos para mensajes de estado */
+.statusMessage.info {
+    background-color: #ffffff !important;
+    color: #374151 !important;
+    border-color: #e5e7eb !important;
+}
+
+.statusMessage.success {
+    background-color: #ffffff !important;
+    color: #166534 !important;
+    border-color: #bbf7d0 !important;
+}
+
+.statusMessage.warning {
+    background-color: #ffffff !important;
+    color: #92400e !important;
+    border-color: #fcd34d !important;
+}
+
+.statusMessage.error {
+    background-color: #ffffff !important;
+    color: #dc2626 !important;
+    border-color: #fecaca !important;
+}
+
+.resultsCount {
+    color: #1F448B !important;
+}
+
+/* FORZAR ESTILOS DE INPUTS - Override cualquier estilo oscuro */
+.filterSelect {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #374151 !important;
+    border-color: #e5e7eb !important;
+}
+
+/* FORZAR ESTILOS DEL CONTADOR DE RESULTADOS */
+.resultsCounter {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #374151 !important;
+    border-color: #e5e7eb !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.resultsCounter span {
+    color: #374151 !important;
+}
+
+.resultsCount {
+    color: #1F448B !important;
+    font-weight: 600 !important;
+}
+
+.filterSelect:disabled {
+    background-color: #f9fafb !important;
+    background: #f9fafb !important;
+    color: #9ca3af !important;
+}
+
+.filterSelect option {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #374151 !important;
+}
+
+.filterSelect option:checked {
+    background-color: #1F448B !important;
+    background: #1F448B !important;
+    color: #ffffff !important;
+}
+
+.filterSelect option:hover {
+    background-color: #f3f4f6 !important;
+    background: #f3f4f6 !important;
+}
+
+/* FORZAR ESTILOS DEL BOTÓN LIMPIAR */
+.clearFiltersButton {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #374151 !important;
+    border-color: #e5e7eb !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.clearFiltersButton:hover {
+    background-color: #f8f9fa !important;
+    background: #f8f9fa !important;
+    color: #1F448B !important;
+    border-color: #1F448B !important;
+}
+
+/* Placeholder y texto del select */
+.filterSelect::placeholder {
+    color: #9ca3af !important;
+}
+
+.filterSelect:invalid {
+    color: #9ca3af !important;
+}
