@@ -4,7 +4,6 @@ import userStyles from '../styles/components/UserDashboard.module.css';
 
 // Componentes modulares
 import HierarchicalFilters from './dashboard/HierarchicalFilters';
-import AdvancedSearchFilters from './dashboard/AdvancedSearchFilters';
 
 // Iconos SVG
 import { PdfIcon, ExcelIcon, WordIcon, SearchIcon } from './icons/DashboardIcons';
@@ -15,10 +14,7 @@ const UserDashboard = () => {
     const [searchLoading, setSearchLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filters, setFilters] = useState({});
-    const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
     const [allDocuments, setAllDocuments] = useState([]);
-    const [sortBy, setSortBy] = useState('created_at');
-    const [sortOrder, setSortOrder] = useState('desc');
     const typingTimerRef = useRef(null);
     const searchAbortRef = useRef(null);
     const [stats, setStats] = useState({
@@ -98,11 +94,13 @@ const UserDashboard = () => {
         try {
             setSearchLoading(true);
             
+            console.log('🔍 UserDashboard: performSearch iniciado con filtros:', filters);
+            
             // Construir parámetros de búsqueda
             const params = new URLSearchParams();
             
-            // Solo agregar término de búsqueda si tiene al menos 3 caracteres
-            if (searchTerm && searchTerm.trim().length >= 3) {
+            // Solo agregar término de búsqueda si tiene al menos 2 caracteres (optimizado)
+            if (searchTerm && searchTerm.trim().length >= 2) {
                 params.append('termino', searchTerm.trim());
             }
             
@@ -146,9 +144,9 @@ const UserDashboard = () => {
                 params.append('extension', filters.extension);
             }
             
-            // Ordenamiento
-            if (sortBy) params.append('sort_by', sortBy);
-            if (sortOrder) params.append('sort_order', sortOrder);
+            // Ordenamiento por defecto (más recientes primero)
+            params.append('sort_by', 'created_at');
+            params.append('sort_order', 'desc');
 
             // Si no hay término de búsqueda y no hay filtros, usar el endpoint index
             let url = '/api/documentos';
@@ -167,9 +165,13 @@ const UserDashboard = () => {
             const controller = new AbortController();
             searchAbortRef.current = controller;
 
+            console.log('🔍 UserDashboard: Haciendo petición a:', url);
             let response = await apiRequest(url, { signal: controller.signal });
+            console.log('🔍 UserDashboard: Respuesta recibida:', response);
+            
             if (response.success) {
                 let results = response.data?.documentos || response.data || [];
+                console.log('🔍 UserDashboard: Resultados obtenidos:', results.length);
                 
                 // Fallback: si buscamos por texto y no hay resultados, intentar solo con filtros (sin termino)
                 if (hasText && results.length === 0 && hasAnyParam) {
@@ -202,34 +204,27 @@ const UserDashboard = () => {
         if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
         typingTimerRef.current = setTimeout(() => {
             performSearch();
-        }, 300);
+        }, 200); // Reducido a 200ms para búsqueda más rápida
     };
 
     const handleFilterChange = async (newFilters) => {
+        console.log('🔍 UserDashboard: handleFilterChange recibido:', newFilters);
         setFilters(newFilters);
         const hasAnyFilter = Object.values(newFilters).some(v => v && v !== '');
+        console.log('🔍 UserDashboard: ¿Tiene filtros?', hasAnyFilter);
+        
         // Cancelar cualquier búsqueda en curso al cambiar filtros jerárquicos
         if (searchAbortRef.current) {
             try { searchAbortRef.current.abort(); } catch (e) {}
         }
-        if (hasAnyFilter || (searchTerm && searchTerm.trim().length >= 3)) {
+        if (hasAnyFilter || (searchTerm && searchTerm.trim().length >= 2)) {
             // Ejecutar búsqueda inmediata para evitar resultados obsoletos
+            console.log('🔍 UserDashboard: Ejecutando búsqueda inmediata');
             setSearchLoading(true);
             setSearchResults([]);
             await performSearch();
         } else {
-            setSearchResults([]);
-            setStats(prev => ({ ...prev, filtered: prev.total }));
-        }
-    };
-
-    const handleAdvancedFilterChange = (filterKey, value) => {
-        const newFilters = { ...filters, [filterKey]: value };
-        setFilters(newFilters);
-        const hasAnyFilter = Object.values(newFilters).some(v => v && v !== '');
-        if (hasAnyFilter || (searchTerm && searchTerm.trim().length >= 3)) {
-            scheduleSearch();
-        } else {
+            console.log('🔍 UserDashboard: Sin filtros, limpiando resultados');
             setSearchResults([]);
             setStats(prev => ({ ...prev, filtered: prev.total }));
         }
@@ -307,81 +302,7 @@ const UserDashboard = () => {
     };
 
 
-    // Función para manejar filtros rápidos tipo chips
-    const handleQuickFilter = (key, value) => {
-        const newFilters = { ...filters };
-        if (value === "") {
-            delete newFilters[key];
-        } else {
-            newFilters[key] = value;
-        }
-        setFilters(newFilters);
-        performSearch();
-    };
-    // Filtros avanzados disponibles
-    const advancedFilters = [
-        {
-            key: 'tipo',
-            label: 'Tipo de Documento',
-            type: 'select',
-            options: [
-                { value: '', label: 'Todos los tipos' },
-                { value: 'Política', label: 'Política' },
-                { value: 'Procedimiento', label: 'Procedimiento' },
-                { value: 'Formato', label: 'Formato' },
-                { value: 'Registro', label: 'Registro' },
-                { value: 'Informe', label: 'Informe' },
-                { value: 'Plano', label: 'Plano' },
-                { value: 'Acta', label: 'Acta' },
-                { value: 'Contrato', label: 'Contrato' },
-                { value: 'Factura', label: 'Factura' },
-                { value: 'Presupuesto', label: 'Presupuesto' },
-                { value: 'Manual', label: 'Manual' }
-            ]
-        },
-        {
-            key: 'confidencialidad',
-            label: 'Confidencialidad',
-            type: 'select',
-            options: [
-                { value: '', label: 'Todas las confidencialidades' },
-                { value: 'Publico', label: 'Público' },
-                { value: 'Interno', label: 'Interno' },
-                { value: 'Restringido', label: 'Restringido' }
-            ]
-        },
-        {
-            key: 'extension',
-            label: 'Formato de Archivo',
-            type: 'select',
-            options: [
-                { value: '', label: 'Todos los formatos' },
-                { value: 'pdf', label: 'PDF' },
-                { value: 'docx', label: 'Word (.docx)' },
-                { value: 'xlsx', label: 'Excel (.xlsx)' },
-                { value: 'pptx', label: 'PowerPoint (.pptx)' },
-                { value: 'jpg', label: 'Imagen (.jpg)' },
-                { value: 'png', label: 'Imagen (.png)' },
-                { value: 'txt', label: 'Texto (.txt)' }
-            ]
-        },
-        {
-            key: 'etiqueta',
-            label: 'Etiqueta',
-            type: 'text',
-            placeholder: 'Ej: Proyecto Tumaco, Factura, etc.'
-        },
-        {
-            key: 'fechaDesde',
-            label: 'Fecha Desde',
-            type: 'date'
-        },
-        {
-            key: 'fechaHasta',
-            label: 'Fecha Hasta',
-            type: 'date'
-        }
-    ];
+
 
     return (
         <div className={userStyles.userDashboardContainer}>
@@ -467,87 +388,18 @@ const UserDashboard = () => {
                 </div>
 
                 {/* Filtros rápidos tipo chips */}
-                <div className={userStyles.quickFilters}>
-                    <button 
-                        className={`${userStyles.filterChip} ${!filters.extension ? userStyles.active : ''}`}
-                        onClick={() => handleQuickFilter('extension', '')}
-                    >
-                        <svg style={{ width: '16px', height: '16px', marginRight: '6px' }} fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/>
-                        </svg>
-                        Todos
-                    </button>
-                    <button 
-                        className={`${userStyles.filterChip} ${filters.extension === 'pdf' ? userStyles.active : ''}`}
-                        onClick={() => handleQuickFilter('extension', 'pdf')}
-                    >
-                        <svg style={{ width: '16px', height: '16px', marginRight: '6px' }} fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-                        </svg>
-                        PDF
-                    </button>
-                    <button 
-                        className={`${userStyles.filterChip} ${filters.extension === 'docx' ? userStyles.active : ''}`}
-                        onClick={() => handleQuickFilter('extension', 'docx')}
-                    >
-                        <svg style={{ width: '16px', height: '16px', marginRight: '6px' }} fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M10.5,14.5L12,13L13.5,14.5L15,13V17H13.5V15.5L12,17L10.5,15.5V17H9V13L10.5,14.5Z"/>
-                        </svg>
-                        Word
-                    </button>
-                    <button 
-                        className={`${userStyles.filterChip} ${filters.extension === 'xlsx' ? userStyles.active : ''}`}
-                        onClick={() => handleQuickFilter('extension', 'xlsx')}
-                    >
-                        <svg style={{ width: '16px', height: '16px', marginRight: '6px' }} fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M10,12V14H12V12H10M10,14V16H12V14H10M12,12V14H14V12H12M12,14V16H14V14H12Z"/>
-                        </svg>
-                        Excel
-                    </button>
-                    <button 
-                        className={`${userStyles.filterChip} ${filters.extension === 'jpg' ? userStyles.active : ''}`}
-                        onClick={() => handleQuickFilter('extension', 'jpg')}
-                    >
-                        <svg style={{ width: '16px', height: '16px', marginRight: '6px' }} fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M8.5,13.5L11,16.5L14.5,12L19,18H5M21,19V5C21,3.89 20.1,3 19,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19Z"/>
-                        </svg>
-                        Imágenes
-                    </button>
-                </div>
+
 
                 {/* Botón para mostrar/ocultar filtros avanzados */}
-                <div className={userStyles.advancedToggleContainer}>
-                    <button 
-                        className={userStyles.advancedToggleButton}
-                        onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                    >
-                        <svg style={{ width: '18px', height: '18px', marginRight: '8px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z" />
-                        </svg>
-                        {showAdvancedFilters ? 'Ocultar Filtros Avanzados' : 'Mostrar Filtros Avanzados'}
-                        <svg style={{ width: '16px', height: '16px', marginLeft: '8px', transform: showAdvancedFilters ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </button>
-                </div>
+
 
                                 {/* Filtros Jerárquicos */}
                 <HierarchicalFilters 
                     onFilterChange={handleFilterChange}
                     filters={filters}
                     styles={userStyles}
+                    onDocumentsLoad={setSearchResults}
                 />
-
-                {/* Filtros Avanzados */}
-                {showAdvancedFilters && (
-                    <AdvancedSearchFilters
-                        filters={filters}
-                        advancedFilters={advancedFilters}
-                        onFilterChange={handleAdvancedFilterChange}
-                        onClearAll={clearAllFilters}
-                        styles={userStyles}
-                    />
-                )}
             </div>
 
             {/* Resultados de búsqueda */}

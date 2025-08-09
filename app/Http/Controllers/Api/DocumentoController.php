@@ -23,15 +23,17 @@ class DocumentoController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $perPage = min(max((int) $request->get('per_page', 15), 1), 50);
-            $query = Documento::with(['direccion', 'procesoApoyo', 'subidoPor']);
+            $perPage = min(max((int) $request->get('per_page', 10), 1), 100); // Optimizado para 10 por defecto
+            $query = Documento::with(['direccion:id,nombre,codigo', 'procesoApoyo:id,nombre,codigo', 'subidoPor:id,name']); // Solo campos necesarios
 
-            // Filtros
+            // Filtros con logging para debug
             if ($request->has('direccion_id')) {
+                \Log::info('🔍 Aplicando filtro dirección_id:', ['direccion_id' => $request->direccion_id]);
                 $query->porDireccion($request->direccion_id);
             }
 
             if ($request->has('proceso_apoyo_id')) {
+                \Log::info('🔍 Aplicando filtro proceso_apoyo_id:', ['proceso_apoyo_id' => $request->proceso_apoyo_id]);
                 $query->porProceso($request->proceso_apoyo_id);
             }
 
@@ -90,7 +92,11 @@ class DocumentoController extends Controller
                     $query->buscar($q);
                 }
             } elseif ($q !== '' && mb_strlen($q) >= 2) {
-                $query->buscar($q);
+                // Búsqueda optimizada usando índices de texto completo
+                $query->whereRaw("to_tsvector('spanish', titulo || ' ' || COALESCE(descripcion, '')) @@ plainto_tsquery('spanish', ?)", [$q])
+                      ->orWhere('titulo', 'ilike', "%{$q}%")
+                      ->orWhere('descripcion', 'ilike', "%{$q}%")
+                      ->orWhere('nombre_original', 'ilike', "%{$q}%");
             }
 
             // Filtros por metadatos
@@ -694,18 +700,25 @@ class DocumentoController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'termino' => 'required|string|min:3'
+                'termino' => 'required|string|min:2' // Reducido a 2 caracteres para búsqueda más flexible
             ]);
 
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'El término de búsqueda debe tener al menos 3 caracteres'
+                    'message' => 'El término de búsqueda debe tener al menos 2 caracteres'
                 ], 422);
             }
 
-            $query = Documento::buscar($request->termino)
-                ->with(['direccion', 'procesoApoyo', 'subidoPor']);
+            // Búsqueda optimizada usando índices de texto completo
+            $termino = $request->get('termino');
+            $query = Documento::where(function($q) use ($termino) {
+                $q->whereRaw("to_tsvector('spanish', titulo || ' ' || COALESCE(descripcion, '')) @@ plainto_tsquery('spanish', ?)", [$termino])
+                  ->orWhere('titulo', 'ilike', "%{$termino}%")
+                  ->orWhere('descripcion', 'ilike', "%{$termino}%")
+                  ->orWhere('nombre_original', 'ilike', "%{$termino}%")
+                  ->orWhereJsonContains('etiquetas', $termino);
+            })->with(['direccion:id,nombre,codigo', 'procesoApoyo:id,nombre,codigo', 'subidoPor:id,name']); // Solo campos necesarios
 
             // Aplicar filtros opcionales también en búsqueda
             if ($request->has('direccion_id')) {
@@ -737,7 +750,14 @@ class DocumentoController extends Controller
             $sortOrder = strtolower($request->get('sort_order', 'desc')) === 'asc' ? 'asc' : 'desc';
             $query->orderBy($sortBy, $sortOrder);
 
-            $documentos = $query->paginate(15);
+            // Ordenamiento optimizado (más recientes primero)
+            $sortBy = $request->get('sort_by', 'created_at');
+            $sortOrder = $request->get('sort_order', 'desc');
+            $query->orderBy($sortBy, $sortOrder);
+
+            // Paginación optimizada para 10 documentos
+            $perPage = min(max((int) $request->get('per_page', 10), 1), 50);
+            $documentos = $query->paginate($perPage);
 
             $data = $documentos->getCollection()->map(function ($documento) {
                 return [
@@ -777,7 +797,12 @@ class DocumentoController extends Controller
                         'total' => $documentos->total(),
                     ]
                 ],
-                'message' => 'Búsqueda completada exitosamente'
+                'message' => 'Búsqueda completada exitosamente',
+                'performance' => [
+                    'query_time' => round((microtime(true) - LARAVEL_START) * 1000, 2) . 'ms',
+                    'results_count' => count($data),
+                    'total_found' => $documentos->total()
+                ]
             ], 200);
 
         } catch (\Exception $e) {

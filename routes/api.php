@@ -74,6 +74,30 @@ Route::middleware(['api.auth'])->group(function () {
         Route::get('/documentos/{id}/vista-previa', [DocumentoController::class, 'vistaPrevia'])->name('documentos.vista-previa');
     });
 
+    // Ruta de prueba para debug
+    Route::get('/debug/documentos', function (Request $request) {
+        $query = \App\Models\Documento::with(['direccion:id,nombre,codigo', 'procesoApoyo:id,nombre,codigo']);
+        
+        if ($request->has('direccion_id')) {
+            $query->where('direccion_id', $request->direccion_id);
+        }
+        
+        if ($request->has('proceso_apoyo_id')) {
+            $query->where('proceso_apoyo_id', $request->proceso_apoyo_id);
+        }
+        
+        $documentos = $query->get();
+        
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'documentos' => $documentos,
+                'count' => $documentos->count(),
+                'params' => $request->all()
+            ]
+        ]);
+    });
+
     // Rutas de Administración (solo para administradores)
     Route::middleware('admin')->group(function () {
         // Gestión de Usuarios

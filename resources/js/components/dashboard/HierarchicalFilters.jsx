@@ -4,12 +4,12 @@ import { useAuth } from '../../contexts/AuthContext';
 const HierarchicalFilters = ({ 
     onFilterChange, 
     filters = {},
-    styles = {}
+    styles = {},
+    onDocumentsLoad // Nueva prop para cargar documentos
 }) => {
     const { apiRequest } = useAuth();
     const [direcciones, setDirecciones] = useState([]);
     const [procesos, setProcesos] = useState([]);
-    const [tiposArchivo, setTiposArchivo] = useState([]);
     const [loading, setLoading] = useState(false);
     const [localFilters, setLocalFilters] = useState(filters);
 
@@ -38,14 +38,12 @@ const HierarchicalFilters = ({
         }
     }, [localFilters.direccionId]);
 
-    // Cargar tipos de archivo cuando cambie el proceso seleccionado
+    // Cargar documentos cuando cambie la dirección o proceso seleccionado
     useEffect(() => {
-        if (localFilters.procesoId) {
-            loadTiposArchivo(localFilters.direccionId, localFilters.procesoId);
-        } else {
-            setTiposArchivo([]);
+        if (localFilters.direccionId) {
+            loadDocumentsByDirection(localFilters.direccionId, localFilters.procesoId);
         }
-    }, [localFilters.procesoId, localFilters.direccionId]);
+    }, [localFilters.direccionId, localFilters.procesoId]);
 
     const loadDirecciones = async () => {
         try {
@@ -75,34 +73,48 @@ const HierarchicalFilters = ({
         }
     };
 
-    const loadTiposArchivo = async (direccionId, procesoId) => {
+    // Nueva función para cargar documentos por dirección y proceso con paginación
+    const loadDocumentsByDirection = async (direccionId, procesoId = null) => {
         try {
             setLoading(true);
-            const response = await apiRequest(`/api/procesos-apoyo/${procesoId}/documentos`);
-            if (response.success) {
-                // Extraer tipos únicos de archivo de los documentos
-                const documentos = response.data || [];
-                const tiposUnicos = [...new Set(documentos.map(doc => doc.tipo_archivo).filter(Boolean))];
-                setTiposArchivo(tiposUnicos);
+            const params = new URLSearchParams({
+                direccion_id: direccionId,
+                per_page: '10' // Paginación de 10 documentos
+            });
+            
+            // Si hay proceso seleccionado, agregarlo al filtro
+            if (procesoId) {
+                params.append('proceso_apoyo_id', procesoId);
+            }
+            
+            console.log('🔍 Cargando documentos con parámetros:', params.toString());
+            const response = await apiRequest(`/api/documentos?${params}`);
+            
+            if (response.success && onDocumentsLoad) {
+                console.log('📄 Documentos cargados:', response.data?.documentos?.length || 0);
+                onDocumentsLoad(response.data?.documentos || []);
+            } else {
+                console.error('❌ Error en respuesta:', response);
             }
         } catch (error) {
-            console.error('Error al cargar tipos de archivo:', error);
+            console.error('Error al cargar documentos por dirección/proceso:', error);
         } finally {
             setLoading(false);
         }
     };
 
     const handleFilterChange = (key, value) => {
+        console.log('🔍 HierarchicalFilters: Cambio de filtro:', { key, value, currentFilters: localFilters });
+        
         let newFilters = { ...localFilters, [key]: value };
 
-        // Resetear filtros dependientes cuando cambie un filtro padre
+        // Resetear proceso cuando cambie la dirección
         if (key === 'direccionId') {
             newFilters.procesoId = '';
-            newFilters.tipoArchivo = '';
-        } else if (key === 'procesoId') {
-            newFilters.tipoArchivo = '';
+            console.log('🔄 Reseteando procesoId porque cambió dirección');
         }
 
+        console.log('🔍 HierarchicalFilters: Nuevos filtros:', newFilters);
         setLocalFilters(newFilters);
         onFilterChange && onFilterChange(newFilters);
     };
@@ -145,43 +157,11 @@ const HierarchicalFilters = ({
                 </select>
             </div>
 
-            {/* Filtro de Tipos de Archivo */}
-            <div className={styles.filterGroup || ''}>
-                <label className={styles.filterLabel || ''}>Tipo de Archivo</label>
-                <select
-                    value={localFilters.tipoArchivo || ''}
-                    onChange={(e) => handleFilterChange('tipoArchivo', e.target.value)}
-                    className={styles.filterSelect || ''}
-                    disabled={!localFilters.procesoId || loading}
-                >
-                    <option value="">Todos los tipos</option>
-                    {tiposArchivo.map((tipo) => (
-                        <option key={tipo} value={tipo}>
-                            {tipo.toUpperCase()}
-                        </option>
-                    ))}
-                </select>
-            </div>
-
-            {/* Filtro de Ordenamiento */}
-            <div className={styles.filterGroup || ''}>
-                <label className={styles.filterLabel || ''}>Ordenar por</label>
-                <select
-                    value={localFilters.sortBy || 'created_at'}
-                    onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-                    className={styles.filterSelect || ''}
-                >
-                    <option value="created_at">Fecha de creación</option>
-                    <option value="titulo">Título</option>
-                    <option value="updated_at">Última modificación</option>
-                </select>
-            </div>
-
             {/* Indicador de carga */}
             {loading && (
                 <div className={styles.loadingIndicator || ''}>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                    <span className="ml-2 text-sm text-gray-600">Cargando...</span>
+                    <span className="ml-2 text-sm text-gray-600">Cargando documentos...</span>
                 </div>
             )}
         </div>
