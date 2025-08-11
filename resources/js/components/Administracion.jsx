@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import useNotifications from '../hooks/useNotifications';
 import styles from '../styles/components/Administracion.module.css';
 
 // Iconos SVG
@@ -72,6 +73,7 @@ const LoginIcon = ({ className = "" }) => (
 const Administracion = () => {
     const auth = useAuth();
     const { apiRequest } = auth;
+    const { showNotification } = useNotifications();
     const [activeTab, setActiveTab] = useState('usuarios');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -88,15 +90,6 @@ const Administracion = () => {
         password_confirmation: '',
         role_id: '',
         is_active: true
-    });
-
-    // Estados para roles
-    const [showRoleForm, setShowRoleForm] = useState(false);
-    const [editingRole, setEditingRole] = useState(null);
-    const [roleForm, setRoleForm] = useState({
-        name: '',
-        description: '',
-        permissions: []
     });
 
     // Estados para estadísticas
@@ -155,8 +148,10 @@ const Administracion = () => {
         try {
             if (editingUser) {
                 await apiRequest(`/usuarios/${editingUser.id}`, { method: 'PUT', body: JSON.stringify(userForm) });
+                showSuccess('Usuario actualizado exitosamente');
             } else {
                 await apiRequest('/usuarios', { method: 'POST', body: JSON.stringify(userForm) });
+                showSuccess('Usuario creado exitosamente');
             }
             
             setShowUserForm(false);
@@ -164,7 +159,9 @@ const Administracion = () => {
             resetUserForm();
             loadData();
         } catch (err) {
-            setError(err.response?.data?.message || 'Error al guardar usuario');
+            const errorMessage = err.response?.data?.message || 'Error al guardar usuario';
+            setError(errorMessage);
+            showError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -189,9 +186,12 @@ const Administracion = () => {
         setLoading(true);
         try {
             await apiRequest(`/usuarios/${userId}`, { method: 'DELETE' });
+            showSuccess('Usuario eliminado exitosamente');
             loadData();
         } catch (err) {
-            setError('Error al eliminar usuario');
+            const errorMessage = 'Error al eliminar usuario';
+            setError(errorMessage);
+            showError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -208,61 +208,7 @@ const Administracion = () => {
         });
     };
 
-    // Funciones para roles
-    const handleRoleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError(null);
 
-        try {
-            if (editingRole) {
-                await apiRequest(`/roles/${editingRole.id}`, { method: 'PUT', body: JSON.stringify(roleForm) });
-            } else {
-                await apiRequest('/roles', { method: 'POST', body: JSON.stringify(roleForm) });
-            }
-            
-            setShowRoleForm(false);
-            setEditingRole(null);
-            resetRoleForm();
-            loadData();
-        } catch (err) {
-            setError(err.response?.data?.message || 'Error al guardar rol');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleRoleEdit = (role) => {
-        setEditingRole(role);
-        setRoleForm({
-            name: role.name,
-            description: role.description,
-            permissions: role.permissions || []
-        });
-        setShowRoleForm(true);
-    };
-
-    const handleRoleDelete = async (roleId) => {
-        if (!confirm('¿Estás seguro de que quieres eliminar este rol?')) return;
-        
-        setLoading(true);
-        try {
-            await apiRequest(`/roles/${roleId}`, { method: 'DELETE' });
-            loadData();
-        } catch (err) {
-            setError('Error al eliminar rol');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const resetRoleForm = () => {
-        setRoleForm({
-            name: '',
-            description: '',
-            permissions: []
-        });
-    };
 
     const toggleUserStatus = async (userId, currentStatus) => {
         setLoading(true);
@@ -271,9 +217,13 @@ const Administracion = () => {
                 method: 'PATCH',
                 body: JSON.stringify({ is_active: !currentStatus })
             });
+            const newStatus = !currentStatus ? 'activado' : 'desactivado';
+            showSuccess(`Usuario ${newStatus} exitosamente`);
             loadData();
         } catch (err) {
-            setError('Error al cambiar estado del usuario');
+            const errorMessage = 'Error al cambiar estado del usuario';
+            setError(errorMessage);
+            showError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -296,7 +246,7 @@ const Administracion = () => {
                 <div className={styles.headerContent}>
                     <div>
                         <h1 className={styles.title}>Panel de Administración</h1>
-                        <p className={styles.subtitle}>Gestiona usuarios, roles y permisos del sistema</p>
+                        <p className={styles.subtitle}>Gestiona usuarios del sistema</p>
                     </div>
                     <button 
                         onClick={loadData}
@@ -332,7 +282,7 @@ const Administracion = () => {
                         </svg>
                     </div>
                     <div className={styles.statContent}>
-                        <h3>{stats.total_users || 0}</h3>
+                        <h3>{stats.users?.total || 0}</h3>
                         <p>Usuarios Totales</p>
                     </div>
                 </div>
@@ -343,21 +293,11 @@ const Administracion = () => {
                         </svg>
                     </div>
                     <div className={styles.statContent}>
-                        <h3>{stats.active_users || 0}</h3>
+                        <h3>{stats.users?.active || 0}</h3>
                         <p>Usuarios Activos</p>
                     </div>
                 </div>
-                <div className={styles.statCard}>
-                    <div className={styles.statIcon}>
-                        <svg style={{ width: '32px', height: '32px', color: '#1F448B' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                    </div>
-                    <div className={styles.statContent}>
-                        <h3>{stats.total_roles || 0}</h3>
-                        <p>Roles del Sistema</p>
-                    </div>
-                </div>
+
                 <div className={styles.statCard}>
                     <div className={styles.statIcon}>
                         <svg style={{ width: '32px', height: '32px', color: '#1F448B' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -408,24 +348,7 @@ const Administracion = () => {
                     </svg>
                     Usuarios
                 </button>
-                <button 
-                    className={`${styles.tab} ${activeTab === 'roles' ? styles.activeTab : ''}`}
-                    onClick={() => setActiveTab('roles')}
-                >
-                    <svg style={{ width: '20px', height: '20px', marginRight: '8px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                    Roles y Permisos
-                </button>
-                <button 
-                    className={`${styles.tab} ${activeTab === 'activity' ? styles.activeTab : ''}`}
-                    onClick={() => setActiveTab('activity')}
-                >
-                    <svg style={{ width: '20px', height: '20px', marginRight: '8px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                    </svg>
-                    Actividad Reciente
-                </button>
+
             </div>
 
             {/* Contenido de usuarios */}
@@ -593,14 +516,14 @@ const Administracion = () => {
                                                     className={styles.editButton}
                                                     title="Editar"
                                                 >
-                                                    ✏️
+                                                    <EditIcon />
                                                 </button>
                                                 <button
                                                     onClick={() => handleUserDelete(user.id)}
                                                     className={styles.deleteButton}
                                                     title="Eliminar"
                                                 >
-                                                    🗑️
+                                                    <TrashIcon />
                                                 </button>
                                             </div>
                                         </td>
@@ -612,144 +535,7 @@ const Administracion = () => {
                 </div>
             )}
 
-            {/* Contenido de roles */}
-            {activeTab === 'roles' && (
-                <div className={styles.tabContent}>
-                    <div className={styles.sectionHeader}>
-                        <h2>Gestión de Roles y Permisos</h2>
-                        <button 
-                            className={styles.addButton}
-                            onClick={() => {
-                                setShowRoleForm(true);
-                                setEditingRole(null);
-                                resetRoleForm();
-                            }}
-                        >
-                            <PlusIcon /> Nuevo Rol
-                        </button>
-                    </div>
 
-                    {showRoleForm && (
-                        <div className={styles.formOverlay}>
-                            <div className={styles.formModal}>
-                                <div className={styles.formHeader}>
-                                    <h3>{editingRole ? 'Editar Rol' : 'Nuevo Rol'}</h3>
-                                    <button 
-                                        onClick={() => {
-                                            setShowRoleForm(false);
-                                            setEditingRole(null);
-                                            resetRoleForm();
-                                        }}
-                                        className={styles.closeButton}
-                                    >
-                                        <svg style={{ width: "20px", height: "20px", color: "white" }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                                    </button>
-                                </div>
-                                <form onSubmit={handleRoleSubmit} className={styles.form}>
-                                    <div className={styles.formGroup}>
-                                        <label>Nombre del Rol</label>
-                                        <input
-                                            type="text"
-                                            value={roleForm.name}
-                                            onChange={(e) => setRoleForm({...roleForm, name: e.target.value})}
-                                            required
-                                        />
-                                    </div>
-                                    <div className={styles.formGroup}>
-                                        <label>Descripción</label>
-                                        <textarea
-                                            value={roleForm.description}
-                                            onChange={(e) => setRoleForm({...roleForm, description: e.target.value})}
-                                            rows="3"
-                                        />
-                                    </div>
-                                    <div className={styles.formActions}>
-                                        <button type="submit" className={styles.saveButton} disabled={loading}>
-                                            {loading ? 'Guardando...' : (editingRole ? 'Actualizar' : 'Crear')}
-                                        </button>
-                                        <button 
-                                            type="button" 
-                                            className={styles.cancelButton}
-                                            onClick={() => {
-                                                setShowRoleForm(false);
-                                                setEditingRole(null);
-                                                resetRoleForm();
-                                            }}
-                                        >
-                                            Cancelar
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    )}
-
-                    <div className={styles.rolesGrid}>
-                        {roles.map(role => (
-                            <div key={role.id} className={styles.roleCard}>
-                                <div className={styles.roleHeader}>
-                                    <h3>{role.name}</h3>
-                                    <div className={styles.roleActions}>
-                                        <button
-                                            onClick={() => handleRoleEdit(role)}
-                                            className={styles.editButton}
-                                            title="Editar"
-                                        >
-                                            ✏️
-                                        </button>
-                                        <button
-                                            onClick={() => handleRoleDelete(role.id)}
-                                            className={styles.deleteButton}
-                                            title="Eliminar"
-                                        >
-                                            🗑️
-                                        </button>
-                                    </div>
-                                </div>
-                                <p className={styles.roleDescription}>{role.description || 'Sin descripción'}</p>
-                                <div className={styles.roleStats}>
-                                    <span>{role.users_count || 0} usuarios</span>
-                                    <span>{role.permissions_count || 0} permisos</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Contenido de actividad */}
-            {activeTab === 'activity' && (
-                <div className={styles.tabContent}>
-                    <div className={styles.sectionHeader}>
-                        <h2>Actividad Reciente del Sistema</h2>
-                    </div>
-                    
-                    <div className={styles.activityList}>
-                        {stats.recent_activity && stats.recent_activity.length > 0 ? (
-                            stats.recent_activity.map((activity, index) => (
-                                <div key={index} className={styles.activityItem}>
-                                    <div className={styles.activityIcon}>
-                                        {activity.type === 'login' && <LoginIcon />}
-                                        {activity.type === 'document' && <ActivityIcon />}
-                                        {activity.type === 'user' && <UsersIcon />}
-                                        {activity.type === 'system' && <ShieldIcon />}
-                                    </div>
-                                    <div className={styles.activityContent}>
-                                        <p className={styles.activityText}>{activity.description}</p>
-                                        <span className={styles.activityTime}>
-                                            {new Date(activity.created_at).toLocaleString()}
-                                        </span>
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <div className={styles.emptyState}>
-                                <p>No hay actividad reciente para mostrar</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
