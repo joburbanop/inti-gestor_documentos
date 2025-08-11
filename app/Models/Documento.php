@@ -234,8 +234,12 @@ class Documento extends Model
     /**
      * Scope para filtrar por extensión específica
      */
-    public function scopePorExtension(Builder $query, string $extension): Builder
+    public function scopePorExtension(Builder $query, ?string $extension): Builder
     {
+        if (empty($extension)) {
+            return $query;
+        }
+        
         return $query->where('extension', strtolower($extension))
                     ->whereNotNull('extension')
                     ->where('extension', '!=', '');
@@ -246,6 +250,10 @@ class Documento extends Model
      */
     public function scopePorExtensiones(Builder $query, array $extensiones): Builder
     {
+        if (empty($extensiones)) {
+            return $query;
+        }
+        
         return $query->whereIn('extension', array_map('strtolower', $extensiones))
                     ->whereNotNull('extension')
                     ->where('extension', '!=', '');

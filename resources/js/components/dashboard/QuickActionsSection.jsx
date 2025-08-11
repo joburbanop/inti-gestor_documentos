@@ -67,10 +67,10 @@ const QuickActionsSection = ({
             colorClass: "quickActionIconAzul"
         }] : []),
         ...(showProcesses ? [{
-            title: isUserDashboard ? "Explorar por Proceso" : "Procesos de Apoyo",
+            title: isUserDashboard ? "Explorar por Categoría" : "Categorías",
             description: isUserDashboard 
                 ? "Explora documentos específicos por proceso de apoyo dentro de cada dirección"
-                : "Configura los procesos de apoyo dentro de cada dirección. Define los flujos de trabajo y procedimientos administrativos.",
+                : "Configura las categorías dentro de cada dirección. Define los flujos de trabajo y procedimientos administrativos.",
             icon: <ProcessIcon className="w-8 h-8" />,
             hash: "procesos",
             colorClass: "quickActionIconVerde"

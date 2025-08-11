@@ -29,6 +29,72 @@ const HierarchicalFilters = ({
         loadDirecciones();
     }, []);
 
+    // Escuchar eventos de creación/actualización de direcciones
+    useEffect(() => {
+        const handleDireccionCreated = (event) => {
+            console.log('🏢 Dirección creada, actualizando filtros:', event.detail);
+            // Mostrar notificación temporal
+            showUpdateNotification('Nueva dirección agregada a los filtros');
+            loadDirecciones(); // Recargar direcciones
+        };
+
+        const handleDireccionUpdated = (event) => {
+            console.log('🏢 Dirección actualizada, actualizando filtros:', event.detail);
+            // Mostrar notificación temporal
+            showUpdateNotification('Filtros actualizados');
+            loadDirecciones(); // Recargar direcciones
+        };
+
+        // Agregar event listeners
+        window.addEventListener('direccionCreated', handleDireccionCreated);
+        window.addEventListener('direccionUpdated', handleDireccionUpdated);
+
+        // Cleanup: remover event listeners
+        return () => {
+            window.removeEventListener('direccionCreated', handleDireccionCreated);
+            window.removeEventListener('direccionUpdated', handleDireccionUpdated);
+        };
+    }, []);
+
+    // Función para mostrar notificación de actualización
+    const showUpdateNotification = (message) => {
+        // Crear elemento de notificación temporal
+        const notification = document.createElement('div');
+        notification.className = styles.updateNotification;
+        notification.textContent = message;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            animation: slideInRight 0.3s ease-out;
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Remover después de 3 segundos
+        setTimeout(() => {
+            notification.style.animation = 'slideOutRight 0.3s ease-in';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+    };
+
+    // Función para recargar direcciones (útil para actualizar después de cambios)
+    const reloadDirecciones = () => {
+        loadDirecciones();
+    };
+
     // Cargar procesos cuando cambie la dirección seleccionada
     useEffect(() => {
         if (localFilters.direccionId) {
@@ -50,7 +116,28 @@ const HierarchicalFilters = ({
             setLoading(true);
             const response = await apiRequest('/api/direcciones');
             if (response.success) {
-                setDirecciones(response.data || []);
+                // Filtrar solo direcciones que tienen documentos o procesos
+                const direccionesConContenido = response.data.filter(direccion => 
+                    direccion.estadisticas?.total_documentos > 0 || 
+                    direccion.estadisticas?.total_procesos > 0
+                );
+                
+                // Verificar si hay cambios en las direcciones
+                const direccionesAnteriores = direcciones.map(d => d.id).sort();
+                const direccionesNuevas = direccionesConContenido.map(d => d.id).sort();
+                const hayCambios = JSON.stringify(direccionesAnteriores) !== JSON.stringify(direccionesNuevas);
+                
+                setDirecciones(direccionesConContenido || []);
+                console.log('🏢 Direcciones cargadas:', direccionesConContenido.length);
+                
+                // Si hay cambios y hay una dirección seleccionada, verificar si sigue existiendo
+                if (hayCambios && localFilters.direccionId) {
+                    const direccionExiste = direccionesConContenido.some(d => d.id === localFilters.direccionId);
+                    if (!direccionExiste) {
+                        console.log('🔄 Dirección seleccionada ya no existe, limpiando filtro');
+                        handleFilterChange('direccionId', '');
+                    }
+                }
             }
         } catch (error) {
             console.error('Error al cargar direcciones:', error);
@@ -125,43 +212,62 @@ const HierarchicalFilters = ({
             <div className={styles.filtersRow}>
                 {/* Filtro de Dirección */}
                 <div className={styles.filterGroup}>
-                    <label className={styles.filterLabel} htmlFor="direccion-select">
-                        Dirección
-                    </label>
+                    <div className={styles.filterHeader}>
+                        <label className={styles.filterLabel} htmlFor="direccion-select">
+                            Dirección
+                        </label>
+                        <button
+                            type="button"
+                            onClick={reloadDirecciones}
+                            className={styles.reloadButton}
+                            title="Actualizar direcciones"
+                            disabled={loading}
+                        >
+                            {loading ? (
+                                <div className={styles.loadingSpinner}></div>
+                            ) : (
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                            )}
+                        </button>
+                    </div>
                     <select
                         id="direccion-select"
                         value={localFilters.direccionId || ''}
                         onChange={(e) => handleFilterChange('direccionId', e.target.value ? Number(e.target.value) : '')}
-                        className={styles.filterSelect}
+                        className={`${styles.filterSelect} ${loading ? styles.updating : ''}`}
                         disabled={loading}
                         aria-label="Seleccionar dirección"
                     >
-                        <option value="">Seleccionar dirección</option>
+                        <option value="">
+                            {loading ? 'Actualizando...' : 'Seleccionar dirección'}
+                        </option>
                         {direcciones.map((direccion) => (
                             <option key={direccion.id} value={direccion.id}>
-                                {direccion.nombre}
+                                {direccion.nombre} ({direccion.estadisticas?.total_documentos || 0} docs)
                             </option>
                         ))}
                     </select>
                 </div>
 
-                {/* Filtro de Procesos de Apoyo */}
+                {/* Filtro de Categorías */}
                 <div className={styles.filterGroup}>
-                    <label className={styles.filterLabel} htmlFor="proceso-select">
-                        Proceso de Apoyo
-                    </label>
+                                            <label className={styles.filterLabel} htmlFor="proceso-select">
+                            Categoría
+                        </label>
                     <select
                         id="proceso-select"
                         value={localFilters.procesoId || ''}
                         onChange={(e) => handleFilterChange('procesoId', e.target.value ? Number(e.target.value) : '')}
                         className={styles.filterSelect}
                         disabled={!localFilters.direccionId || loading}
-                        aria-label="Seleccionar proceso de apoyo"
+                                                    aria-label="Seleccionar categoría"
                     >
-                        <option value="">Seleccionar proceso</option>
+                                                    <option value="">Seleccionar categoría</option>
                         {procesos.map((proceso) => (
                             <option key={proceso.id} value={proceso.id}>
-                                {proceso.nombre}
+                                {proceso.nombre} ({proceso.estadisticas?.total_documentos || 0} docs)
                             </option>
                         ))}
                     </select>
@@ -179,14 +285,17 @@ const HierarchicalFilters = ({
             {/* Mensaje de estado cuando no hay dirección seleccionada */}
             {!localFilters.direccionId && !loading && (
                 <div className={`${styles.statusMessage} ${styles.info}`}>
-                    Selecciona una dirección para ver los procesos de apoyo disponibles
+                    {direcciones.length > 0 
+                        ? 'Selecciona una dirección para ver las categorías disponibles'
+                        : 'No hay direcciones con documentos disponibles'
+                    }
                 </div>
             )}
 
             {/* Mensaje cuando hay dirección pero no hay procesos */}
             {localFilters.direccionId && procesos.length === 0 && !loading && (
                 <div className={`${styles.statusMessage} ${styles.warning}`}>
-                    No hay procesos de apoyo disponibles para esta dirección
+                                            No hay categorías disponibles para esta dirección
                 </div>
             )}
 
@@ -199,12 +308,18 @@ const HierarchicalFilters = ({
                                 Dirección: <span className={styles.resultsCount}>
                                     {direcciones.find(d => d.id === localFilters.direccionId)?.nombre}
                                 </span>
+                                <span className={styles.resultsStats}>
+                                    ({direcciones.find(d => d.id === localFilters.direccionId)?.estadisticas?.total_documentos || 0} documentos)
+                                </span>
                             </>
                         )}
                         {localFilters.procesoId && (
                             <>
-                                {' • '}Proceso: <span className={styles.resultsCount}>
+                                {' • '}Categoría: <span className={styles.resultsCount}>
                                     {procesos.find(p => p.id === localFilters.procesoId)?.nombre}
+                                </span>
+                                <span className={styles.resultsStats}>
+                                    ({procesos.find(p => p.id === localFilters.procesoId)?.estadisticas?.total_documentos || 0} documentos)
                                 </span>
                             </>
                         )}

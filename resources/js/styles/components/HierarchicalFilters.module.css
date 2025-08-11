@@ -33,13 +33,88 @@
     min-width: 0; /* Permite que el contenido se ajuste */
 }
 
+/* Header del filtro con botón de recarga */
+.filterHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+
 /* Etiqueta del filtro */
 .filterLabel {
     font-size: 0.875rem;
     font-weight: 600;
     color: #374151 !important;
-    margin-bottom: 0.25rem;
     line-height: 1.25;
+    margin: 0;
+}
+
+/* Botón de recarga */
+.reloadButton {
+    padding: 0.25rem;
+    border: none;
+    background: transparent;
+    color: #6b7280;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.reloadButton:hover {
+    color: #1F448B;
+    background-color: rgba(31, 68, 139, 0.1);
+}
+
+.reloadButton:disabled {
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
+.reloadButton:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(31, 68, 139, 0.2);
+}
+
+/* Animaciones para notificaciones de actualización */
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+.updateNotification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #10b981;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 9999;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    animation: slideInRight 0.3s ease-out;
 }
 
 /* Select personalizado */
@@ -78,6 +153,12 @@
     color: #9ca3af !important;
     cursor: not-allowed;
     border-color: #e5e7eb;
+}
+
+.filterSelect.updating {
+    background-color: #f0f9ff !important;
+    border-color: #0ea5e9;
+    color: #0ea5e9 !important;
 }
 
 /* Opciones del select */
@@ -173,6 +254,13 @@
 .resultsCount {
     font-weight: 600;
     color: #1F448B;
+}
+
+.resultsStats {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: 400;
+    margin-left: 0.25rem;
 }
 
 /* Botón de limpiar filtros */

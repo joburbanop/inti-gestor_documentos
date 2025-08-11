@@ -12,7 +12,7 @@ const CreateDireccion = () => {
 
     //
 
-    // Cargar opciones de procesos de apoyo
+            // Cargar opciones de categorías
     useEffect(() => {
         const cargarProcesos = async () => {
             try {
@@ -21,10 +21,10 @@ const CreateDireccion = () => {
                     setProcesosOptions(response.data);
                 }
             } catch (error) {
-                console.error('Error al cargar procesos de apoyo:', error);
+                console.error('Error al cargar categorías:', error);
                 // No mostrar error si es de autenticación, ya se maneja en el contexto
                 if (!error.message?.includes('No autenticado')) {
-                    setErrors({ general: 'Error al cargar procesos de apoyo' });
+                    setErrors({ general: 'Error al cargar categorías' });
                 }
             }
         };
@@ -132,14 +132,14 @@ const CreateDireccion = () => {
             ]
         },
         {
-            title: 'Procesos de Apoyo',
+                            title: 'Categorías',
             icon: ProcessIcon,
             fields: [
                 {
                     name: 'procesos_apoyo',
-                    label: 'Procesos de Apoyo Asociados',
+                    label: 'Categorías Asociadas',
                     type: 'select',
-                    placeholder: 'Selecciona los procesos de apoyo (opcional)',
+                    placeholder: 'Selecciona las categorías (opcional)',
                     required: false,
                     multiple: true,
                     options: procesosOptions,
@@ -183,7 +183,7 @@ const CreateDireccion = () => {
                         </div>
                         <div className="modalContent">
                             <p>Esta funcionalidad estará disponible próximamente.</p>
-                            <p>Por ahora, puedes crear procesos de apoyo desde la sección de Procesos.</p>
+                            <p>Por ahora, puedes crear categorías desde la sección de Categorías.</p>
                         </div>
                         <div className="modalActions">
                             <button 

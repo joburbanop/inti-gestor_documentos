@@ -88,11 +88,11 @@ const Direcciones = () => {
         applyFilters(searchTerm, filters);
     };
 
-    // Aplicar filtros y búsqueda
+    // Aplicar búsqueda y filtros
     const applyFilters = (search, filters) => {
         let filtered = [...direcciones];
 
-        // Aplicar búsqueda
+        // Aplicar búsqueda por texto
         if (search.trim()) {
             const searchLower = search.toLowerCase();
             filtered = filtered.filter(direccion => 
@@ -102,28 +102,10 @@ const Direcciones = () => {
             );
         }
 
-        // Aplicar filtros
+        // Aplicar filtro por dirección
         filters.forEach(filter => {
-            if (filter.key === 'procesos_count') {
-                const count = parseInt(filter.value);
-                if (count === 0) {
-                    filtered = filtered.filter(d => d.procesos_apoyo_count === 0);
-                } else if (count > 0) {
-                    filtered = filtered.filter(d => d.procesos_apoyo_count > 0);
-                }
-            }
-            if (filter.key === 'codigo') {
-                const code = String(filter.value).toLowerCase();
-                filtered = filtered.filter(d => d.codigo.toLowerCase().includes(code));
-            }
-            // filtro color eliminado
-            if (filter.key === 'orden_min') {
-                const min = Number(filter.value);
-                if (!Number.isNaN(min)) filtered = filtered.filter(d => (d.orden ?? 0) >= min);
-            }
-            if (filter.key === 'orden_max') {
-                const max = Number(filter.value);
-                if (!Number.isNaN(max)) filtered = filtered.filter(d => (d.orden ?? 0) <= max);
+            if (filter.key === 'direccion_id' && filter.value) {
+                filtered = filtered.filter(direccion => direccion.id.toString() === filter.value);
             }
         });
 
@@ -160,6 +142,25 @@ const Direcciones = () => {
                 // Mostrar mensaje de éxito
                 const action = modalMode === 'create' ? 'creada' : 'actualizada';
                 showSuccess(`Dirección "${formData.nombre}" ${action} exitosamente`);
+                
+                // Disparar evento personalizado para actualizar filtros en otros componentes
+                if (modalMode === 'create') {
+                    const event = new CustomEvent('direccionCreated', {
+                        detail: {
+                            direccion: response.data,
+                            action: 'created'
+                        }
+                    });
+                    window.dispatchEvent(event);
+                } else {
+                    const event = new CustomEvent('direccionUpdated', {
+                        detail: {
+                            direccion: response.data,
+                            action: 'updated'
+                        }
+                    });
+                    window.dispatchEvent(event);
+                }
             }
         } catch (error) {
             //
@@ -181,7 +182,7 @@ const Direcciones = () => {
         
         setSelectedDireccion(direccion);
         
-        // Extraer los IDs de los procesos de apoyo
+                    // Extraer los IDs de las categorías
         const procesosIds = direccion.procesos_apoyo ? 
             direccion.procesos_apoyo.map(proceso => proceso.id) : [];
         
@@ -324,7 +325,7 @@ const Direcciones = () => {
                 )}
             </div>
 
-            {/* Barra de búsqueda y filtros */}
+            {/* Barra de búsqueda y filtro por dirección */}
             <SearchFilterBar
                 onSearch={handleSearch}
                 onFiltersChange={handleFiltersChange}
@@ -334,45 +335,24 @@ const Direcciones = () => {
                 showAdvancedFilters={true}
                 advancedFilters={[
                     {
-                        key: 'procesos_count',
-                        label: 'Procesos de Apoyo',
+                        key: 'direccion_id',
+                        label: 'Filtrar por Dirección',
                         type: 'select',
-                        value: activeFilters.find(f => f.key === 'procesos_count')?.value || '',
+                        value: activeFilters.find(f => f.key === 'direccion_id')?.value || '',
                         options: [
-                            { value: '0', label: 'Sin procesos' },
-                            { value: '1', label: 'Con procesos' }
+                            { value: '', label: 'Todas las direcciones' },
+                            ...direcciones.map(direccion => ({
+                                value: direccion.id.toString(),
+                                label: direccion.nombre
+                            }))
                         ]
-                    },
-                    {
-                        key: 'codigo',
-                        label: 'Código',
-                        type: 'text',
-                        value: activeFilters.find(f => f.key === 'codigo')?.value || '',
-                        placeholder: 'Ej: ADM, FIN, COM'
-                    },
-                    
-                    {
-                        key: 'orden_min',
-                        label: 'Orden desde',
-                        type: 'number',
-                        value: activeFilters.find(f => f.key === 'orden_min')?.value ?? ''
-                    },
-                    {
-                        key: 'orden_max',
-                        label: 'Orden hasta',
-                        type: 'number',
-                        value: activeFilters.find(f => f.key === 'orden_max')?.value ?? ''
                     }
                 ]}
                 onAdvancedFilterChange={(key, value) => {
                     const newFilters = activeFilters.filter(f => f.key !== key);
                     if (value !== '' && value !== undefined && value !== null) {
-                        let label = '';
-                        if (key === 'procesos_count') label = value === '0' ? 'Sin procesos' : 'Con procesos';
-                        else if (key === 'codigo') label = `Código: ${value}`;
-                        else if (key === 'orden_min') label = `Orden ≥ ${value}`;
-                        else if (key === 'orden_max') label = `Orden ≤ ${value}`;
-                        else label = String(value);
+                        const direccionSeleccionada = direcciones.find(d => d.id.toString() === value);
+                        const label = direccionSeleccionada ? `Dirección: ${direccionSeleccionada.nombre}` : '';
                         newFilters.push({ key, value, label });
                     }
                     handleFiltersChange(newFilters);

@@ -82,9 +82,9 @@ const Dashboard = () => {
             colorClass: 'statCardVerde'
         },
         {
-            title: 'Procesos de Apoyo',
+            title: 'Categorías',
             value: stats.total_procesos,
-            subtitle: 'Procesos configurados',
+            subtitle: 'Categorías configuradas',
             icon: <ProcessIcon className="w-8 h-8" />,
             colorClass: 'statCardMorado'
         }
@@ -100,15 +100,15 @@ const Dashboard = () => {
             colorClass: 'quickActionIconAzul'
         },
         {
-            title: 'Procesos de Apoyo',
-            description: 'Crear, editar y eliminar procesos dentro de cada dirección. Define flujos de trabajo y procedimientos administrativos.',
+            title: 'Categorías',
+            description: 'Crear, editar y eliminar categorías dentro de cada dirección. Define flujos de trabajo y procedimientos administrativos.',
             icon: <ProcessIcon className="w-6 h-6" />,
             hash: 'procesos',
             colorClass: 'quickActionIconVerde'
         },
         {
             title: 'Formatos o Documentos',
-            description: 'Crear, editar y eliminar documentos del sistema. Organiza la información por dirección y proceso para fácil acceso.',
+            description: 'Crear, editar y eliminar documentos del sistema. Organiza la información por dirección y categoría para fácil acceso.',
             icon: <DocumentIcon className="w-6 h-6" />,
             hash: 'documentos',
             colorClass: 'quickActionIconNaranja'

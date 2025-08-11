@@ -72,7 +72,7 @@ const Navbar = ({ title = "Intranet Inti" }) => {
     const navItems = [
         { name: 'Dashboard', path: '/' , icon: DashboardIcon },
         { name: 'Direcciones', path: '/direcciones', icon: DirectionsIcon },
-        { name: 'Procesos de Apoyo', path: '/procesos', icon: ProcessesIcon },
+        { name: 'Categorías', path: '/procesos', icon: ProcessesIcon },
         { name: 'Documentos', path: '/documentos', icon: DocumentsIcon },
     ];
 

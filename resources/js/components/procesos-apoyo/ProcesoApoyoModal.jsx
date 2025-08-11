@@ -52,7 +52,7 @@ const ProcesoApoyoModal = ({
 
     if (!show) return null;
 
-    // Configuración de campos para procesos de apoyo
+                // Configuración de campos para categorías
     const procesoApoyoFields = [
         {
             title: 'Información Básica',
@@ -60,7 +60,7 @@ const ProcesoApoyoModal = ({
             fields: [
                 {
                     name: 'nombre',
-                    label: 'Nombre del Proceso',
+                    label: 'Nombre de la Categoría',
                     type: 'text',
                     placeholder: 'Ej: Gestión de Recursos Humanos',
                     required: true,
@@ -82,9 +82,9 @@ const ProcesoApoyoModal = ({
             fields: [
                 {
                     name: 'descripcion',
-                    label: 'Descripción del Proceso',
+                    label: 'Descripción de la Categoría',
                     type: 'textarea',
-                    placeholder: 'Describe las funciones principales, responsabilidades y objetivos de este proceso...',
+                    placeholder: 'Describe las funciones principales, responsabilidades y objetivos de esta categoría...',
                     required: true,
                     maxLength: 500,
                     rows: 4
@@ -126,7 +126,7 @@ const ProcesoApoyoModal = ({
                 {/* Header del Modal */}
                 <div className={styles.modalHeader}>
                     <h2 className={styles.modalTitle}>
-                        {mode === 'create' ? 'Nuevo Proceso de Apoyo' : 'Editar Proceso de Apoyo'}
+                        {mode === 'create' ? 'Nueva Categoría' : 'Editar Categoría'}
                     </h2>
                     <button
                         onClick={onClose}

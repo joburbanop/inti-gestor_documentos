@@ -36,7 +36,7 @@ const ProcesosApoyo = () => {
     const { notifications, showSuccess, showError, showWarning, removeNotification } = useNotifications();
     const [deletingIds, setDeletingIds] = useState(new Set());
 
-    // Cargar procesos de apoyo
+            // Cargar categorías
     const fetchProcesosApoyo = async () => {
         try {
             setLoading(true);
@@ -153,7 +153,7 @@ const ProcesosApoyo = () => {
                 await fetchProcesosApoyo();
                 
                 const action = modalMode === 'create' ? 'creado' : 'actualizado';
-                showSuccess(`Proceso de apoyo "${formData.nombre}" ${action} exitosamente`);
+                showSuccess(`Categoría "${formData.nombre}" ${action} exitosamente`);
             }
         } catch (error) {
             //
@@ -161,8 +161,8 @@ const ProcesosApoyo = () => {
             if (error.message === 'Error de validación' && error.errors) {
                 setErrors(error.errors);
             } else {
-                setErrors({ general: 'Error al guardar el proceso de apoyo' });
-                showError('Error al guardar el proceso de apoyo');
+                            setErrors({ general: 'Error al guardar la categoría' });
+            showError('Error al guardar la categoría');
             }
         } finally {
             setFormLoading(false);
@@ -187,12 +187,12 @@ const ProcesosApoyo = () => {
     const handleDelete = (proceso) => {
         //
         
-        // Verificar si el proceso tiene documentos asociados antes de mostrar el modal
+                    // Verificar si la categoría tiene documentos asociados antes de mostrar el modal
         const hasDocuments = proceso.estadisticas?.total_documentos > 0;
         
         if (hasDocuments) {
             // Si tiene documentos, mostrar notificación de advertencia
-            showWarning(`No se puede eliminar el proceso "${proceso.nombre}" porque tiene ${proceso.estadisticas.total_documentos} documento(s) asociado(s).\n\nPrimero debes eliminar o mover todos los documentos asociados a este proceso.`);
+            showWarning(`No se puede eliminar la categoría "${proceso.nombre}" porque tiene ${proceso.estadisticas.total_documentos} documento(s) asociado(s).\n\nPrimero debes eliminar o mover todos los documentos asociados a esta categoría.`);
             return;
         }
         
@@ -211,7 +211,7 @@ const ProcesosApoyo = () => {
                         setFilteredProcesos(computeFiltered(updated, searchTerm, activeFilters));
                         return updated;
                     });
-                    showSuccess(`Proceso de apoyo "${proceso.nombre}" eliminado exitosamente`);
+                    showSuccess(`Categoría "${proceso.nombre}" eliminada exitosamente`);
                 }
             } catch (error) {
                 // Si el backend responde "no encontrado", lo tratamos como eliminado (idempotente)
@@ -222,10 +222,10 @@ const ProcesosApoyo = () => {
                         setFilteredProcesos(computeFiltered(updated, searchTerm, activeFilters));
                         return updated;
                     });
-                    showSuccess(`Proceso de apoyo "${proceso.nombre}" ya no existe. Lista actualizada.`);
+                    showSuccess(`Categoría "${proceso.nombre}" ya no existe. Lista actualizada.`);
                 } else {
-                    console.error('Error al eliminar proceso de apoyo:', error);
-                    showError(`Error al eliminar proceso de apoyo: ${error.message}`);
+                                console.error('Error al eliminar categoría:', error);
+            showError(`Error al eliminar categoría: ${error.message}`);
                 }
             } finally {
                 setDeletingIds(prev => {
@@ -238,8 +238,8 @@ const ProcesosApoyo = () => {
         };
 
         showConfirmModal({
-            title: 'Eliminar Proceso de Apoyo',
-            message: `¿Estás seguro de que quieres eliminar el proceso "${proceso.nombre}"? Esta acción no se puede deshacer.`,
+            title: 'Eliminar Categoría',
+            message: `¿Estás seguro de que quieres eliminar la categoría "${proceso.nombre}"? Esta acción no se puede deshacer.`,
             confirmText: 'Eliminar',
             cancelText: 'Cancelar',
             type: 'danger',
@@ -276,7 +276,7 @@ const ProcesosApoyo = () => {
             <div className={styles.loadingContainer}>
                 <div className={styles.loadingSpinner}></div>
                 <p className="text-gray-600 text-lg font-medium mt-4">
-                    Cargando procesos de apoyo...
+                    Cargando categorías...
                 </p>
             </div>
         );
@@ -290,10 +290,10 @@ const ProcesosApoyo = () => {
             <div className={styles.header}>
                 <div className={styles.headerContent}>
                     <div>
-                        <h1 className={styles.title}>Procesos de Apoyo</h1>
-                        <p className={styles.subtitle}>
-                            Gestiona los procesos de apoyo de la organización
-                        </p>
+                                        <h1 className={styles.title}>Categorías</h1>
+                <p className={styles.subtitle}>
+                    Gestiona las categorías de la organización
+                </p>
                     </div>
                     <button
                         onClick={openCreateModal}
@@ -302,7 +302,7 @@ const ProcesosApoyo = () => {
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
-                        Nuevo Proceso
+                        Nueva Categoría
                     </button>
                 </div>
             </div>
@@ -311,7 +311,7 @@ const ProcesosApoyo = () => {
             <SearchFilterBar
                 onSearch={handleSearch}
                 onFiltersChange={handleFiltersChange}
-                placeholder="Buscar procesos por nombre, código, descripción o dirección..."
+                                        placeholder="Buscar categorías por nombre, código, descripción o dirección..."
                 searchValue={searchTerm}
                 loading={loading}
                 showAdvancedFilters={true}
@@ -350,11 +350,11 @@ const ProcesosApoyo = () => {
             {loading ? (
                 <div className="text-center py-12">
                     <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    <p className="mt-4 text-gray-600">Cargando procesos de apoyo...</p>
+                    <p className="mt-4 text-gray-600">Cargando categorías...</p>
                 </div>
             ) : (
                 <>
-                    {/* Lista de procesos de apoyo */}
+                    {/* Lista de categorías */}
                     <div className={styles.procesosGrid}>
                         {filteredProcesos.map((proceso) => (
                             <ProcesoApoyoCard
@@ -366,7 +366,7 @@ const ProcesosApoyo = () => {
                         ))}
                     </div>
 
-                    {/* Mensaje cuando no hay procesos */}
+                    {/* Mensaje cuando no hay categorías */}
                     {filteredProcesos.length === 0 && (
                         <div className="text-center py-12">
                             <div className="text-gray-400 mb-4">
@@ -374,13 +374,13 @@ const ProcesosApoyo = () => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                             </div>
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">No hay procesos de apoyo</h3>
-                            <p className="text-gray-500 mb-4">Comienza creando tu primer proceso de apoyo.</p>
+                            <h3 className="text-lg font-medium text-gray-900 mb-2">No hay categorías</h3>
+                                                            <p className="text-gray-500 mb-4">Comienza creando tu primera categoría.</p>
                             <button
                                 onClick={openCreateModal}
                                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                             >
-                                Crear Primer Proceso
+                                Crear Primera Categoría
                             </button>
                         </div>
                     )}

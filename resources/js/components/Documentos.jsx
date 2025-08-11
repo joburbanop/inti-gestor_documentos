@@ -85,7 +85,7 @@ const Documentos = () => {
 
   // Opciones dinámicas para selects en cascada
   const [direccionesOptions, setDireccionesOptions] = useState([{ value: '', label: 'Todas las direcciones' }]);
-  const [procesosOptions, setProcesosOptions] = useState([{ value: '', label: 'Todos los procesos' }]);
+      const [procesosOptions, setProcesosOptions] = useState([{ value: '', label: 'Todas las categorías' }]);
   const abortRef = useRef(null);
 
   const fetchDocumentos = async () => {
@@ -166,7 +166,7 @@ const Documentos = () => {
   useEffect(() => {
     const dirId = advancedFilterValues.direccion_id;
     if (!dirId) {
-      setProcesosOptions([{ value: '', label: 'Todos los procesos' }]);
+      setProcesosOptions([{ value: '', label: 'Todas las categorías' }]);
       setAdvancedFilterValues(prev => ({ ...prev, proceso_apoyo_id: '' }));
       return;
     }
@@ -174,16 +174,16 @@ const Documentos = () => {
       try {
         const p = await apiRequest(`/direcciones/${dirId}/procesos-apoyo`);
         if (p.success) {
-          const opts = [{ value: '', label: 'Todos los procesos' }].concat(
+          const opts = [{ value: '', label: 'Todas las categorías' }].concat(
             (p.data || []).map(x => ({ value: x.id, label: x.nombre }))
           );
           setProcesosOptions(opts);
           setAdvancedFilterValues(prev => ({ ...prev, proceso_apoyo_id: '' }));
         } else {
-          setProcesosOptions([{ value: '', label: 'Todos los procesos' }]);
+          setProcesosOptions([{ value: '', label: 'Todas las categorías' }]);
         }
       } catch {
-        setProcesosOptions([{ value: '', label: 'Todos los procesos' }]);
+        setProcesosOptions([{ value: '', label: 'Todas las categorías' }]);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -241,7 +241,7 @@ const Documentos = () => {
     },
     {
       key: 'proceso_apoyo_id',
-      label: 'Proceso de Apoyo',
+      label: 'Categoría',
       type: 'select',
       options: procesosOptions,
       value: advancedFilterValues.proceso_apoyo_id

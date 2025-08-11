@@ -75,7 +75,7 @@ const DireccionCard = ({
                             {direccion.estadisticas?.total_procesos || 0}
                         </div>
                         <div className={styles.statLabel}>
-                            Procesos
+                            Categorías
                         </div>
                     </div>
                     <div className={styles.statItem}>

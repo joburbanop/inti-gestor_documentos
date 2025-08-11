@@ -19,7 +19,7 @@ const DireccionModal = ({
     const [procesosOptions, setProcesosOptions] = useState([]);
     const [showProcessModal, setShowProcessModal] = useState(false);
 
-    // Cargar procesos de apoyo para el select
+                // Cargar categorías para el select
     useEffect(() => {
         if (show) {
             // Debug removido
@@ -88,14 +88,14 @@ const DireccionModal = ({
             ]
         },
         {
-            title: 'Procesos de Apoyo',
+                            title: 'Categorías',
             icon: ProcessIcon,
             fields: [
                 {
                     name: 'procesos_apoyo',
-                    label: 'Procesos de Apoyo Asociados',
+                    label: 'Categorías Asociadas',
                     type: 'select',
-                    placeholder: 'Selecciona los procesos de apoyo (opcional)',
+                    placeholder: 'Selecciona las categorías (opcional)',
                     required: false,
                     multiple: true,
                     options: procesosOptions,

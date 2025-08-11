@@ -120,7 +120,7 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
       return;
     }
     
-    const nombre = window.prompt('Escribe el nombre del nuevo proceso de apoyo:');
+            const nombre = window.prompt('Escribe el nombre de la nueva categoría:');
     if (!nombre) return;
     const codigo = window.prompt('Escribe el código del proceso (opcional):');
     
@@ -139,12 +139,12 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
         const nuevoProceso = { value: res.data.id, label: res.data.nombre };
         setProcesosOptions(prev => [...prev, nuevoProceso]);
         setLocalData(prev => ({ ...prev, proceso_apoyo_id: res.data.id }));
-        alert('Proceso de apoyo creado exitosamente');
+        alert('Categoría creada exitosamente');
       } else {
-        alert(res.message || 'Error al crear el proceso de apoyo');
+        alert(res.message || 'Error al crear la categoría');
       }
     } catch (e) {
-      alert('Error al crear el proceso de apoyo: ' + e.message);
+              alert('Error al crear la categoría: ' + e.message);
     }
   };
 
@@ -197,14 +197,14 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
         },
         { 
           name: 'proceso_apoyo_id', 
-          label: 'Proceso de Apoyo', 
+          label: 'Categoría', 
           type: 'select', 
           required: true, 
           options: procesosOptions, 
           disabled: !localData?.direccion_id,
-          placeholder: 'Selecciona el proceso relacionado',
+          placeholder: 'Selecciona la categoría relacionada',
           hasAddButton: true,
-          addButtonText: 'Agregar proceso',
+          addButtonText: 'Agregar categoría',
           onAddClick: handleAddProceso
         },
         { 

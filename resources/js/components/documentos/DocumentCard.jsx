@@ -95,9 +95,9 @@ const DocumentCard = ({ documento, onView, onEdit, onDelete, onDownload, busy = 
             </span>
           </div>
           <div className={styles.infoItem}>
-            <span className={styles.infoLabel}>Proceso:</span>
+                          <span className={styles.infoLabel}>Categoría:</span>
             <span className={styles.infoValue}>
-              {documento.proceso_apoyo?.nombre || 'Sin proceso'}
+                                      {documento.proceso_apoyo?.nombre || 'Sin categoría'}
             </span>
           </div>
         </div>

@@ -392,7 +392,7 @@ const Administracion = () => {
                     </div>
                     <div className={styles.statContent}>
                         <h3>{stats.procesos?.total || 0}</h3>
-                        <p>Procesos de Apoyo</p>
+                        <p>Categorías</p>
                     </div>
                 </div>
             </div>

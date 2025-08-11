@@ -38,7 +38,7 @@ const StatsSection = ({
             description: "Direcciones administrativas"
         }] : []),
         ...(showProcesses ? [{
-            title: "Procesos de Apoyo",
+            title: "Categorías",
             value: stats?.total_procesos || 0,
             icon: <BuildingIcon className="w-8 h-8" />,
             colorClass: "statCardMorado",

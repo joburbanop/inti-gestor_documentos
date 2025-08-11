@@ -34,25 +34,38 @@ const UserDashboard = () => {
         perPage: 10,
         total: 0
     });
+    
+    // Estado de carga de paginación
+    const [paginationLoading, setPaginationLoading] = useState(false);
 
-    // Cargar todos los documentos al montar el componente
+    // Cargar documentos iniciales al montar el componente
     useEffect(() => {
-        loadAllDocuments();
+        performInitialSearch();
     }, []);
 
-    const loadAllDocuments = async () => {
+    const performInitialSearch = async () => {
         try {
             setSearchLoading(true);
-            // Solicitar todos los documentos (máximo 100 por página)
-            const response = await apiRequest('/api/documentos?per_page=100');
+            const response = await apiRequest('/api/documentos?per_page=10&page=1');
             if (response.success) {
                 const docs = response.data?.documentos || response.data || [];
-                console.log('📄 UserDashboard: Cargados', docs.length, 'documentos');
-                setAllDocuments(docs);
-                calculateStats(docs);
+                console.log('📄 UserDashboard: Cargados', docs.length, 'documentos iniciales');
+                setSearchResults(docs);
+                
+                // Actualizar información de paginación
+                if (response.data?.pagination) {
+                    setPagination({
+                        currentPage: response.data.pagination.current_page,
+                        lastPage: response.data.pagination.last_page,
+                        perPage: response.data.pagination.per_page,
+                        total: response.data.pagination.total
+                    });
+                }
+                
+                setStats(prev => ({ ...prev, filtered: docs.length }));
             }
         } catch (error) {
-            console.error('Error al cargar documentos:', error);
+            console.error('Error al cargar documentos iniciales:', error);
         } finally {
             setSearchLoading(false);
         }
@@ -103,37 +116,29 @@ const UserDashboard = () => {
         }, 500);
     };
 
-    const performSearchWithFilters = async (customFilters = null) => {
+    const performSearchWithFilters = async (customFilters = null, customPage = null) => {
         try {
             setSearchLoading(true);
             
             const filtersToUse = customFilters || filters;
-            console.log('🔍 UserDashboard: performSearchWithFilters iniciado con filtros:', filtersToUse);
-            
-            // Construir parámetros de búsqueda
+            const pageToUse = customPage || pagination.currentPage;
             const params = new URLSearchParams();
             
-            // Solo agregar término de búsqueda si tiene al menos 2 caracteres (optimizado)
-            if (searchTerm && searchTerm.trim().length >= 2) {
+            // Agregar término de búsqueda si existe
+            if (searchTerm && searchTerm.trim().length >= 3) {
                 params.append('termino', searchTerm.trim());
             }
             
-            // Filtros jerárquicos (normalizar a números)
-            const dirId = Number(filtersToUse.direccionId);
-            if (Number.isFinite(dirId) && dirId > 0) {
-                params.append('direccion_id', String(dirId));
-            }
-
-            const procId = Number(filtersToUse.procesoId);
-            if (Number.isFinite(procId) && procId > 0) {
-                params.append('proceso_apoyo_id', String(procId));
+            // Agregar filtros de dirección y proceso
+            if (filtersToUse.direccionId) {
+                params.append('direccion_id', filtersToUse.direccionId);
             }
             
-            if (filtersToUse.tipoArchivo) {
-                params.append('tipo_archivo', filtersToUse.tipoArchivo);
+            if (filtersToUse.procesoId) {
+                params.append('proceso_apoyo_id', filtersToUse.procesoId);
             }
-
-            // Filtros avanzados
+            
+            // Agregar filtros avanzados
             if (filtersToUse.tipo) {
                 params.append('tipo', filtersToUse.tipo);
             }
@@ -165,16 +170,16 @@ const UserDashboard = () => {
             params.append('sort_order', 'desc');
             
             // Agregar parámetros de paginación
-            params.append('per_page', '10');
-            params.append('page', pagination.currentPage.toString());
+            params.append('per_page', pagination.perPage.toString());
+            params.append('page', pageToUse.toString());
 
-            // Si no hay término de búsqueda y no hay filtros, usar el endpoint index
+            // Determinar la URL correcta
             let url = '/api/documentos';
             const hasText = Boolean(searchTerm && searchTerm.trim().length >= 3);
-            const hasAnyParam = Boolean(params.toString());
+            
             if (hasText) {
                 url = `/api/documentos/buscar?${params.toString()}`;
-            } else if (hasAnyParam) {
+            } else {
                 url = `/api/documentos?${params.toString()}`;
             }
 
@@ -186,39 +191,25 @@ const UserDashboard = () => {
             searchAbortRef.current = controller;
 
             console.log('🔍 UserDashboard: Haciendo petición a:', url);
+            console.log('🔍 UserDashboard: Página solicitada:', pageToUse);
             let response = await apiRequest(url, { signal: controller.signal });
-            console.log('🔍 UserDashboard: Respuesta recibida:', response);
             
             if (response.success) {
                 let results = response.data?.documentos || response.data || [];
                 console.log('🔍 UserDashboard: Resultados obtenidos:', results.length);
                 
-                // Fallback: si buscamos por texto y no hay resultados, intentar solo con filtros (sin termino)
-                if (hasText && results.length === 0 && hasAnyParam) {
-                    const paramsOnlyFilters = new URLSearchParams(params);
-                    paramsOnlyFilters.delete('termino');
-                    const fallbackUrl = `/api/documentos?${paramsOnlyFilters.toString()}`;
-                    try {
-                        const fb = await apiRequest(fallbackUrl, { signal: controller.signal });
-                        if (fb.success) {
-                            results = fb.data?.documentos || fb.data || [];
-                        }
-                    } catch (_) {
-                        // Ignorar errores de fallback
-                    }
-                }
-                
-                // Actualizar resultados y paginación
+                // Actualizar resultados
                 setSearchResults(results);
                 
                 // Actualizar información de paginación si está disponible
                 if (response.data?.pagination) {
-                    setPagination({
+                    setPagination(prev => ({
+                        ...prev,
                         currentPage: response.data.pagination.current_page,
                         lastPage: response.data.pagination.last_page,
                         perPage: response.data.pagination.per_page,
                         total: response.data.pagination.total
-                    });
+                    }));
                 }
                 
                 setStats(prev => ({ ...prev, filtered: results.length }));
@@ -239,15 +230,35 @@ const UserDashboard = () => {
 
     // Funciones de paginación
     const goToPage = async (page) => {
-        if (page >= 1 && page <= pagination.lastPage && page !== pagination.currentPage) {
-            setPagination(prev => ({ ...prev, currentPage: page }));
-            await performSearchWithFilters();
+        console.log('🔍 UserDashboard: goToPage llamado con página:', page);
+        console.log('🔍 UserDashboard: Estado actual pagination:', pagination);
+        
+        if (page >= 1 && page <= pagination.lastPage) {
+            console.log('🔍 UserDashboard: Navegando a página', page);
+            setPaginationLoading(true);
+            
+            try {
+                // Actualizar el estado de paginación inmediatamente
+                setPagination(prev => ({ ...prev, currentPage: page }));
+                
+                // Ejecutar búsqueda con la nueva página directamente
+                await performSearchWithFilters(null, page);
+            } finally {
+                setPaginationLoading(false);
+            }
+        } else {
+            console.log('🔍 UserDashboard: Navegación no válida - página:', page, 'lastPage:', pagination.lastPage, 'currentPage:', pagination.currentPage);
         }
     };
 
     const goToNextPage = async () => {
-        if (pagination.currentPage < pagination.lastPage) {
-            await goToPage(pagination.currentPage + 1);
+        console.log('🔍 UserDashboard: goToNextPage - currentPage:', pagination.currentPage, 'lastPage:', pagination.lastPage);
+        const nextPage = pagination.currentPage + 1;
+        if (nextPage <= pagination.lastPage) {
+            console.log('🔍 UserDashboard: Navegando a página siguiente:', nextPage);
+            await goToPage(nextPage);
+        } else {
+            console.log('🔍 UserDashboard: Ya estamos en la última página');
         }
     };
 
@@ -265,29 +276,24 @@ const UserDashboard = () => {
     };
 
     const handleFilterChange = async (newFilters) => {
-        console.log('🔍 UserDashboard: handleFilterChange recibido:', newFilters);
-        setFilters(newFilters);
-        const hasAnyFilter = Object.values(newFilters).some(v => v && v !== '');
-        console.log('🔍 UserDashboard: ¿Tiene filtros?', hasAnyFilter);
+        console.log('🔍 UserDashboard: handleFilterChange llamado con:', newFilters);
         
         // Resetear a página 1 cuando cambian los filtros
         setPagination(prev => ({ ...prev, currentPage: 1 }));
         
-        // Cancelar cualquier búsqueda en curso al cambiar filtros jerárquicos
+        setFilters(newFilters);
+        
+        // Cancelar cualquier búsqueda en curso
         if (searchAbortRef.current) {
             try { searchAbortRef.current.abort(); } catch (e) {}
         }
-        if (hasAnyFilter || (searchTerm && searchTerm.trim().length >= 2)) {
-            // Ejecutar búsqueda inmediata para evitar resultados obsoletos
-            console.log('🔍 UserDashboard: Ejecutando búsqueda inmediata');
-            setSearchLoading(true);
-            setSearchResults([]);
-            await performSearch();
-        } else {
-            console.log('🔍 UserDashboard: Sin filtros, limpiando resultados');
-            setSearchResults([]);
-            setStats(prev => ({ ...prev, filtered: prev.total }));
-        }
+        
+        // Ejecutar búsqueda inmediata con los nuevos filtros
+        setSearchLoading(true);
+        setSearchResults([]);
+        
+        // Usar los nuevos filtros directamente
+        await performSearchWithFilters(newFilters, 1);
     };
 
     const handleExtensionFilterChange = ({ extensiones, tipos }) => {
@@ -324,8 +330,8 @@ const UserDashboard = () => {
         setSearchLoading(true);
         setSearchResults([]);
         
-        // Usar los nuevos filtros directamente en lugar de depender del estado
-        performSearchWithFilters(newFilters);
+        // Usar los nuevos filtros directamente
+        performSearchWithFilters(newFilters, 1);
     };
 
     const clearAllFilters = () => {
@@ -341,6 +347,9 @@ const UserDashboard = () => {
             total: 0
         });
         setStats(prev => ({ ...prev, filtered: prev.total }));
+        
+        // Recargar documentos iniciales
+        performInitialSearch();
     };
 
     // Debounce de búsqueda por texto
@@ -395,93 +404,96 @@ const UserDashboard = () => {
     };
 
     const getDocumentIcon = (fileType) => {
-        switch (fileType?.toLowerCase()) {
-            case 'pdf':
-                return <PdfIcon className="w-6 h-6" />;
-            case 'xlsx':
-            case 'xls':
-                return <ExcelIcon className="w-6 h-6" />;
-            case 'doc':
-            case 'docx':
-                return <WordIcon className="w-6 h-6" />;
-            default:
-                return <WordIcon className="w-6 h-6" />;
-        }
+        const type = fileType?.toLowerCase() || '';
+        if (type.includes('pdf')) return <PdfIcon />;
+        if (type.includes('excel') || type.includes('xls') || type.includes('csv')) return <ExcelIcon />;
+        if (type.includes('word') || type.includes('doc') || type.includes('txt')) return <WordIcon />;
+        return <SearchIcon />;
     };
-
-
-
 
     return (
         <div className={userStyles.userDashboardContainer}>
-            {/* Búsqueda de documentos - Sección principal mejorada */}
+            {/* Header del usuario */}
+            <div className={userStyles.userHeader}>
+                <h1 className={userStyles.userTitle}>¡Bienvenido, {user?.name}!</h1>
+                <p className={userStyles.userSubtitle}>
+                    Explora y encuentra los documentos que necesitas de manera rápida y eficiente.
+                </p>
+            </div>
+
+            {/* Estadísticas */}
+            <div className={userStyles.statsContainer}>
+                <div className={userStyles.statCard}>
+                    <div className={userStyles.statIcon}>
+                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <div className={userStyles.statContent}>
+                        <h3>{stats.filtered}</h3>
+                        <p>Resultados Encontrados</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Sección de búsqueda */}
             <div className={userStyles.userSearchSection}>
                 <div className={userStyles.searchHeader}>
                     <div className={userStyles.searchTitleContainer}>
-                        <svg className={userStyles.searchHeaderIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <div>
-                            <h2 className={userStyles.searchTitle}>Búsqueda Avanzada</h2>
-                            <p className={userStyles.searchSubtitle}>Encuentra la información que necesitas usando filtros inteligentes</p>
-                        </div>
+                        <SearchIcon className={userStyles.searchHeaderIcon} />
+                        <h2 className={userStyles.searchTitle}>Buscar Documentos</h2>
                     </div>
+                    <p className={userStyles.searchSubtitle}>
+                        Encuentra documentos específicos usando filtros avanzados
+                    </p>
                 </div>
 
-                {/* Barra de búsqueda mejorada */}
-                <div className={userStyles.modernSearchContainer}>
+                {/* Formulario de búsqueda */}
+                <form onSubmit={handleSearch} className={userStyles.searchForm}>
                     <div className={userStyles.searchInputWrapper}>
-                        <svg className={userStyles.searchInputIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
+                        <SearchIcon className={userStyles.searchInputIcon} />
                         <input
                             type="text"
-                            placeholder="¿Qué documento buscas? Escribe al menos 3 caracteres..."
                             value={searchTerm}
                             onChange={handleSearchTermChange}
+                            placeholder="Buscar por título, descripción o contenido..."
                             className={userStyles.modernSearchInput}
                         />
-                        <button 
+                        <button
+                            type="submit"
+                            disabled={searchLoading}
                             className={userStyles.modernSearchButton}
-                            onClick={() => performSearch(searchTerm, filters)}
                         >
-                            <svg className={userStyles.searchButtonIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
+                            <SearchIcon className={userStyles.searchButtonIcon} />
                             Buscar
                         </button>
                     </div>
-                </div>
+                </form>
 
-                {/* Filtros rápidos tipo chips */}
-
-
-                {/* Botón para mostrar/ocultar filtros avanzados */}
-
-
-                                {/* Filtros Jerárquicos */}
-                <HierarchicalFilters 
-                    onFilterChange={handleFilterChange}
-                    filters={filters}
-                    onDocumentsLoad={setSearchResults}
-                />
-
-                {/* Filtro por Extensión */}
+                {/* Filtros de extensiones */}
                 <ExtensionFilter
                     onFilterChange={handleExtensionFilterChange}
                     selectedExtensions={selectedExtensions}
                     selectedTypes={selectedTypes}
-                    customStyles={userStyles}
+                />
+
+                {/* Filtros jerárquicos */}
+                <HierarchicalFilters
+                    onFilterChange={handleFilterChange}
+                    onDocumentsLoad={(docs) => {
+                        setSearchResults(docs);
+                        setStats(prev => ({ ...prev, filtered: docs.length }));
+                    }}
                 />
             </div>
 
-            {/* Resultados de búsqueda */}
+            {/* Resultados de documentos */}
             {searchResults.length > 0 && (
                 <div className={userStyles.userDocumentResults}>
                     <div className={userStyles.userDocumentResultsHeader}>
-                        <h2 className={userStyles.userDocumentResultsTitle}>
-                            Documentos Encontrados ({pagination.total})
-                        </h2>
+                        <h3 className={userStyles.userDocumentResultsTitle}>
+                            Documentos Encontrados ({searchResults.length})
+                        </h3>
                         <button
                             onClick={clearAllFilters}
                             className={userStyles.clearResultsButton}
@@ -489,28 +501,35 @@ const UserDashboard = () => {
                             Limpiar búsqueda
                         </button>
                     </div>
+                    
                     <div className={userStyles.userDocumentResultsList}>
                         {searchResults.map((doc) => (
-                            <div 
-                                key={doc.id} 
-                                className={userStyles.userDocumentItem}
-                            >
-                                <div className={`${userStyles.userDocumentIcon} ${userStyles[`userDocumentIcon${doc.tipo_archivo?.toUpperCase()}`] || userStyles.userDocumentIconDoc}`}>
+                            <div key={doc.id} className={userStyles.userDocumentItem}>
+                                <div className={`${userStyles.userDocumentIcon} ${
+                                    doc.extension === 'pdf' ? userStyles.userDocumentIconPDF :
+                                    doc.extension === 'xlsx' || doc.extension === 'xls' ? userStyles.userDocumentIconXLSX :
+                                    doc.extension === 'doc' || doc.extension === 'docx' ? userStyles.userDocumentIconDOC :
+                                    ''
+                                }`}>
                                     {getDocumentIcon(doc.tipo_archivo)}
                                 </div>
+                                
                                 <div className={userStyles.userDocumentInfo}>
-                                    <div className={userStyles.userDocumentTitle}>{doc.titulo}</div>
+                                    <h4 className={userStyles.userDocumentTitle}>{doc.titulo}</h4>
                                     <div className={userStyles.userDocumentMeta}>
-                                        <span className={userStyles.userDocumentDirection}>{doc.direccion?.nombre}</span>
+                                        <span className={userStyles.userDocumentDirection}>
+                                            {doc.direccion?.nombre}
+                                        </span>
                                         <span className={userStyles.userDocumentSeparator}>•</span>
-                                        <span className={userStyles.userDocumentProcess}>{doc.proceso_apoyo?.nombre}</span>
-                                        {doc.tipo && (
-                                            <>
-                                                <span className={userStyles.userDocumentSeparator}>•</span>
-                                                <span className={userStyles.userDocumentType}>{doc.tipo}</span>
-                                            </>
-                                        )}
+                                        <span className={userStyles.userDocumentProcess}>
+                                            {doc.proceso_apoyo?.nombre}
+                                        </span>
+                                        <span className={userStyles.userDocumentSeparator}>•</span>
+                                        <span className={userStyles.userDocumentType}>
+                                            {doc.tipo_archivo}
+                                        </span>
                                     </div>
+                                    
                                     {doc.etiquetas && doc.etiquetas.length > 0 && (
                                         <div className={userStyles.userDocumentTags}>
                                             {doc.etiquetas.slice(0, 3).map((tag, index) => (
@@ -525,21 +544,23 @@ const UserDashboard = () => {
                                             )}
                                         </div>
                                     )}
+                                    
                                     <div className={userStyles.userDocumentActions}>
                                         <button
-                                            className={`${userStyles.actionButton} ${userStyles.viewButton}`}
                                             onClick={() => handleViewDoc(doc)}
+                                            className={`${userStyles.actionButton} ${userStyles.viewButton}`}
                                         >
                                             Ver
                                         </button>
                                         <button
-                                            className={`${userStyles.actionButton} ${userStyles.downloadButton}`}
                                             onClick={() => handleDownloadDoc(doc)}
+                                            className={`${userStyles.actionButton} ${userStyles.downloadButton}`}
                                         >
                                             Descargar
                                         </button>
                                     </div>
                                 </div>
+                                
                                 <div className={userStyles.userDocumentDate}>
                                     {doc.fecha_creacion ? new Date(doc.fecha_creacion).toLocaleDateString() : ''}
                                 </div>
@@ -547,91 +568,126 @@ const UserDashboard = () => {
                         ))}
                     </div>
                     
-                    {/* Paginación */}
+                    {/* Paginación Mejorada */}
                     {pagination.lastPage > 1 && (
                         <div className={userStyles.paginationContainer}>
                             <div className={userStyles.paginationInfo}>
-                                <span>Página {pagination.currentPage} de {pagination.lastPage}</span>
-                                <span>•</span>
+                                <span>📄 Página {pagination.currentPage} de {pagination.lastPage}</span>
+                                <span>📊</span>
                                 <span>Mostrando {searchResults.length} de {pagination.total} documentos</span>
+                                {paginationLoading && (
+                                    <span style={{ color: '#1F448B', fontWeight: '600' }}>
+                                        🔄 Cargando...
+                                    </span>
+                                )}
                             </div>
                             
                             <div className={userStyles.paginationControls}>
                                 <button
                                     onClick={goToPrevPage}
-                                    disabled={pagination.currentPage === 1}
+                                    disabled={pagination.currentPage === 1 || paginationLoading}
                                     className={`${userStyles.paginationButton} ${userStyles.paginationPrev}`}
+                                    title="Página anterior"
                                 >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                    </svg>
-                                    Anterior
+                                    {paginationLoading ? (
+                                        <div className="animate-spin w-5 h-5 border-2 border-current border-t-transparent rounded-full"></div>
+                                    ) : (
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                        </svg>
+                                    )}
+                                    <span>Anterior</span>
                                 </button>
                                 
                                 <div className={userStyles.paginationNumbers}>
-                                    {/* Primera página */}
-                                    {pagination.currentPage > 3 && (
-                                        <button
-                                            onClick={() => goToPage(1)}
-                                            className={userStyles.paginationNumber}
-                                        >
-                                            1
-                                        </button>
-                                    )}
-                                    
-                                    {/* Elipsis si hay gap */}
-                                    {pagination.currentPage > 4 && (
-                                        <span className={userStyles.paginationEllipsis}>...</span>
-                                    )}
-                                    
-                                    {/* Páginas alrededor de la actual */}
-                                    {Array.from({ length: Math.min(5, pagination.lastPage) }, (_, i) => {
-                                        const page = Math.max(1, Math.min(
-                                            pagination.lastPage,
-                                            pagination.currentPage - 2 + i
-                                        ));
+                                    {(() => {
+                                        const pages = [];
+                                        const currentPage = pagination.currentPage;
+                                        const lastPage = pagination.lastPage;
                                         
-                                        if (page >= 1 && page <= pagination.lastPage) {
+                                        // Función para agregar página si no existe
+                                        const addPageIfNotExists = (page) => {
+                                            if (page >= 1 && page <= lastPage && !pages.some(p => p.number === page)) {
+                                                pages.push({
+                                                    number: page,
+                                                    type: 'number',
+                                                    isActive: page === currentPage
+                                                });
+                                            }
+                                        };
+                                        
+                                        // Calcular rango de páginas visibles
+                                        const start = Math.max(1, currentPage - 2);
+                                        const end = Math.min(lastPage, currentPage + 2);
+                                        
+                                        // Primera página (solo si no está en el rango visible)
+                                        if (currentPage > 3 && start > 1) {
+                                            addPageIfNotExists(1);
+                                        }
+                                        
+                                        // Elipsis después de la primera página
+                                        if (currentPage > 4 && start > 2) {
+                                            pages.push({ type: 'ellipsis', key: 'ellipsis-start' });
+                                        }
+                                        
+                                        // Páginas alrededor de la actual
+                                        for (let i = start; i <= end; i++) {
+                                            addPageIfNotExists(i);
+                                        }
+                                        
+                                        // Elipsis antes de la última página
+                                        if (currentPage < lastPage - 3 && end < lastPage - 1) {
+                                            pages.push({ type: 'ellipsis', key: 'ellipsis-end' });
+                                        }
+                                        
+                                        // Última página (solo si no está en el rango visible)
+                                        if (currentPage < lastPage - 2 && end < lastPage) {
+                                            addPageIfNotExists(lastPage);
+                                        }
+                                        
+                                        return pages.map((item, index) => {
+                                            if (item.type === 'ellipsis') {
+                                                return (
+                                                    <span 
+                                                        key={item.key || `ellipsis-${index}`} 
+                                                        className={userStyles.paginationEllipsis}
+                                                    >
+                                                        ⋯
+                                                    </span>
+                                                );
+                                            }
+                                            
                                             return (
                                                 <button
-                                                    key={page}
-                                                    onClick={() => goToPage(page)}
+                                                    key={`page-${item.number}`}
+                                                    onClick={() => goToPage(item.number)}
+                                                    disabled={paginationLoading}
                                                     className={`${userStyles.paginationNumber} ${
-                                                        page === pagination.currentPage ? userStyles.paginationActive : ''
+                                                        item.isActive ? userStyles.paginationActive : ''
                                                     }`}
+                                                    title={`Ir a la página ${item.number}`}
                                                 >
-                                                    {page}
+                                                    {item.number}
                                                 </button>
                                             );
-                                        }
-                                        return null;
-                                    })}
-                                    
-                                    {/* Elipsis si hay gap */}
-                                    {pagination.currentPage < pagination.lastPage - 3 && (
-                                        <span className={userStyles.paginationEllipsis}>...</span>
-                                    )}
-                                    
-                                    {/* Última página */}
-                                    {pagination.currentPage < pagination.lastPage - 2 && (
-                                        <button
-                                            onClick={() => goToPage(pagination.lastPage)}
-                                            className={userStyles.paginationNumber}
-                                        >
-                                            {pagination.lastPage}
-                                        </button>
-                                    )}
+                                        });
+                                    })()}
                                 </div>
                                 
                                 <button
                                     onClick={goToNextPage}
-                                    disabled={pagination.currentPage === pagination.lastPage}
+                                    disabled={pagination.currentPage === pagination.lastPage || paginationLoading}
                                     className={`${userStyles.paginationButton} ${userStyles.paginationNext}`}
+                                    title="Página siguiente"
                                 >
-                                    Siguiente
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                    </svg>
+                                    <span>Siguiente</span>
+                                    {paginationLoading ? (
+                                        <div className="animate-spin w-5 h-5 border-2 border-current border-t-transparent rounded-full"></div>
+                                    ) : (
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    )}
                                 </button>
                             </div>
                         </div>

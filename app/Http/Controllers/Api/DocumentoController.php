@@ -24,6 +24,7 @@ class DocumentoController extends Controller
     {
         try {
             $perPage = min(max((int) $request->get('per_page', 10), 1), 100); // Optimizado para 10 por defecto
+            $page = (int) $request->get('page', 1);
             $query = Documento::with(['direccion:id,nombre,codigo', 'procesoApoyo:id,nombre,codigo', 'subidoPor:id,name']); // Solo campos necesarios
 
             // Filtros con logging para debug
@@ -37,7 +38,7 @@ class DocumentoController extends Controller
                 $query->porProceso($request->proceso_apoyo_id);
             }
 
-            // Filtro por extensión
+            // Filtro por extensión única
             if ($request->has('extension')) {
                 \Log::info('🔍 Aplicando filtro extension:', ['extension' => $request->extension]);
                 $query->porExtension($request->extension);
@@ -53,12 +54,6 @@ class DocumentoController extends Controller
             if ($request->has('tipo_documento')) {
                 \Log::info('🔍 Aplicando filtro tipo_documento:', ['tipo_documento' => $request->tipo_documento]);
                 $query->porTipoDocumento($request->tipo_documento);
-            }
-
-            // Filtro por extensiones (array)
-            if ($request->has('extensiones') && is_array($request->extensiones)) {
-                \Log::info('🔍 Aplicando filtro extensiones:', ['extensiones' => $request->extensiones]);
-                $query->porExtensiones($request->extensiones);
             }
 
             // Filtro por tipos de documento (array)
@@ -191,7 +186,7 @@ class DocumentoController extends Controller
             $sortOrder = strtolower($request->get('sort_order', 'desc')) === 'asc' ? 'asc' : 'desc';
             $query->orderBy($sortBy, $sortOrder);
 
-            $documentos = $query->paginate($perPage)->appends($request->query());
+            $documentos = $query->paginate($perPage, ['*'], 'page', $page)->appends($request->query());
 
             $data = $documentos->getCollection()->map(function ($documento) {
                 return [

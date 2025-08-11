@@ -63,7 +63,7 @@ const DireccionDetailsModal = ({
                                 </div>
                                 <div className={styles.detailStatLabel}>
                                     <ProcessIcon className="w-4 h-4 inline mr-1" />
-                                    Procesos de Apoyo
+                                    Categorías
                                 </div>
                             </div>
                             <div className={styles.detailStat}>
