@@ -1,7 +1,19 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from '../../styles/components/ProcesosApoyo.module.css';
 
 const ProcesoApoyoCard = ({ proceso, onEdit, onDelete }) => {
+    const navigate = useNavigate();
+
+    const handleCardClick = () => {
+        // Navegar a documentos con filtro por categoría
+        navigate('/documentos', { 
+            state: { 
+                filterByCategoria: proceso.id,
+                categoriaName: proceso.nombre
+            }
+        });
+    };
     const handleEdit = (e) => {
         e.stopPropagation();
         onEdit(proceso);
@@ -13,7 +25,10 @@ const ProcesoApoyoCard = ({ proceso, onEdit, onDelete }) => {
     };
 
     return (
-        <div className={styles.procesoCard}>
+        <div 
+            className={`${styles.procesoCard} ${styles.clickable}`}
+            onClick={handleCardClick}
+        >
             {/* Header con botones de acción */}
             <div className={styles.cardHeader}>
                 <div className={styles.cardIcon}>

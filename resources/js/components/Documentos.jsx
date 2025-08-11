@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import SearchFilterBar from './common/SearchFilterBar';
 import DocumentCard from './documentos/DocumentCard';
@@ -44,6 +45,7 @@ const EXTENSION_OPTIONS = [
 
 const Documentos = () => {
   const { apiRequest } = useAuth();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [documentos, setDocumentos] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -188,6 +190,26 @@ const Documentos = () => {
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [advancedFilterValues.direccion_id]);
+
+  // Manejar filtro por categoría cuando se navega desde categorías
+  useEffect(() => {
+    if (location.state?.filterByCategoria) {
+      const categoriaId = location.state.filterByCategoria;
+      const categoriaName = location.state.categoriaName;
+      
+      // Aplicar filtro por categoría
+      setAdvancedFilterValues(prev => ({
+        ...prev,
+        proceso_apoyo_id: categoriaId.toString()
+      }));
+      
+      // Mostrar notificación
+      // showSuccess(`Filtrado por categoría: ${categoriaName}`);
+      
+      // Limpiar el estado de navegación
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [location.state]);
 
   // Resultados vienen ya filtrados desde el servidor
   const filteredDocs = documentos;
