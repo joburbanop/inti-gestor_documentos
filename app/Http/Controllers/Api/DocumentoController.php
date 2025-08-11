@@ -1014,4 +1014,89 @@ class DocumentoController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Obtener etiquetas disponibles
+     */
+    public function etiquetas(): JsonResponse
+    {
+        try {
+            // Obtener todas las etiquetas únicas de los documentos
+            $etiquetas = Documento::selectRaw('DISTINCT etiquetas')
+                                 ->whereNotNull('etiquetas')
+                                 ->where('etiquetas', '!=', '')
+                                 ->get()
+                                 ->pluck('etiquetas')
+                                 ->flatMap(function($etiquetas) {
+                                     // Las etiquetas están almacenadas como JSON, convertirlas a array
+                                     $etiquetasArray = is_string($etiquetas) ? json_decode($etiquetas, true) : $etiquetas;
+                                     return is_array($etiquetasArray) ? $etiquetasArray : [];
+                                 })
+                                 ->unique()
+                                 ->filter()
+                                 ->sort()
+                                 ->values()
+                                 ->toArray();
+
+            \Log::info('🔍 DocumentoController: Etiquetas disponibles obtenidas', [
+                'total_etiquetas' => count($etiquetas),
+                'etiquetas' => $etiquetas
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $etiquetas,
+                'message' => 'Etiquetas disponibles obtenidas exitosamente'
+            ], 200);
+
+        } catch (\Exception $e) {
+            \Log::error('🔍 DocumentoController: Error al obtener etiquetas disponibles', [
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener etiquetas disponibles',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtener tipos de documento disponibles
+     */
+    public function tipos(): JsonResponse
+    {
+        try {
+            // Obtener todos los tipos únicos de los documentos
+            $tipos = Documento::selectRaw('DISTINCT tipo')
+                             ->whereNotNull('tipo')
+                             ->where('tipo', '!=', '')
+                             ->orderBy('tipo')
+                             ->pluck('tipo')
+                             ->toArray();
+
+            \Log::info('🔍 DocumentoController: Tipos de documento disponibles obtenidos', [
+                'total_tipos' => count($tipos),
+                'tipos' => $tipos
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $tipos,
+                'message' => 'Tipos de documento disponibles obtenidos exitosamente'
+            ], 200);
+
+        } catch (\Exception $e) {
+            \Log::error('🔍 DocumentoController: Error al obtener tipos de documento disponibles', [
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener tipos de documento disponibles',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
 } 

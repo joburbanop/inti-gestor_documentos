@@ -19,6 +19,7 @@ const SearchFilterBar = ({
     const [activeFilters, setActiveFilters] = useState(Array.isArray(filters) ? filters : []);
     const [showFilters, setShowFilters] = useState(false);
     const [isSearchFocused, setIsSearchFocused] = useState(false);
+    const [activeMultiselectFilter, setActiveMultiselectFilter] = useState(null);
     const searchTimeoutRef = useRef(null);
     const searchInputRef = useRef(null);
 
@@ -103,6 +104,33 @@ const SearchFilterBar = ({
         }
     };
 
+    // Handle multiselect filter change
+    const handleMultiselectChange = (filterKey, selectedValues) => {
+        console.log('🔍 SearchFilterBar: Cambio de multiselect:', { filterKey, selectedValues });
+        
+        // Limpiar filtros anteriores de este tipo
+        const newFilters = activeFilters.filter(f => f.key !== filterKey);
+        
+        // Agregar cada valor seleccionado como un filtro separado
+        selectedValues.forEach(value => {
+            const filterConfig = advancedFilters.find(f => f.key === filterKey);
+            if (filterConfig && filterConfig.options) {
+                const option = filterConfig.options.find(opt => opt.value === value);
+                const label = option ? option.label : value;
+                newFilters.push({ key: filterKey, value, label });
+            }
+        });
+        
+        setActiveFilters(newFilters);
+        onFiltersChange(newFilters);
+        
+        if (onAdvancedFilterChange) {
+            onAdvancedFilterChange(filterKey, selectedValues);
+        }
+    };
+
+
+
     // Focus search on Ctrl/Cmd + K
     useEffect(() => {
         const handleKeyDown = (e) => {
@@ -122,6 +150,18 @@ const SearchFilterBar = ({
             setSearchTerm(searchValue);
         }
     }, [searchValue]);
+
+    // Cerrar dropdown cuando se hace clic fuera
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (activeMultiselectFilter && !event.target.closest(`.${styles.multiselectContainer}`)) {
+                setActiveMultiselectFilter(null);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [activeMultiselectFilter]);
 
     useEffect(() => {
         const incoming = Array.isArray(filters) ? filters : [];
@@ -291,6 +331,60 @@ const SearchFilterBar = ({
                                     disabled={loading}
                                 />
                             )}
+                            {filter.type === 'multiselect' && (
+                                <div className={styles.multiselectContainer}>
+                                    <div className={styles.multiselectWrapper}>
+                                        <div className={styles.multiselectDisplay}>
+                                            {filter.value && filter.value.length > 0 ? (
+                                                filter.value.map((value, index) => (
+                                                    <span key={index} className={styles.multiselectTag}>
+                                                        {value}
+                                                        <button
+                                                            onClick={() => {
+                                                                const newValues = filter.value.filter((_, i) => i !== index);
+                                                                handleMultiselectChange(filter.key, newValues);
+                                                            }}
+                                                            className={styles.multiselectTagRemove}
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </span>
+                                                ))
+                                            ) : (
+                                                <span className={styles.multiselectPlaceholder}>
+                                                    Seleccionar etiquetas...
+                                                </span>
+                                            )}
+                                        </div>
+                                        <button
+                                            onClick={() => setActiveMultiselectFilter(filter.key)}
+                                            className={styles.multiselectDropdownButton}
+                                        >
+                                            ▼
+                                        </button>
+                                    </div>
+                                    {activeMultiselectFilter === filter.key && (
+                                        <div className={styles.multiselectDropdown}>
+                                            {filter.options.map((option) => (
+                                                <label key={option.value} className={styles.multiselectOption}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={filter.value && filter.value.includes(option.value)}
+                                                        onChange={(e) => {
+                                                            const currentValues = filter.value || [];
+                                                            const newValues = e.target.checked
+                                                                ? [...currentValues, option.value]
+                                                                : currentValues.filter(v => v !== option.value);
+                                                            handleMultiselectChange(filter.key, newValues);
+                                                        }}
+                                                    />
+                                                    <span>{option.label}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>
@@ -303,6 +397,8 @@ const SearchFilterBar = ({
                 <kbd className={styles.kbd}>K</kbd>
                 <span>para buscar</span>
             </div>
+
+
         </div>
     );
 };

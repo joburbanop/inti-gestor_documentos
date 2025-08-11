@@ -29,10 +29,13 @@ const CreateForm = ({
     const navigate = useNavigate();
     const [formData, setFormData] = useState(initialData);
     const [multiSelectOpen, setMultiSelectOpen] = useState(null);
+    const [etiquetasDisponibles, setEtiquetasDisponibles] = useState([]);
+    const [showEtiquetasDropdown, setShowEtiquetasDropdown] = useState(false);
 
     // Componente interno para gestionar entrada de etiquetas con píldoras
     const TagsInput = ({ name, value = [], placeholder, disabled = false }) => {
         const [inputValue, setInputValue] = useState('');
+        const [showDropdown, setShowDropdown] = useState(false);
 
         const addTag = (raw) => {
             if (!raw) return;
@@ -48,6 +51,7 @@ const CreateForm = ({
                 return updated;
             });
             setInputValue('');
+            setShowDropdown(false);
         };
 
         const removeTag = (tagToRemove) => {
@@ -68,11 +72,41 @@ const CreateForm = ({
                 // Borrar la última etiqueta con backspace si input está vacío
                 const current = Array.isArray(value) ? value : [];
                 if (current.length > 0) removeTag(current[current.length - 1]);
+            } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                // Manejar navegación del dropdown
+                e.preventDefault();
             }
         };
 
+        const handleInputChange = (e) => {
+            const newValue = e.target.value;
+            setInputValue(newValue);
+            setShowDropdown(newValue.length > 0);
+        };
+
+        const handleInputFocus = () => {
+            if (inputValue.length > 0) {
+                setShowDropdown(true);
+            }
+        };
+
+        const handleInputBlur = () => {
+            // Delay para permitir clicks en el dropdown
+            setTimeout(() => {
+                setShowDropdown(false);
+                if (inputValue.trim()) {
+                    addTag(inputValue);
+                }
+            }, 300);
+        };
+
+        // Filtrar etiquetas disponibles basadas en el input
+        const filteredEtiquetas = etiquetasDisponibles.filter(etiqueta =>
+            etiqueta.toLowerCase().includes(inputValue.toLowerCase())
+        );
+
         return (
-            <div className="tagsContainer">
+            <div className="tagsContainer" style={{ position: 'relative' }}>
                 <div className="tagsPills">
                     {(Array.isArray(value) ? value : []).map((tag) => (
                         <span key={tag} className="tagPill">
@@ -84,22 +118,150 @@ const CreateForm = ({
                         type="text"
                         className="tagsInput"
                         value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
+                        onChange={handleInputChange}
                         onKeyDown={onKeyDown}
-                        onBlur={() => addTag(inputValue)}
+                        onFocus={handleInputFocus}
+                        onBlur={handleInputBlur}
                         placeholder={placeholder}
                         disabled={disabled}
                     />
                 </div>
+                
+                {/* Dropdown de etiquetas disponibles */}
+                {showDropdown && filteredEtiquetas.length > 0 && (
+                    <div 
+                        className="etiquetasDropdown" 
+                        style={{
+                            position: 'absolute',
+                            top: '100%',
+                            left: 0,
+                            right: 0,
+                            backgroundColor: 'white',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                            zIndex: 1002,
+                            maxHeight: '200px',
+                            overflowY: 'auto',
+                            marginTop: '4px'
+                        }}
+                        onMouseDown={(e) => e.preventDefault()}
+                    >
+                        {filteredEtiquetas.map((etiqueta) => {
+                            const isSelected = value.some(v => v.toLowerCase() === etiqueta.toLowerCase());
+                            return (
+                                <div
+                                    key={etiqueta}
+                                    className="etiquetaOption"
+                                    style={{
+                                        padding: '8px 12px',
+                                        cursor: isSelected ? 'default' : 'pointer',
+                                        borderBottom: '1px solid #f3f4f6',
+                                        backgroundColor: isSelected ? '#f0f9ff' : 'white',
+                                        color: isSelected ? '#1F448B' : '#374151',
+                                        opacity: isSelected ? 0.6 : 1,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between'
+                                    }}
+                                    onMouseDown={(e) => {
+                                        e.preventDefault();
+                                        if (!isSelected) {
+                                            addTag(etiqueta);
+                                        }
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        if (!isSelected) {
+                                            e.target.style.backgroundColor = '#f8f9fa';
+                                        }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        if (!isSelected) {
+                                            e.target.style.backgroundColor = 'white';
+                                        }
+                                    }}
+                                >
+                                    <span>{etiqueta}</span>
+                                    {isSelected && (
+                                        <span style={{
+                                            fontSize: '0.75rem',
+                                            color: '#1F448B',
+                                            fontWeight: '500'
+                                        }}>
+                                            ✓ Seleccionada
+                                        </span>
+                                    )}
+                                </div>
+                            );
+                        })}
+                        {inputValue && !filteredEtiquetas.some(e => e.toLowerCase() === inputValue.toLowerCase()) && !value.some(v => v.toLowerCase() === inputValue.toLowerCase()) && (
+                            <div
+                                className="etiquetaOption"
+                                style={{
+                                    padding: '8px 12px',
+                                    cursor: 'pointer',
+                                    borderBottom: '1px solid #f3f4f6',
+                                    backgroundColor: '#f0f9ff',
+                                    color: '#1F448B',
+                                    fontWeight: '500'
+                                }}
+                                onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    addTag(inputValue);
+                                }}
+                                onMouseEnter={(e) => e.target.style.backgroundColor = '#e0f2fe'}
+                                onMouseLeave={(e) => e.target.style.backgroundColor = '#f0f9ff'}
+                            >
+                                Crear "{inputValue}"
+                            </div>
+                        )}
+                        {inputValue && filteredEtiquetas.length === 0 && !value.some(v => v.toLowerCase() === inputValue.toLowerCase()) && (
+                            <div
+                                style={{
+                                    padding: '8px 12px',
+                                    color: '#6b7280',
+                                    fontSize: '0.875rem',
+                                    fontStyle: 'italic',
+                                    textAlign: 'center'
+                                }}
+                            >
+                                No se encontraron etiquetas que coincidan con "{inputValue}"
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
         );
     };
 
     // Actualizar formData cuando cambie initialData
     useEffect(() => {
-  //
-        setFormData(initialData);
+        if (initialData && Object.keys(initialData).length > 0) {
+            setFormData(initialData);
+        }
     }, [initialData]);
+
+    // Cargar etiquetas disponibles
+    useEffect(() => {
+        const loadEtiquetas = async () => {
+            try {
+                const response = await fetch('/api/documentos/etiquetas', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    setEtiquetasDisponibles(data.data || []);
+                }
+            } catch (error) {
+                console.error('Error al cargar etiquetas:', error);
+            }
+        };
+        
+        loadEtiquetas();
+    }, []);
 
     const handleInputChange = (e) => {
         const { name, value, type, files } = e.target;

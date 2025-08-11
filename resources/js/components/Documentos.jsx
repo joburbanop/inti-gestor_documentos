@@ -70,24 +70,18 @@ const Documentos = () => {
   // Estados para filtros avanzados
   const [advancedFilterValues, setAdvancedFilterValues] = useState({
     tipo: '',
-    confidencialidad: '',
-    etiqueta: '',
+    etiqueta: [],
     extension: '',
-    fechaDesde: '',
-    fechaHasta: '',
     direccion_id: '',
     proceso_apoyo_id: '',
-    subidoPor: '',
-    tamanoMin: '',
-    tamanoMax: '',
-    descargasMin: '',
-    sort_by: '',
-    sort_order: ''
+    descargasMin: ''
   });
 
   // Opciones dinámicas para selects en cascada
   const [direccionesOptions, setDireccionesOptions] = useState([{ value: '', label: 'Todas las direcciones' }]);
-      const [procesosOptions, setProcesosOptions] = useState([{ value: '', label: 'Todas las categorías' }]);
+  const [procesosOptions, setProcesosOptions] = useState([{ value: '', label: 'Todas las categorías' }]);
+  const [etiquetasOptions, setEtiquetasOptions] = useState([]);
+  const [tiposDocumentoOptions, setTiposDocumentoOptions] = useState([]);
   const abortRef = useRef(null);
 
   const fetchDocumentos = async () => {
@@ -164,6 +158,36 @@ const Documentos = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Cargar etiquetas disponibles al inicio
+  useEffect(() => {
+    (async () => {
+      try {
+        const response = await apiRequest('/api/documentos/etiquetas');
+        if (response.success) {
+          const etiquetas = response.data || [];
+          setEtiquetasOptions(etiquetas);
+        }
+      } catch (error) {
+        console.error('Error al cargar etiquetas:', error);
+      }
+    })();
+  }, []);
+
+  // Cargar tipos de documento disponibles al inicio
+  useEffect(() => {
+    (async () => {
+      try {
+        const response = await apiRequest('/api/documentos/tipos');
+        if (response.success) {
+          const tipos = response.data || [];
+          setTiposDocumentoOptions(tipos);
+        }
+      } catch (error) {
+        console.error('Error al cargar tipos de documento:', error);
+      }
+    })();
+  }, []);
+
   // Cargar procesos cuando cambia la dirección seleccionada (cascada)
   useEffect(() => {
     const dirId = advancedFilterValues.direccion_id;
@@ -231,29 +255,23 @@ const Documentos = () => {
     });
   };
 
+
+
   // Limpiar todos los filtros
   const clearAllFilters = () => {
     setActiveFilters([]);
     setAdvancedFilterValues({
       tipo: '',
-      confidencialidad: '',
-      etiqueta: '',
+      etiqueta: [],
       extension: '',
-      fechaDesde: '',
-      fechaHasta: '',
       direccion_id: '',
       proceso_apoyo_id: '',
-      subidoPor: '',
-      tamanoMin: '',
-      tamanoMax: '',
-      descargasMin: '',
-      sort_by: '',
-      sort_order: ''
+      descargasMin: ''
     });
     setSearchTerm('');
   };
 
-  const advancedFilters = [
+  const advancedFilters = useMemo(() => [
     {
       key: 'direccion_id',
       label: 'Dirección',
@@ -272,15 +290,31 @@ const Documentos = () => {
       key: 'tipo',
       label: 'Tipo de Documento',
       type: 'select',
-      options: TIPO_OPTIONS,
+      options: [
+        { value: '', label: 'Todos los tipos' },
+        ...tiposDocumentoOptions.map(tipo => ({
+          value: tipo,
+          label: tipo
+        }))
+      ],
       value: advancedFilterValues.tipo
     },
     {
-      key: 'confidencialidad',
-      label: 'Confidencialidad',
-      type: 'select',
-      options: CONF_OPTS,
-      value: advancedFilterValues.confidencialidad
+      key: 'etiqueta',
+      label: 'Etiquetas',
+      type: 'multiselect',
+      options: etiquetasOptions.map(etiqueta => ({
+        value: etiqueta,
+        label: etiqueta
+      })),
+      value: advancedFilterValues.etiqueta || []
+    },
+    {
+      key: 'descargasMin',
+      label: 'Cantidad Descargas',
+      type: 'number',
+      placeholder: 'Ej: 5',
+      value: advancedFilterValues.descargasMin
     },
     {
       key: 'extension',
@@ -288,59 +322,8 @@ const Documentos = () => {
       type: 'select',
       options: EXTENSION_OPTIONS,
       value: advancedFilterValues.extension
-    },
-    {
-      key: 'etiqueta',
-      label: 'Etiqueta',
-      type: 'text',
-      placeholder: 'Ej: Proyecto Tumaco, Factura, etc.',
-      value: advancedFilterValues.etiqueta
-    },
-    {
-      key: 'fechaDesde',
-      label: 'Fecha Desde',
-      type: 'date',
-      value: advancedFilterValues.fechaDesde
-    },
-    {
-      key: 'fechaHasta',
-      label: 'Fecha Hasta',
-      type: 'date',
-      value: advancedFilterValues.fechaHasta
-    },
-    {
-      key: 'descargasMin',
-      label: 'Mín. Descargas',
-      type: 'number',
-      placeholder: 'Ej: 5',
-      value: advancedFilterValues.descargasMin
-    },
-    {
-      key: 'sort_by',
-      label: 'Ordenar por',
-      type: 'select',
-      options: [
-        { value: '', label: 'Por defecto (Fecha creación)' },
-        { value: 'created_at', label: 'Fecha de creación' },
-        { value: 'updated_at', label: 'Fecha de actualización' },
-        { value: 'titulo', label: 'Nombre (A-Z)' },
-        { value: 'contador_descargas', label: 'Más descargados' },
-        { value: 'tamaño_archivo', label: 'Tamaño de archivo' }
-      ],
-      value: advancedFilterValues.sort_by
-    },
-    {
-      key: 'sort_order',
-      label: 'Orden',
-      type: 'select',
-      options: [
-        { value: '', label: 'Descendente' },
-        { value: 'asc', label: 'Ascendente' },
-        { value: 'desc', label: 'Descendente' }
-      ],
-      value: advancedFilterValues.sort_order
     }
-  ];
+  ], [direccionesOptions, procesosOptions, etiquetasOptions, tiposDocumentoOptions, advancedFilterValues]);
 
   const handleView = async (documento) => {
     try {
@@ -538,7 +521,7 @@ const Documentos = () => {
           <div>
             <h1 className={styles.title}>Gestión de Documentos</h1>
             <p className={styles.subtitle}>
-              Busca y filtra documentos por tipo, etiquetas y confidencialidad
+              Busca y filtra documentos por dirección, categoría, tipo, etiquetas y más
             </p>
           </div>
           <button

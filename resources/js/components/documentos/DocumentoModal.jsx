@@ -221,7 +221,7 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
       ]
     },
     {
-      title: 'Metadatos y Seguridad',
+      title: 'Seguridad',
       icon: LockIcon,
       fields: [
         { 
