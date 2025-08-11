@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useLocation } from 'react-router-dom';
 import styles from '../styles/components/ProcesosApoyo.module.css';
 import ProcesoApoyoCard from './procesos-apoyo/ProcesoApoyoCard';
 import ProcesoApoyoModal from './procesos-apoyo/ProcesoApoyoModal';
@@ -12,6 +13,7 @@ import { WarningIcon } from './icons/ModalIcons';
 
 const ProcesosApoyo = () => {
     const { apiRequest } = useAuth();
+    const location = useLocation();
     const [procesosApoyo, setProcesosApoyo] = useState([]);
     const [loading, setLoading] = useState(true);
     const [formLoading, setFormLoading] = useState(false);
@@ -36,13 +38,48 @@ const ProcesosApoyo = () => {
     const { notifications, showSuccess, showError, showWarning, removeNotification } = useNotifications();
     const [deletingIds, setDeletingIds] = useState(new Set());
 
-            // Cargar categorías
+    // Manejar filtro por dirección cuando se navega desde direcciones
+    useEffect(() => {
+        if (location.state?.filterByDireccion) {
+            const direccionId = location.state.filterByDireccion;
+            const direccionName = location.state.direccionName;
+            
+            console.log('🔍 Navegación detectada:', { direccionId, direccionName, type: typeof direccionId });
+            
+            // Aplicar filtro por dirección
+            const newFilters = [{ 
+                key: 'direccion_id', 
+                value: direccionId.toString(), 
+                label: `Dirección: ${direccionName}` 
+            }];
+            
+            console.log('🔍 Filtros a aplicar:', newFilters);
+            setActiveFilters(newFilters);
+            
+            // Mostrar notificación
+            showSuccess(`Filtrado por dirección: ${direccionName}`);
+            
+            // Limpiar el estado de navegación
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }, [location.state]);
+
+    // Cargar categorías
     const fetchProcesosApoyo = async () => {
         try {
             setLoading(true);
             const response = await apiRequest('/api/procesos-apoyo');
             
             if (response.success) {
+                console.log('🔍 Datos recibidos del backend:', response.data.length, 'categorías');
+                console.log('🔍 Muestra de datos:', response.data.slice(0, 5).map(p => ({
+                    id: p.id,
+                    nombre: p.nombre,
+                    direccion_id: p.direccion?.id,
+                    direccion_nombre: p.direccion?.nombre,
+                    direccion_completa: p.direccion
+                })));
+                
                 setProcesosApoyo(response.data);
                 setFilteredProcesos(response.data);
             }
@@ -58,10 +95,14 @@ const ProcesosApoyo = () => {
         try {
             const response = await apiRequest('/api/direcciones');
             if (response.success) {
-                setDireccionesOptions(response.data.map(d => ({
-                    value: d.id.toString(),
-                    label: d.nombre
-                })));
+                const options = [
+                    { value: '', label: 'Todas las direcciones' },
+                    ...response.data.map(d => ({
+                        value: d.id.toString(),
+                        label: d.nombre
+                    }))
+                ];
+                setDireccionesOptions(options);
             }
         } catch (error) {
             //
@@ -83,6 +124,7 @@ const ProcesosApoyo = () => {
     // Utilidad para computar filtrado sobre una lista
     const computeFiltered = (list, search, filters) => {
         let filtered = [...list];
+        
         if (search.trim()) {
             const searchLower = search.toLowerCase();
             filtered = filtered.filter(proceso =>
@@ -92,10 +134,22 @@ const ProcesosApoyo = () => {
                 proceso.direccion?.nombre.toLowerCase().includes(searchLower)
             );
         }
+        
         filters.forEach(filter => {
             if (filter.key === 'direccion_id') {
-                filtered = filtered.filter(p => p.direccion?.id.toString() === filter.value);
+                const beforeCount = filtered.length;
+                console.log(`🔍 Aplicando filtro direccion_id: ${filter.value}`);
+                console.log(`🔍 Elementos antes del filtro: ${beforeCount}`);
+                
+                filtered = filtered.filter(p => {
+                    // Comparar tanto como string como como número
+                    const match = p.direccion?.id.toString() === filter.value || p.direccion?.id == filter.value;
+                    console.log(`🔍 Proceso "${p.nombre}": direccion.id=${p.direccion?.id}, filter.value=${filter.value}, match=${match}`);
+                    return match;
+                });
+                console.log(`🔍 Filtro direccion_id: ${beforeCount} → ${filtered.length} elementos`);
             }
+            
             if (filter.key === 'documentos_count') {
                 const count = parseInt(filter.value);
                 if (count === 0) {
@@ -105,12 +159,16 @@ const ProcesosApoyo = () => {
                 }
             }
         });
+        
         return filtered;
     };
 
     // Aplicar filtros
     const applyFilters = (search, filters) => {
-        setFilteredProcesos(computeFiltered(procesosApoyo, search, filters));
+        console.log('🔍 applyFilters - Llamado con:', { search, filters, procesosApoyoLength: procesosApoyo.length });
+        const result = computeFiltered(procesosApoyo, search, filters);
+        console.log('🔍 applyFilters - Resultado:', result.length, 'elementos');
+        setFilteredProcesos(result);
     };
 
     // Cargar datos al montar el componente
@@ -118,6 +176,14 @@ const ProcesosApoyo = () => {
         fetchProcesosApoyo();
         fetchDireccionesOptions();
     }, []);
+
+    // Aplicar filtros cuando cambien los filtros, búsqueda o datos
+    useEffect(() => {
+        if (procesosApoyo.length > 0) {
+            console.log('🔍 Aplicando filtros:', { searchTerm, activeFilters, procesosApoyoLength: procesosApoyo.length });
+            applyFilters(searchTerm, activeFilters);
+        }
+    }, [activeFilters, searchTerm, procesosApoyo]);
 
     // Manejar envío del formulario
     const handleSubmit = async (formData) => {
@@ -295,15 +361,34 @@ const ProcesosApoyo = () => {
                     Gestiona las categorías de la organización
                 </p>
                     </div>
-                    <button
-                        onClick={openCreateModal}
-                        className={styles.createButton}
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                        Nueva Categoría
-                    </button>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <button
+                            onClick={() => {
+                                console.log('🔍 TEST: Aplicando filtro manual para dirección 1');
+                                const testFilters = [{ key: 'direccion_id', value: '1', label: 'Dirección: Dirección Administrativa' }];
+                                setActiveFilters(testFilters);
+                            }}
+                            style={{ 
+                                padding: '8px 16px', 
+                                backgroundColor: '#f59e0b', 
+                                color: 'white', 
+                                border: 'none', 
+                                borderRadius: '6px',
+                                fontSize: '14px'
+                            }}
+                        >
+                            Test Filtro Dirección 1
+                        </button>
+                        <button
+                            onClick={openCreateModal}
+                            className={styles.createButton}
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            Nueva Categoría
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -311,7 +396,7 @@ const ProcesosApoyo = () => {
             <SearchFilterBar
                 onSearch={handleSearch}
                 onFiltersChange={handleFiltersChange}
-                                        placeholder="Buscar categorías por nombre, código, descripción o dirección..."
+                placeholder="Buscar categorías por nombre, código, descripción o dirección..."
                 searchValue={searchTerm}
                 loading={loading}
                 showAdvancedFilters={true}
@@ -345,6 +430,27 @@ const ProcesosApoyo = () => {
                     handleFiltersChange(newFilters);
                 }}
             />
+
+            {/* Indicador de filtro activo */}
+            {activeFilters.length > 0 && (
+                <div className={styles.activeFilters}>
+                    <span className={styles.activeFiltersLabel}>Filtros activos:</span>
+                    {activeFilters.map((filter, index) => (
+                        <span key={index} className={styles.activeFilterTag}>
+                            {filter.label}
+                            <button
+                                onClick={() => {
+                                    const newFilters = activeFilters.filter((_, i) => i !== index);
+                                    handleFiltersChange(newFilters);
+                                }}
+                                className={styles.removeFilterButton}
+                            >
+                                ×
+                            </button>
+                        </span>
+                    ))}
+                </div>
+            )}
 
             {/* Loading */}
             {loading ? (

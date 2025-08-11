@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { EditIcon, DeleteIcon } from '../icons/CrudIcons';
 import styles from '../../styles/components/Direcciones.module.css';
 
@@ -8,14 +9,26 @@ const DireccionCard = ({
     onEdit, 
     onDelete
 }) => {
+    const navigate = useNavigate();
+
+    const handleCardClick = () => {
+        // Navegar a categorías con filtro por dirección
+        navigate('/procesos', { 
+            state: { 
+                filterByDireccion: direccion.id,
+                direccionName: direccion.nombre
+            }
+        });
+    };
 
     return (
         <div 
-            className={styles.direccionCard}
+            className={`${styles.direccionCard} ${styles.clickable}`}
             style={{ 
                 '--direccion-color': direccion.color,
                 '--direccion-color-light': direccion.color + '20'
             }}
+            onClick={handleCardClick}
         >
             {/* Header de la tarjeta */}
             <div className={styles.cardHeader}>
