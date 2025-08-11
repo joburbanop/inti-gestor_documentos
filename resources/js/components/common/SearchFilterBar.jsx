@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { MagnifyingGlassIcon, XMarkIcon, AdjustmentsHorizontalIcon, FunnelIcon } from '@heroicons/react/24/outline';
 import styles from '../../styles/components/SearchFilterBar.module.css';
 
@@ -181,7 +181,26 @@ const SearchFilterBar = ({
     }, [filters]);
 
     // Contar filtros activos
-    const activeFiltersCount = (advancedFilters?.filter(f => f.value && f.value !== '').length || 0) + activeFilters.length;
+    const activeFiltersCount = useMemo(() => {
+        let count = activeFilters.length;
+        
+        // Contar filtros avanzados
+        advancedFilters?.forEach(filter => {
+            if (filter.type === 'multiselect') {
+                // Para multiselect, contar elementos seleccionados
+                if (Array.isArray(filter.value) && filter.value.length > 0) {
+                    count += filter.value.length;
+                }
+            } else {
+                // Para otros tipos, verificar si tiene valor
+                if (filter.value && filter.value !== '' && filter.value !== null && filter.value !== undefined) {
+                    count += 1;
+                }
+            }
+        });
+        
+        return count;
+    }, [activeFilters, advancedFilters]);
 
     return (
         <div className={`${styles.searchFilterContainer} ${className}`}>

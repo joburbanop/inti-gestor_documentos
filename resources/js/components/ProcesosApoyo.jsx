@@ -507,10 +507,26 @@ const ProcesosApoyo = () => {
                                 </svg>
                             </div>
                             <h3 className="text-lg font-medium text-gray-900 mb-2">No hay categorías</h3>
-                                                            <p className="text-gray-500 mb-4">Comienza creando tu primera categoría.</p>
+                            <p className="text-gray-500 mb-4">Comienza creando tu primera categoría.</p>
                             <button
                                 onClick={openCreateModal}
-                                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                                style={{
+                                    backgroundColor: '#2563eb',
+                                    color: 'white',
+                                    padding: '8px 16px',
+                                    borderRadius: '8px',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    transition: 'background-color 0.2s ease'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.target.style.backgroundColor = '#1d4ed8';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.target.style.backgroundColor = '#2563eb';
+                                }}
                             >
                                 Crear Primera Categoría
                             </button>
