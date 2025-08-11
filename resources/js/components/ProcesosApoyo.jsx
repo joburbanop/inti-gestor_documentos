@@ -33,6 +33,8 @@ const ProcesosApoyo = () => {
     const [activeFilters, setActiveFilters] = useState([]);
     const [filteredProcesos, setFilteredProcesos] = useState([]);
     const [direccionesOptions, setDireccionesOptions] = useState([]);
+    const [categoriasOptions, setCategoriasOptions] = useState([]);
+    const [selectedDireccion, setSelectedDireccion] = useState('');
 
     const { modalState, showConfirmModal, hideConfirmModal } = useConfirmModal();
     const { notifications, showSuccess, showError, showWarning, removeNotification } = useNotifications();
@@ -44,8 +46,6 @@ const ProcesosApoyo = () => {
             const direccionId = location.state.filterByDireccion;
             const direccionName = location.state.direccionName;
             
-            console.log('🔍 Navegación detectada:', { direccionId, direccionName, type: typeof direccionId });
-            
             // Aplicar filtro por dirección
             const newFilters = [{ 
                 key: 'direccion_id', 
@@ -53,7 +53,6 @@ const ProcesosApoyo = () => {
                 label: `Dirección: ${direccionName}` 
             }];
             
-            console.log('🔍 Filtros a aplicar:', newFilters);
             setActiveFilters(newFilters);
             
             // Mostrar notificación
@@ -71,15 +70,6 @@ const ProcesosApoyo = () => {
             const response = await apiRequest('/api/procesos-apoyo');
             
             if (response.success) {
-                console.log('🔍 Datos recibidos del backend:', response.data.length, 'categorías');
-                console.log('🔍 Muestra de datos:', response.data.slice(0, 5).map(p => ({
-                    id: p.id,
-                    nombre: p.nombre,
-                    direccion_id: p.direccion?.id,
-                    direccion_nombre: p.direccion?.nombre,
-                    direccion_completa: p.direccion
-                })));
-                
                 setProcesosApoyo(response.data);
                 setFilteredProcesos(response.data);
             }
@@ -97,6 +87,7 @@ const ProcesosApoyo = () => {
             if (response.success) {
                 const options = [
                     { value: '', label: 'Todas las direcciones' },
+                    { value: 'null', label: 'Sin dirección' },
                     ...response.data.map(d => ({
                         value: d.id.toString(),
                         label: d.nombre
@@ -107,6 +98,32 @@ const ProcesosApoyo = () => {
         } catch (error) {
             //
         }
+    };
+
+    // Generar opciones de categorías basadas en la dirección seleccionada
+    const generateCategoriasOptions = (direccionId) => {
+        let categoriasFiltradas = [];
+        
+        if (direccionId === '') {
+            // Todas las direcciones - mostrar todas las categorías
+            categoriasFiltradas = procesosApoyo;
+        } else if (direccionId === 'null') {
+            // Sin dirección - mostrar solo categorías sin dirección
+            categoriasFiltradas = procesosApoyo.filter(p => !p.direccion);
+        } else {
+            // Dirección específica - mostrar solo categorías de esa dirección
+            categoriasFiltradas = procesosApoyo.filter(p => p.direccion?.id.toString() === direccionId);
+        }
+        
+        const options = [
+            { value: '', label: 'Todas las categorías' },
+            ...categoriasFiltradas.map(cat => ({
+                value: cat.id.toString(),
+                label: cat.nombre
+            }))
+        ];
+        
+        setCategoriasOptions(options);
     };
 
     // Función de búsqueda
@@ -138,26 +155,41 @@ const ProcesosApoyo = () => {
         filters.forEach(filter => {
             if (filter.key === 'direccion_id') {
                 const beforeCount = filtered.length;
-                console.log(`🔍 Aplicando filtro direccion_id: ${filter.value}`);
-                console.log(`🔍 Elementos antes del filtro: ${beforeCount}`);
                 
                 filtered = filtered.filter(p => {
-                    // Comparar tanto como string como como número
-                    const match = p.direccion?.id.toString() === filter.value || p.direccion?.id == filter.value;
-                    console.log(`🔍 Proceso "${p.nombre}": direccion.id=${p.direccion?.id}, filter.value=${filter.value}, match=${match}`);
+                    let match = false;
+                    
+                    if (filter.value === 'null') {
+                        // Filtrar categorías sin dirección
+                        match = p.direccion === null || p.direccion === undefined;
+                    } else if (filter.value === '') {
+                        // Mostrar todas las direcciones
+                        match = true;
+                    } else {
+                        // Filtrar por dirección específica
+                        match = p.direccion?.id.toString() === filter.value || p.direccion?.id == filter.value;
+                    }
+                    
                     return match;
                 });
+                
                 console.log(`🔍 Filtro direccion_id: ${beforeCount} → ${filtered.length} elementos`);
             }
-            
-            if (filter.key === 'documentos_count') {
-                const count = parseInt(filter.value);
-                if (count === 0) {
-                    filtered = filtered.filter(p => (p.estadisticas?.total_documentos || 0) === 0);
-                } else if (count > 0) {
-                    filtered = filtered.filter(p => (p.estadisticas?.total_documentos || 0) > 0);
-                }
+
+            if (filter.key === 'categoria_id') {
+                const beforeCount = filtered.length;
+                
+                filtered = filtered.filter(p => {
+                    if (filter.value === '') {
+                        return true; // Mostrar todas las categorías
+                    } else {
+                        return p.id.toString() === filter.value;
+                    }
+                });
+                
+                console.log(`🔍 Filtro categoria_id: ${beforeCount} → ${filtered.length} elementos`);
             }
+
         });
         
         return filtered;
@@ -165,9 +197,7 @@ const ProcesosApoyo = () => {
 
     // Aplicar filtros
     const applyFilters = (search, filters) => {
-        console.log('🔍 applyFilters - Llamado con:', { search, filters, procesosApoyoLength: procesosApoyo.length });
         const result = computeFiltered(procesosApoyo, search, filters);
-        console.log('🔍 applyFilters - Resultado:', result.length, 'elementos');
         setFilteredProcesos(result);
     };
 
@@ -180,10 +210,16 @@ const ProcesosApoyo = () => {
     // Aplicar filtros cuando cambien los filtros, búsqueda o datos
     useEffect(() => {
         if (procesosApoyo.length > 0) {
-            console.log('🔍 Aplicando filtros:', { searchTerm, activeFilters, procesosApoyoLength: procesosApoyo.length });
             applyFilters(searchTerm, activeFilters);
         }
     }, [activeFilters, searchTerm, procesosApoyo]);
+
+    // Actualizar opciones de categorías cuando cambie la dirección seleccionada
+    useEffect(() => {
+        if (procesosApoyo.length > 0) {
+            generateCategoriasOptions(selectedDireccion);
+        }
+    }, [selectedDireccion, procesosApoyo]);
 
     // Manejar envío del formulario
     const handleSubmit = async (formData) => {
@@ -361,34 +397,15 @@ const ProcesosApoyo = () => {
                     Gestiona las categorías de la organización
                 </p>
                     </div>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                        <button
-                            onClick={() => {
-                                console.log('🔍 TEST: Aplicando filtro manual para dirección 1');
-                                const testFilters = [{ key: 'direccion_id', value: '1', label: 'Dirección: Dirección Administrativa' }];
-                                setActiveFilters(testFilters);
-                            }}
-                            style={{ 
-                                padding: '8px 16px', 
-                                backgroundColor: '#f59e0b', 
-                                color: 'white', 
-                                border: 'none', 
-                                borderRadius: '6px',
-                                fontSize: '14px'
-                            }}
-                        >
-                            Test Filtro Dirección 1
-                        </button>
-                        <button
-                            onClick={openCreateModal}
-                            className={styles.createButton}
-                        >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
-                            Nueva Categoría
-                        </button>
-                    </div>
+                    <button
+                        onClick={openCreateModal}
+                        className={styles.createButton}
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        Nueva Categoría
+                    </button>
                 </div>
             </div>
 
@@ -409,25 +426,34 @@ const ProcesosApoyo = () => {
                         options: direccionesOptions
                     },
                     {
-                        key: 'documentos_count',
-                        label: 'Documentos',
+                        key: 'categoria_id',
+                        label: 'Categoría',
                         type: 'select',
-                        value: activeFilters.find(f => f.key === 'documentos_count')?.value || '',
-                        options: [
-                            { value: '0', label: 'Sin documentos' },
-                            { value: '1', label: 'Con documentos' }
-                        ]
+                        value: activeFilters.find(f => f.key === 'categoria_id')?.value || '',
+                        options: categoriasOptions
                     }
                 ]}
                 onAdvancedFilterChange={(key, value) => {
                     const newFilters = activeFilters.filter(f => f.key !== key);
-                    if (value) {
-                        const label = key === 'direccion_id' 
-                            ? direccionesOptions.find(d => d.value === value)?.label || 'Dirección'
-                            : value === '0' ? 'Sin documentos' : 'Con documentos';
-                        newFilters.push({ key, value, label });
+                    
+                    if (key === 'direccion_id') {
+                        // Si cambia la dirección, limpiar el filtro de categoría
+                        setSelectedDireccion(value);
+                        const filtersWithoutCategoria = newFilters.filter(f => f.key !== 'categoria_id');
+                        
+                        if (value) {
+                            const label = direccionesOptions.find(d => d.value === value)?.label || 'Dirección';
+                            filtersWithoutCategoria.push({ key, value, label });
+                        }
+                        
+                        handleFiltersChange(filtersWithoutCategoria);
+                    } else if (key === 'categoria_id') {
+                        if (value) {
+                            const label = categoriasOptions.find(c => c.value === value)?.label || 'Categoría';
+                            newFilters.push({ key, value, label });
+                        }
+                        handleFiltersChange(newFilters);
                     }
-                    handleFiltersChange(newFilters);
                 }}
             />
 
