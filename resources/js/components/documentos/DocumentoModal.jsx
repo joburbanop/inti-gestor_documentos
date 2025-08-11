@@ -26,14 +26,21 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
   const [direccionesOptions, setDireccionesOptions] = useState([]);
   const [procesosOptions, setProcesosOptions] = useState([]);
   const [tipoOptions, setTipoOptions] = useState(TIPO_OPTIONS);
+  const [etiquetasOptions, setEtiquetasOptions] = useState([]);
   const [localData, setLocalData] = useState(formData || {});
 
   useEffect(() => {
     if (!show) return;
     (async () => {
       try {
-        const d = await apiRequest('/direcciones');
+        const [d, e] = await Promise.all([
+          apiRequest('/direcciones'),
+          apiRequest('/documentos/etiquetas')
+        ]);
+        
         if (d.success) setDireccionesOptions(d.data.map(x => ({ value: x.id, label: x.nombre })));
+        if (e.success) setEtiquetasOptions(e.data.map(x => ({ value: x, label: x })));
+        
         const dirId = (formData && formData.direccion_id) || localData?.direccion_id;
         if (dirId) {
           const p = await apiRequest(`/direcciones/${dirId}/procesos-apoyo`);
@@ -83,6 +90,24 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
       setTipoOptions(prev => [...prev, { value: val, label: val }]);
     }
     setLocalData(prev => ({ ...prev, tipo: val }));
+  };
+
+  const handleAddEtiqueta = () => {
+    const nueva = window.prompt('Escribe la nueva etiqueta:');
+    if (!nueva) return;
+    const val = String(nueva).trim();
+    if (!val) return;
+    if (!etiquetasOptions.find(o => String(o.value).toLowerCase() === val.toLowerCase())) {
+      setEtiquetasOptions(prev => [...prev, { value: val, label: val }]);
+    }
+    // Agregar la nueva etiqueta a las etiquetas seleccionadas
+    const etiquetasActuales = localData.etiquetas || [];
+    if (!etiquetasActuales.includes(val)) {
+      setLocalData(prev => ({ 
+        ...prev, 
+        etiquetas: [...etiquetasActuales, val] 
+      }));
+    }
   };
 
   const handleAddDireccion = async () => {
@@ -241,8 +266,12 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
         { 
           name: 'etiquetas', 
           label: 'Etiquetas', 
-          type: 'tags', 
-          placeholder: 'Ej: proyecto tumaco, fotografía, 2025'
+          type: 'multiselect', 
+          options: etiquetasOptions,
+          placeholder: 'Selecciona o crea etiquetas',
+          hasAddButton: true,
+          addButtonText: 'Crear etiqueta',
+          onAddClick: handleAddEtiqueta
         }
       ]
     }

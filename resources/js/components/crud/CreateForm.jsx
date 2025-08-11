@@ -437,6 +437,83 @@ const CreateForm = ({
                     </div>
                 );
 
+            case 'multiselect':
+                return (
+                    <div className="formGroup" key={name}>
+                        <label htmlFor={name} className="formLabel">
+                            {label} {required && '*'}
+                        </label>
+                        <div className="selectWithButton">
+                            <div className={`multiSelectContainer ${multiSelectOpen === name ? 'open' : ''}`}>
+                                <div className="multiSelectDisplay" onClick={() => toggleMultiSelect(name)}>
+                                    <div className="selectedItems">
+                                        {fieldValue && fieldValue.length > 0 ? (
+                                            fieldValue.map((value, index) => {
+                                                const option = options.find(opt => opt.value == value);
+                                                return option ? (
+                                                    <span key={value} className="selectedItem">
+                                                        {option.label}
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                removeSelectedItem(name, value);
+                                                            }}
+                                                            className="removeItem"
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </span>
+                                                ) : null;
+                                            })
+                                        ) : (
+                                            <span className="placeholder">{placeholder}</span>
+                                        )}
+                                    </div>
+                                    <div className="multiSelectArrow">▼</div>
+                                </div>
+                                {multiSelectOpen === name && (
+                                    <div className="multiSelectDropdown">
+                                        {options.map((option) => (
+                                            <div
+                                                key={option.value}
+                                                className={`multiSelectOption ${fieldValue && fieldValue.includes(option.value) ? 'selected' : ''}`}
+                                                onClick={() => toggleOption(name, option.value)}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={fieldValue && fieldValue.includes(option.value)}
+                                                    readOnly
+                                                />
+                                                <span>{option.label}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            {field.hasAddButton && (
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        if (field.onAddClick) {
+                                            field.onAddClick();
+                                        }
+                                    }}
+                                    className="addButton"
+                                    title={field.addButtonText}
+                                >
+                                    <PlusIcon className="w-4 h-4" />
+                                </button>
+                            )}
+                        </div>
+                        {fieldError && (
+                            <span className="errorText">{fieldError}</span>
+                        )}
+                    </div>
+                );
+
             case 'select':
                 if (field.multiple) {
                     return (

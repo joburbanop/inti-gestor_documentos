@@ -25,8 +25,7 @@ use Illuminate\Support\Facades\Route;
 Route::post('/login', [AuthController::class, 'login']);
 
 // Rutas protegidas
-Route::middleware(['api.auth'])->group(function () {
-    // \App\Http\Middleware\CheckUserActivity::class TEMPORALMENTE DESHABILITADO
+Route::middleware(['api.auth', \App\Http\Middleware\CheckUserActivity::class])->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/verify', [AuthController::class, 'verify']);
