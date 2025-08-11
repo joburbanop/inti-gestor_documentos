@@ -492,10 +492,29 @@ const CreateForm = ({
                                         </div>
                                     )}
                                 </div>
-                                {field.hasAddButton && (
+                                {(() => {
+                                    console.log('🔍 CreateForm: field.hasAddButton para', name, ':', field.hasAddButton);
+                                    return field.hasAddButton;
+                                })() && (
                                     <button
                                         type="button"
-                                        onClick={field.onAddClick}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            console.log('🔍 CreateForm: Botón de agregar clickeado para campo múltiple:', name);
+                                            console.log('🔍 CreateForm: field.onAddClick existe:', !!field.onAddClick);
+                                            console.log('🔍 CreateForm: field.onAddClick tipo:', typeof field.onAddClick);
+                                            if (field.onAddClick) {
+                                                console.log('🔍 CreateForm: Ejecutando field.onAddClick');
+                                                console.log('🔍 CreateForm: field.onAddClick.toString():', field.onAddClick.toString());
+                                                try {
+                                                    field.onAddClick();
+                                                    console.log('🔍 CreateForm: field.onAddClick ejecutado sin errores');
+                                                } catch (error) {
+                                                    console.error('🔍 CreateForm: Error al ejecutar field.onAddClick:', error);
+                                                }
+                                            }
+                                        }}
                                         className="addButton"
                                         title={field.addButtonText}
                                     >

@@ -50,6 +50,41 @@ const ProcesoApoyoModal = ({
         }
     };
 
+    const handleAddDireccion = async () => {
+        const nombre = window.prompt('Escribe el nombre de la nueva dirección:');
+        if (!nombre) return;
+        
+        const codigo = window.prompt('Escribe el código de la dirección (opcional):');
+        
+        try {
+            const response = await apiRequest('/api/direcciones', {
+                method: 'POST',
+                body: JSON.stringify({
+                    nombre: nombre.trim(),
+                    codigo: codigo ? codigo.trim() : null,
+                    descripcion: '',
+                    color: '#1F448B'
+                })
+            });
+
+            if (response.success) {
+                // Agregar la nueva dirección a las opciones
+                const nuevaDireccion = {
+                    value: response.data.id,
+                    label: `${response.data.nombre} (${response.data.codigo})`
+                };
+                setDireccionesOptions(prev => [...prev, nuevaDireccion]);
+                
+                alert('Dirección creada exitosamente');
+            } else {
+                alert(response.message || 'Error al crear la dirección');
+            }
+        } catch (error) {
+            console.error('Error al crear dirección:', error);
+            alert('Error al crear la dirección: ' + error.message);
+        }
+    };
+
     if (!show) return null;
 
                 // Configuración de campos para categorías
@@ -101,7 +136,10 @@ const ProcesoApoyoModal = ({
                     type: 'select',
                     placeholder: 'Selecciona la dirección a la que pertenece',
                     required: true,
-                    options: direccionesOptions
+                    options: direccionesOptions,
+                    hasAddButton: true,
+                    addButtonText: 'Agregar dirección',
+                    onAddClick: handleAddDireccion
                 },
                 
             ]

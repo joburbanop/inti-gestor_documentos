@@ -1,18 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import CreateForm from './CreateForm';
-import { BuildingIcon, CodeIcon, DescriptionIcon, ProcessIcon, PlusIcon } from '../icons/CrudIcons';
+import { BuildingIcon, CodeIcon, DescriptionIcon, ProcessIcon } from '../icons/CrudIcons';
 
 const CreateDireccion = () => {
-    const { apiRequest, token, isAuthenticated } = useAuth();
+    const { apiRequest } = useAuth();
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
     const [procesosOptions, setProcesosOptions] = useState([]);
-    const [showProcessModal, setShowProcessModal] = useState(false);
 
-    //
-
-            // Cargar opciones de categorías
+    // Cargar opciones de categorías
     useEffect(() => {
         const cargarProcesos = async () => {
             try {
@@ -22,7 +19,6 @@ const CreateDireccion = () => {
                 }
             } catch (error) {
                 console.error('Error al cargar categorías:', error);
-                // No mostrar error si es de autenticación, ya se maneja en el contexto
                 if (!error.message?.includes('No autenticado')) {
                     setErrors({ general: 'Error al cargar categorías' });
                 }
@@ -60,15 +56,12 @@ const CreateDireccion = () => {
             setLoading(true);
             setErrors({});
             
-            //
-            
             const response = await apiRequest('/direcciones', {
                 method: 'POST',
                 body: JSON.stringify(formData)
             });
 
             if (response.success) {
-      
                 // Redirigir inmediatamente a la lista de direcciones con mensaje de éxito
                 window.location.href = '/#direcciones?success=created';
             } else {
@@ -92,7 +85,8 @@ const CreateDireccion = () => {
         }
     };
 
-    // Configuración de campos para direcciones
+
+
     const direccionFields = [
         {
             title: 'Información Básica',
@@ -132,7 +126,7 @@ const CreateDireccion = () => {
             ]
         },
         {
-                            title: 'Categorías',
+            title: 'Categorías',
             icon: ProcessIcon,
             fields: [
                 {
@@ -143,9 +137,8 @@ const CreateDireccion = () => {
                     required: false,
                     multiple: true,
                     options: procesosOptions,
-                    hasAddButton: true,
-                    addButtonText: 'Crear Nuevo Proceso',
-                    onAddClick: () => setShowProcessModal(true)
+                    hasAddButton: false // Explícitamente deshabilitado
+                    // Sin botón de agregar - eliminado por problemas de funcionalidad
                 }
             ]
         }
@@ -167,41 +160,6 @@ const CreateDireccion = () => {
                     descripcion: ''
                 }}
             />
-            
-            {/* Modal para crear proceso de apoyo */}
-            {showProcessModal && (
-                <div className="modalOverlay">
-                    <div className="processModal">
-                        <div className="modalHeader">
-                            <h3>Crear Nuevo Proceso de Apoyo</h3>
-                            <button 
-                                onClick={() => setShowProcessModal(false)}
-                                className="closeButton"
-                            >
-                                ×
-                            </button>
-                        </div>
-                        <div className="modalContent">
-                            <p>Esta funcionalidad estará disponible próximamente.</p>
-                            <p>Por ahora, puedes crear categorías desde la sección de Categorías.</p>
-                        </div>
-                        <div className="modalActions">
-                            <button 
-                                onClick={() => window.location.href = '/#procesos'}
-                                className="primaryButton"
-                            >
-                                Ir a Procesos
-                            </button>
-                            <button 
-                                onClick={() => setShowProcessModal(false)}
-                                className="secondaryButton"
-                            >
-                                Cancelar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </>
     );
 };

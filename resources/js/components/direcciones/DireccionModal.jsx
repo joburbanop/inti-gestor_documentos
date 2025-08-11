@@ -17,7 +17,6 @@ const DireccionModal = ({
 }) => {
     const { apiRequest } = useAuth();
     const [procesosOptions, setProcesosOptions] = useState([]);
-    const [showProcessModal, setShowProcessModal] = useState(false);
 
                 // Cargar categorías para el select
     useEffect(() => {
@@ -98,10 +97,8 @@ const DireccionModal = ({
                     placeholder: 'Selecciona las categorías (opcional)',
                     required: false,
                     multiple: true,
-                    options: procesosOptions,
-                    hasAddButton: true,
-                    addButtonText: 'Crear Nuevo Proceso',
-                    onAddClick: () => setShowProcessModal(true)
+                    options: procesosOptions
+                    // Sin botón de agregar - eliminado por problemas de funcionalidad
                 }
             ]
         }

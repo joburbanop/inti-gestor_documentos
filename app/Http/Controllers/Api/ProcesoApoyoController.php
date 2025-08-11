@@ -286,14 +286,13 @@ class ProcesoApoyoController extends Controller
             $validator = Validator::make($request->all(), [
                 'nombre' => 'required|string|max:255|unique:procesos_apoyo,nombre',
                 'descripcion' => 'nullable|string|max:1000',
-                'direccion_id' => 'required|exists:direcciones,id',
+                'direccion_id' => 'nullable|exists:direcciones,id',
                 'codigo' => 'nullable|string|max:20|unique:procesos_apoyo,codigo',
                     // 'orden' eliminado completamente
             ], [
                 'nombre.required' => 'El nombre es obligatorio',
                 'nombre.unique' => 'Ya existe un proceso con ese nombre',
                 'codigo.unique' => 'Ya existe un proceso con ese código',
-                'direccion_id.required' => 'La dirección es obligatoria',
                 'direccion_id.exists' => 'La dirección seleccionada no existe'
             ]);
 
