@@ -73,7 +73,7 @@ const LoginIcon = ({ className = "" }) => (
 const Administracion = () => {
     const auth = useAuth();
     const { apiRequest } = auth;
-    const { showNotification } = useNotifications();
+    const { showSuccess, showError } = useNotifications();
     const [activeTab, setActiveTab] = useState('usuarios');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
