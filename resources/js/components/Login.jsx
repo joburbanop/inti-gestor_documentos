@@ -52,21 +52,8 @@ const Login = () => {
                         />
                     </div>
                     <h1 className={styles.title}>
-                        Intranet Inti
+                        Gestión Documental
                     </h1>
-                    <p className={styles.subtitle}>
-                        Centro de Documentos
-                    </p>
-                </div>
-
-                {/* Welcome Message */}
-                <div className={styles.welcomeSection}>
-                    <h2 className={styles.welcomeTitle}>
-                        ¡Bienvenido!
-                    </h2>
-                    <p className={styles.welcomeText}>
-                        Accede a tu cuenta para continuar
-                    </p>
                 </div>
 
                 {/* Login Form */}
@@ -137,43 +124,12 @@ const Login = () => {
                     </button>
                 </form>
 
-                {/* Demo Credentials */}
-                <div className={styles.demoCredentials}>
-                    <p className={styles.demoCredentialsTitle}>
-                        Credenciales de demostración
-                    </p>
-                    <div className={styles.demoCredentialsCard}>
-                        <div className={styles.credentialItem}>
-                            <span className={styles.credentialLabel}>
-                                <strong>👨‍💼 Admin:</strong>
-                            </span>
-                            <span className={styles.credentialValue}>
-                                victor@intiled.com
-                            </span>
-                        </div>
-                        <div className={styles.credentialItem}>
-                            <span className={styles.credentialLabel}>
-                                <strong>👤 Usuario:</strong>
-                            </span>
-                            <span className={styles.credentialValue}>
-                                usuario@intiled.com
-                            </span>
-                        </div>
-                        <div className={styles.credentialItem}>
-                            <span className={styles.credentialLabel}>
-                                <strong>🔑 Contraseña:</strong>
-                            </span>
-                            <span className={styles.credentialValue}>
-                                password
-                            </span>
-                        </div>
-                    </div>
-                </div>
+                
             </div>
 
             {/* Footer */}
             <div className={styles.footer}>
-                &copy; 2024 Intiled. Todos los derechos reservados.
+                &copy; 2025 Intiled. Todos los derechos reservados.
             </div>
         </div>
     );
