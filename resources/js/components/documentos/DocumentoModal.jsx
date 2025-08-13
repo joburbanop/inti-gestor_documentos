@@ -111,9 +111,9 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
   };
 
   const handleAddDireccion = async () => {
-    const nombre = window.prompt('Escribe el nombre de la nueva dirección:');
+    const nombre = window.prompt('Escribe el nombre del nuevo proceso estratégico:');
     if (!nombre) return;
-    const codigo = window.prompt('Escribe el código de la dirección (opcional):');
+    const codigo = window.prompt('Escribe el código del proceso estratégico (opcional):');
     
     try {
       const res = await apiRequest('/direcciones', {
@@ -130,18 +130,18 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
         const nuevaDireccion = { value: res.data.id, label: res.data.nombre };
         setDireccionesOptions(prev => [...prev, nuevaDireccion]);
         setLocalData(prev => ({ ...prev, direccion_id: res.data.id, proceso_apoyo_id: '' }));
-        alert('Dirección creada exitosamente');
+        alert('Proceso estratégico creado exitosamente');
       } else {
-        alert(res.message || 'Error al crear la dirección');
+        alert(res.message || 'Error al crear el proceso estratégico');
       }
     } catch (e) {
-      alert('Error al crear la dirección: ' + e.message);
+      alert('Error al crear el proceso estratégico: ' + e.message);
     }
   };
 
   const handleAddProceso = async () => {
     if (!localData?.direccion_id) {
-      alert('Primero selecciona una dirección');
+      alert('Primero selecciona un proceso estratégico');
       return;
     }
     
@@ -211,13 +211,13 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
       fields: [
         { 
           name: 'direccion_id', 
-          label: 'Dirección', 
+          label: 'Proceso Estratégico', 
           type: 'select', 
           required: true, 
           options: direccionesOptions, 
-          placeholder: 'Selecciona la dirección responsable',
+          placeholder: 'Selecciona el proceso estratégico responsable',
           hasAddButton: true,
-          addButtonText: 'Agregar dirección',
+          addButtonText: 'Agregar proceso estratégico',
           onAddClick: handleAddDireccion
         },
         { 

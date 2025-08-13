@@ -281,7 +281,7 @@ const Documentos = () => {
     },
     {
       key: 'proceso_apoyo_id',
-      label: 'Categoría',
+      label: 'Proceso Misional',
       type: 'select',
       options: procesosOptions,
       value: advancedFilterValues.proceso_apoyo_id
@@ -521,7 +521,7 @@ const Documentos = () => {
           <div>
             <h1 className={styles.title}>Gestión de Documentos</h1>
             <p className={styles.subtitle}>
-              Busca y filtra documentos por dirección, categoría, tipo, etiquetas y más
+              Busca y filtra documentos por proceso estratégico, proceso misional, tipo, etiquetas y más
             </p>
           </div>
           <button

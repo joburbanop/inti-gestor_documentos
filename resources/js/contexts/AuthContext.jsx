@@ -154,7 +154,9 @@ export const AuthProvider = ({ children }) => {
         // Debug removido
 
         try {
-            const response = await fetch(url.startsWith('/api') ? url : `/api/${url.replace(/^\//, '')}`, config);
+            // Usar proxy de Vite con rutas relativas
+            const apiUrl = url.startsWith('/api') ? url : `/api/${url.replace(/^\//, '')}`;
+            const response = await fetch(apiUrl, config);
             
             console.log('🔍 AuthContext: Respuesta recibida', { 
                 url, 
@@ -207,7 +209,7 @@ export const AuthProvider = ({ children }) => {
         try {
             dispatch({ type: AUTH_ACTIONS.LOGIN_START });
 
-            // Optimización: Usar fetch directamente para máxima velocidad
+            // Usar ruta relativa para aprovechar el proxy
             const response = await fetch('/api/login', {
                 method: 'POST',
                 headers: {

@@ -18,7 +18,7 @@ const ProcesoApoyoModal = ({
     const { apiRequest } = useAuth();
     const [direccionesOptions, setDireccionesOptions] = useState([]);
 
-    // Cargar direcciones para el select
+    // Cargar procesos estratégicos para el select
     useEffect(() => {
         if (show) {
             // Debug removido
@@ -51,10 +51,10 @@ const ProcesoApoyoModal = ({
     };
 
     const handleAddDireccion = async () => {
-        const nombre = window.prompt('Escribe el nombre de la nueva dirección:');
+        const nombre = window.prompt('Escribe el nombre del nuevo proceso estratégico:');
         if (!nombre) return;
         
-        const codigo = window.prompt('Escribe el código de la dirección (opcional):');
+        const codigo = window.prompt('Escribe el código del proceso estratégico (opcional):');
         
         try {
             const response = await apiRequest('/api/direcciones', {
@@ -68,26 +68,26 @@ const ProcesoApoyoModal = ({
             });
 
             if (response.success) {
-                // Agregar la nueva dirección a las opciones
+                // Agregar el nuevo proceso estratégico a las opciones
                 const nuevaDireccion = {
                     value: response.data.id,
                     label: `${response.data.nombre} (${response.data.codigo})`
                 };
                 setDireccionesOptions(prev => [...prev, nuevaDireccion]);
                 
-                alert('Dirección creada exitosamente');
+                alert('Proceso estratégico creado exitosamente');
             } else {
-                alert(response.message || 'Error al crear la dirección');
+                alert(response.message || 'Error al crear el proceso estratégico');
             }
         } catch (error) {
-            console.error('Error al crear dirección:', error);
-            alert('Error al crear la dirección: ' + error.message);
+            console.error('Error al crear proceso estratégico:', error);
+            alert('Error al crear el proceso estratégico: ' + error.message);
         }
     };
 
     if (!show) return null;
 
-                // Configuración de campos para categorías
+    // Configuración de campos para procesos misionales
     const procesoApoyoFields = [
         {
             title: 'Información Básica',
@@ -95,7 +95,7 @@ const ProcesoApoyoModal = ({
             fields: [
                 {
                     name: 'nombre',
-                    label: 'Nombre de la Categoría',
+                    label: 'Nombre del Proceso Misional',
                     type: 'text',
                     placeholder: 'Ej: Gestión de Recursos Humanos',
                     required: true,
@@ -117,9 +117,9 @@ const ProcesoApoyoModal = ({
             fields: [
                 {
                     name: 'descripcion',
-                    label: 'Descripción de la Categoría',
+                    label: 'Descripción del Proceso Misional',
                     type: 'textarea',
-                    placeholder: 'Describe las funciones principales, responsabilidades y objetivos de esta categoría...',
+                    placeholder: 'Describe las funciones principales, responsabilidades y objetivos de este proceso misional...',
                     required: true,
                     maxLength: 500,
                     rows: 4
@@ -132,13 +132,13 @@ const ProcesoApoyoModal = ({
             fields: [
                 {
                     name: 'direccion_id',
-                    label: 'Dirección Asociada',
+                    label: 'Proceso Estratégico Asociado',
                     type: 'select',
-                    placeholder: 'Selecciona la dirección a la que pertenece',
+                    placeholder: 'Selecciona el proceso estratégico al que pertenece',
                     required: true,
                     options: direccionesOptions,
                     hasAddButton: true,
-                    addButtonText: 'Agregar dirección',
+                    addButtonText: 'Agregar proceso estratégico',
                     onAddClick: handleAddDireccion
                 },
                 
@@ -164,7 +164,7 @@ const ProcesoApoyoModal = ({
                 {/* Header del Modal */}
                 <div className={styles.modalHeader}>
                     <h2 className={styles.modalTitle}>
-                        {mode === 'create' ? 'Nueva Categoría' : 'Editar Categoría'}
+                        {mode === 'create' ? 'Nuevo Proceso Misional' : 'Editar Proceso Misional'}
                     </h2>
                     <button
                         onClick={onClose}

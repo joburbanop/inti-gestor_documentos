@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { useAuth } from '../contexts/AuthContext';
 import { INTILED_COLORS } from '../config/colors';
 import styles from '../styles/components/Navbar.module.css';
+import { QualityIcon, SafetyHealthIcon } from './icons/ManagementIcons';
 
 // Componentes de iconos SVG optimizados
 const DashboardIcon = ({ className }) => (
@@ -71,14 +72,80 @@ const Navbar = ({ title = "Intranet Inti" }) => {
 
     const navItems = [
         { name: 'Dashboard', path: '/' , icon: DashboardIcon },
-        { name: 'Direcciones', path: '/direcciones', icon: DirectionsIcon },
-        { name: 'Categorías', path: '/procesos', icon: ProcessesIcon },
+        { name: 'Procesos Estratégicos', path: '/direcciones', icon: DirectionsIcon },
+        { name: 'Procesos Misionales', path: '/procesos', icon: ProcessesIcon },
         { name: 'Documentos', path: '/documentos', icon: DocumentsIcon },
     ];
 
     const adminItems = [
         { name: 'Administración', path: '/administracion', icon: AdminIcon },
     ];
+
+    // Navegación simplificada para usuarios (no administradores)
+    const userNavItems = [
+        { name: 'Inicio', path: '/', icon: DashboardIcon },
+        { name: 'Sistema de Gestión', path: '/identidad', icon: DirectionsIcon },
+    ];
+
+    const renderNavItem = (item, classNameBtn, classNameIcon) => {
+        const IconComponent = item.icon;
+        if (!item.path) {
+            return (
+                <button
+                    key={item.name}
+                    onClick={(e) => { e.preventDefault(); /* placeholder sin navegación */ }}
+                    className={classNameBtn}
+                    aria-label={`Elemento: ${item.name}`}
+                    type="button"
+                >
+                    <IconComponent className={classNameIcon} />
+                    <span>{item.name}</span>
+                </button>
+            );
+        }
+        const hasDropdown = item.name === 'Sistema de Gestión';
+        if (hasDropdown) {
+            return (
+                <div key={item.name} className={styles.dropdownWrapper}>
+                    <button
+                        type="button"
+                        className={`${classNameBtn} ${styles.hasDropdown}`}
+                        aria-haspopup="menu"
+                        aria-expanded="false"
+                        aria-label={`${item.name} - abrir opciones`}
+                        onClick={(e) => e.preventDefault()}
+                        onFocus={(e) => e.currentTarget.parentElement.classList.add('focus-within')}
+                        onBlur={(e) => e.currentTarget.parentElement.classList.remove('focus-within')}
+                    >
+                        <IconComponent className={classNameIcon} />
+                        <span>{item.name}</span>
+                    </button>
+                    <div className={styles.dropdownMenu} role="menu" aria-label="Submenú sistema de gestión">
+                        <NavLink to="/identidad?tab=calidad" className={styles.dropdownItem} onClick={closeMobileMenu} role="menuitem">
+                            <QualityIcon className={styles.dropdownIcon} />
+                            <span>Calidad</span>
+                        </NavLink>
+                        <NavLink to="/identidad?tab=sst" className={styles.dropdownItem} onClick={closeMobileMenu} role="menuitem">
+                            <SafetyHealthIcon className={styles.dropdownIcon} />
+                            <span>Seguridad y Salud en el Trabajo</span>
+                        </NavLink>
+                    </div>
+                </div>
+            );
+        }
+        return (
+            <NavLink 
+                key={item.path}
+                to={item.path}
+                onClick={closeMobileMenu}
+                className={classNameBtn}
+                aria-label={`Navegar a ${item.name}`}
+            >
+                <IconComponent className={classNameIcon} />
+                <span>{item.name}</span>
+            </NavLink>
+        );
+    };
 
     return (
         <nav className={styles.navbar}>
@@ -104,21 +171,9 @@ const Navbar = ({ title = "Intranet Inti" }) => {
 
                     {/* Sección de Navegación - Desktop */}
                     <div className={styles.navigationSection}>
-                        {user?.is_admin && navItems.map((item) => {
-                            const IconComponent = item.icon;
-                            return (
-                                <NavLink 
-                                    key={item.path}
-                                    to={item.path}
-                                    onClick={closeMobileMenu}
-                                    className={styles.navButton}
-                                    aria-label={`Navegar a ${item.name}`}
-                                >
-                                    <IconComponent className={styles.navIcon} />
-                                    <span>{item.name}</span>
-                                </NavLink>
-                            );
-                        })}
+                        {(user?.is_admin ? navItems : userNavItems).map((item) => (
+                            renderNavItem(item, styles.navButton, styles.navIcon)
+                        ))}
                         {user?.is_admin && adminItems.map((item) => {
                             const IconComponent = item.icon;
                             return (
@@ -180,21 +235,9 @@ const Navbar = ({ title = "Intranet Inti" }) => {
                 {isMobileMenuOpen && (
                     <div className={styles.mobileMenu}>
                         <div className={styles.mobileMenuContent}>
-                            {user?.is_admin && navItems.map((item) => {
-                                const IconComponent = item.icon;
-                                return (
-                                    <NavLink
-                                        key={item.path}
-                                        to={item.path}
-                                        onClick={closeMobileMenu}
-                                        className={styles.mobileNavButton}
-                                        aria-label={`Navegar a ${item.name}`}
-                                    >
-                                        <IconComponent className={styles.mobileIcon} />
-                                        <span>{item.name}</span>
-                                    </NavLink>
-                                );
-                            })}
+                            {(user?.is_admin ? navItems : userNavItems).map((item) => (
+                                renderNavItem(item, styles.mobileNavButton, styles.mobileIcon)
+                            ))}
                             {user?.is_admin && adminItems.map((item) => {
                                 const IconComponent = item.icon;
                                 return (

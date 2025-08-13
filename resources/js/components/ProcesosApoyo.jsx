@@ -50,13 +50,13 @@ const ProcesosApoyo = () => {
             const newFilters = [{ 
                 key: 'direccion_id', 
                 value: direccionId.toString(), 
-                label: `Dirección: ${direccionName}` 
+                label: `Proceso Estratégico: ${direccionName}` 
             }];
             
             setActiveFilters(newFilters);
             
             // Mostrar notificación
-            showSuccess(`Filtrado por dirección: ${direccionName}`);
+            showSuccess(`Filtrado por proceso estratégico: ${direccionName}`);
             
             // Limpiar el estado de navegación
             window.history.replaceState({}, document.title, window.location.pathname);
@@ -86,8 +86,8 @@ const ProcesosApoyo = () => {
             const response = await apiRequest('/api/direcciones');
             if (response.success) {
                 const options = [
-                    { value: '', label: 'Todas las direcciones' },
-                    { value: 'null', label: 'Sin dirección' },
+                    { value: '', label: 'Todos los procesos estratégicos' },
+                    { value: 'null', label: 'Sin proceso estratégico' },
                     ...response.data.map(d => ({
                         value: d.id.toString(),
                         label: d.nombre
@@ -105,13 +105,13 @@ const ProcesosApoyo = () => {
         let categoriasFiltradas = [];
         
         if (direccionId === '') {
-            // Todas las direcciones - mostrar todas las categorías
+            // Todos los procesos estratégicos - mostrar todos los procesos misionales
             categoriasFiltradas = procesosApoyo;
         } else if (direccionId === 'null') {
-            // Sin dirección - mostrar solo categorías sin dirección
+            // Sin proceso estratégico - mostrar solo procesos misionales sin proceso estratégico
             categoriasFiltradas = procesosApoyo.filter(p => !p.direccion);
         } else {
-            // Dirección específica - mostrar solo categorías de esa dirección
+            // Proceso estratégico específico - mostrar solo procesos misionales de ese proceso estratégico
             categoriasFiltradas = procesosApoyo.filter(p => p.direccion?.id.toString() === direccionId);
         }
         
@@ -160,13 +160,13 @@ const ProcesosApoyo = () => {
                     let match = false;
                     
                     if (filter.value === 'null') {
-                        // Filtrar categorías sin dirección
+                        // Filtrar categorías sin proceso estratégico
                         match = p.direccion === null || p.direccion === undefined;
                     } else if (filter.value === '') {
-                        // Mostrar todas las direcciones
+                        // Mostrar todos los procesos estratégicos
                         match = true;
                     } else {
-                        // Filtrar por dirección específica
+                        // Filtrar por proceso estratégico específico
                         match = p.direccion?.id.toString() === filter.value || p.direccion?.id == filter.value;
                     }
                     
@@ -392,9 +392,9 @@ const ProcesosApoyo = () => {
             <div className={styles.header}>
                 <div className={styles.headerContent}>
                     <div>
-                                        <h1 className={styles.title}>Categorías</h1>
+                    <h1 className={styles.title}>Procesos Misionales</h1>
                 <p className={styles.subtitle}>
-                    Gestiona las categorías de la organización
+                    Gestiona los procesos misionales de la organización
                 </p>
                     </div>
                     <button
@@ -404,7 +404,7 @@ const ProcesosApoyo = () => {
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
-                        Nueva Categoría
+                        Nuevo Proceso Misional
                     </button>
                 </div>
             </div>
@@ -413,21 +413,21 @@ const ProcesosApoyo = () => {
             <SearchFilterBar
                 onSearch={handleSearch}
                 onFiltersChange={handleFiltersChange}
-                placeholder="Buscar categorías por nombre, código, descripción o dirección..."
+                placeholder="Buscar procesos misionales por nombre, código, descripción o proceso estratégico..."
                 searchValue={searchTerm}
                 loading={loading}
                 showAdvancedFilters={true}
                 advancedFilters={[
                     {
                         key: 'direccion_id',
-                        label: 'Dirección',
+                        label: 'Proceso Estratégico',
                         type: 'select',
                         value: activeFilters.find(f => f.key === 'direccion_id')?.value || '',
                         options: direccionesOptions
                     },
                     {
                         key: 'categoria_id',
-                        label: 'Categoría',
+                        label: 'Proceso Misional',
                         type: 'select',
                         value: activeFilters.find(f => f.key === 'categoria_id')?.value || '',
                         options: categoriasOptions
@@ -442,14 +442,14 @@ const ProcesosApoyo = () => {
                         const filtersWithoutCategoria = newFilters.filter(f => f.key !== 'categoria_id');
                         
                         if (value) {
-                            const label = direccionesOptions.find(d => d.value === value)?.label || 'Dirección';
+                            const label = direccionesOptions.find(d => d.value === value)?.label || 'Proceso Estratégico';
                             filtersWithoutCategoria.push({ key, value, label });
                         }
                         
                         handleFiltersChange(filtersWithoutCategoria);
                     } else if (key === 'categoria_id') {
                         if (value) {
-                            const label = categoriasOptions.find(c => c.value === value)?.label || 'Categoría';
+                            const label = categoriasOptions.find(c => c.value === value)?.label || 'Proceso Misional';
                             newFilters.push({ key, value, label });
                         }
                         handleFiltersChange(newFilters);
@@ -486,7 +486,7 @@ const ProcesosApoyo = () => {
                 </div>
             ) : (
                 <>
-                    {/* Lista de categorías */}
+                    {/* Lista de procesos misionales */}
                     <div className={styles.procesosGrid}>
                         {filteredProcesos.map((proceso) => (
                             <ProcesoApoyoCard
@@ -498,7 +498,7 @@ const ProcesosApoyo = () => {
                         ))}
                     </div>
 
-                    {/* Mensaje cuando no hay categorías */}
+                    {/* Mensaje cuando no hay procesos misionales */}
                     {filteredProcesos.length === 0 && (
                         <div className="text-center py-12">
                             <div className="text-gray-400 mb-4">
@@ -506,8 +506,8 @@ const ProcesosApoyo = () => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                             </div>
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">No hay categorías</h3>
-                            <p className="text-gray-500 mb-4">Comienza creando tu primera categoría.</p>
+                            <h3 className="text-lg font-medium text-gray-900 mb-2">No hay procesos misionales</h3>
+                            <p className="text-gray-500 mb-4">Comienza creando tu primer proceso misional.</p>
                             <button
                                 onClick={openCreateModal}
                                 style={{
@@ -528,7 +528,7 @@ const ProcesosApoyo = () => {
                                     e.target.style.backgroundColor = '#2563eb';
                                 }}
                             >
-                                Crear Primera Categoría
+                                Crear Primer Proceso Misional
                             </button>
                         </div>
                     )}

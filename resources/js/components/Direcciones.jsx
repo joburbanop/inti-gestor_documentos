@@ -290,7 +290,7 @@ const Direcciones = () => {
             <div className={styles.loadingContainer}>
                 <div className={styles.loadingSpinner}></div>
                 <p className="text-gray-600 text-lg font-medium mt-4">
-                    Cargando direcciones...
+                    Cargando procesos estratégicos...
                 </p>
             </div>
         );
@@ -307,20 +307,20 @@ const Direcciones = () => {
                 <div className={styles.headerContent}>
                     <h1>
                         <BuildingIcon className="w-8 h-8 inline mr-3" />
-                        Direcciones
+                        Procesos Estratégicos
                     </h1>
                     <p>
-                        Gestiona las direcciones administrativas de la empresa
+                        Gestiona los procesos estratégicos de la organización
                     </p>
                 </div>
                 {user?.is_admin && (
                     <button
                         onClick={openCreateModal}
                         className={styles.newButton}
-                        title="Crear nueva dirección"
+                        title="Crear nuevo proceso estratégico"
                     >
                         <PlusIcon />
-                        Nueva Dirección
+                        Nuevo Proceso Estratégico
                     </button>
                 )}
             </div>
@@ -329,18 +329,18 @@ const Direcciones = () => {
             <SearchFilterBar
                 onSearch={handleSearch}
                 onFiltersChange={handleFiltersChange}
-                placeholder="Buscar direcciones por nombre, código o descripción..."
+                placeholder="Buscar procesos estratégicos por nombre, código o descripción..."
                 searchValue={searchTerm}
                 loading={loading}
                 showAdvancedFilters={true}
                 advancedFilters={[
                     {
                         key: 'direccion_id',
-                        label: 'Filtrar por Dirección',
+                        label: 'Filtrar por Proceso Estratégico',
                         type: 'select',
                         value: activeFilters.find(f => f.key === 'direccion_id')?.value || '',
                         options: [
-                            { value: '', label: 'Todas las direcciones' },
+                            { value: '', label: 'Todos los procesos estratégicos' },
                             ...direcciones.map(direccion => ({
                                 value: direccion.id.toString(),
                                 label: direccion.nombre
@@ -352,7 +352,7 @@ const Direcciones = () => {
                     const newFilters = activeFilters.filter(f => f.key !== key);
                     if (value !== '' && value !== undefined && value !== null) {
                         const direccionSeleccionada = direcciones.find(d => d.id.toString() === value);
-                        const label = direccionSeleccionada ? `Dirección: ${direccionSeleccionada.nombre}` : '';
+                        const label = direccionSeleccionada ? `Proceso Estratégico: ${direccionSeleccionada.nombre}` : '';
                         newFilters.push({ key, value, label });
                     }
                     handleFiltersChange(newFilters);
@@ -377,10 +377,10 @@ const Direcciones = () => {
                 <div className="text-center py-12">
                     <BuildingIcon className="w-16 h-16 mx-auto text-gray-300 mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
-                        No hay direcciones registradas
+                        No hay procesos estratégicos registrados
                     </h3>
                     <p className="text-gray-500 mb-6">
-                        Comienza creando la primera dirección administrativa
+                        Comienza creando el primer proceso estratégico
                     </p>
                     {user?.is_admin && (
                         <button
@@ -388,7 +388,7 @@ const Direcciones = () => {
                             className={styles.newButton}
                         >
                             <PlusIcon />
-                            Crear Primera Dirección
+                            Crear Primer Proceso Estratégico
                         </button>
                     )}
                 </div>
@@ -413,8 +413,8 @@ const Direcciones = () => {
                 isOpen={modalState.isOpen}
                 onClose={hideConfirmModal}
                 onConfirm={executeConfirm}
-                title={modalState.title}
-                message={modalState.message}
+                title={modalState.title?.replace('Dirección', 'Proceso Estratégico')}
+                message={modalState.message?.replace(/dirección/gi, 'proceso estratégico')}
                 confirmText={modalState.confirmText}
                 cancelText={modalState.cancelText}
                 type={modalState.type}

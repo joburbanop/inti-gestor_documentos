@@ -2,9 +2,21 @@
 .userDashboardContainer {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 2rem;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 0.25rem 2rem 2rem;
+    background: transparent;
     min-height: 100vh;
+}
+
+/* Espaciado específico para el slider, sin margen superior extra */
+.sliderSection {
+    margin-top: 0;        /* elimina el espacio arriba */
+    margin-bottom: 1rem;  /* espacio controlado abajo */
+}
+
+/* Separación extra antes de tarjetas de Misión y Visión */
+.infoCardsSection {
+    margin-top: 0;        /* evitar colapso con hijo */
+    padding-top: 0.5rem;  /* un poco más de separación */
 }
 
 /* Header del usuario */

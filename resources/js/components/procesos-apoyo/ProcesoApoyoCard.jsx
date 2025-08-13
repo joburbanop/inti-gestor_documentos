@@ -40,7 +40,7 @@ const ProcesoApoyoCard = ({ proceso, onEdit, onDelete }) => {
                     <button
                         onClick={handleEdit}
                         className={styles.editButton}
-                        title="Editar categoría"
+                        title="Editar proceso misional"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -49,7 +49,7 @@ const ProcesoApoyoCard = ({ proceso, onEdit, onDelete }) => {
                     <button
                         onClick={handleDelete}
                         className={styles.deleteButton}
-                        title="Eliminar categoría"
+                        title="Eliminar proceso misional"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -72,10 +72,10 @@ const ProcesoApoyoCard = ({ proceso, onEdit, onDelete }) => {
                     </p>
                 )}
 
-                {/* Dirección asociada */}
+                {/* Proceso Estratégico asociado */}
                 {proceso.direccion ? (
                     <div className={styles.direccionInfo}>
-                        <span className={styles.direccionLabel}>Dirección:</span>
+                        <span className={styles.direccionLabel}>Proceso Estratégico:</span>
                         <span 
                             className={styles.direccionNombre}
                             style={{ 
@@ -88,9 +88,9 @@ const ProcesoApoyoCard = ({ proceso, onEdit, onDelete }) => {
                     </div>
                 ) : (
                     <div className={styles.direccionInfo}>
-                        <span className={styles.direccionLabel}>Dirección:</span>
+                        <span className={styles.direccionLabel}>Proceso Estratégico:</span>
                         <span className={styles.direccionNombre} style={{ color: '#6B7280', backgroundColor: '#6B728020' }}>
-                            Sin dirección
+                            Sin proceso estratégico
                         </span>
                     </div>
                 )}

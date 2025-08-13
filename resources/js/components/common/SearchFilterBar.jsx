@@ -243,10 +243,10 @@ const SearchFilterBar = ({
                     onClick={() => setShowFilters(!showFilters)}
                     className={`${styles.filterToggle} ${showFilters ? styles.active : ''} ${activeFiltersCount > 0 ? styles.hasFilters : ''}`}
                     disabled={loading}
+                    aria-label={showFilters ? 'Ocultar filtros' : 'Mostrar filtros'}
                 >
-                    <FunnelIcon className="w-5 h-5" />
                     <span className={styles.filterButtonText}>
-                        {showFilters ? 'Ocultar' : 'Filtros'}
+                        {showFilters ? 'Ocultar filtros' : 'Mostrar filtros'}
                     </span>
                     {activeFiltersCount > 0 && (
                         <span className={styles.filterCount}>

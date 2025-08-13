@@ -9,6 +9,7 @@ import Documentos from './Documentos';
 import DocumentoPreview from './documentos/DocumentoPreview';
 import Administracion from './Administracion';
 import CreateDireccion from './crud/CreateDireccion';
+import OrgStructure from './common/OrgStructure';
 import { INTILED_COLORS } from '../config/colors';
 
 const Home = () => {
@@ -32,6 +33,7 @@ const AppRouter = () => {
             <Route path="/" element={<Home />} />
             <Route path="/direcciones" element={<Direcciones />} />
             <Route path="/procesos" element={<ProcesosApoyo />} />
+            <Route path="/identidad" element={<OrgStructure />} />
             <Route path="/documentos" element={<Documentos />} />
             <Route path="/documentos/:id/preview" element={<DocumentoPreview />} />
             <Route path="/administracion" element={<Administracion />} />

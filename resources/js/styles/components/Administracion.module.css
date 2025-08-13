@@ -109,29 +109,47 @@
     will-change: transform;
 }
 
-.statCard:nth-child(1) {
+/* Colores de tarjetas alineados a Dashboard */
+.statCard:nth-child(1) { /* Azul */
     background: linear-gradient(135deg, #1F448B 0%, #667eea 100%);
 }
 
-.statCard:nth-child(2) {
+.statCard:nth-child(2) { /* Verde */
     background: linear-gradient(135deg, #B1CC34 0%, #9CAF88 100%);
 }
 
-.statCard:nth-child(3) {
-    background: linear-gradient(135deg, #FF7D09 0%, #FF9A3C 100%);
-}
-
-.statCard:nth-child(4) {
+.statCard:nth-child(3) { /* Morado (igual que dashboard tercer KPI) */
     background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
 }
 
-.statCard:nth-child(5) {
+.statCard:nth-child(4) { /* Morado */
+    background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+}
+
+.statCard:nth-child(5) { /* Verde esmeralda */
     background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
 }
 
 .statCard:hover {
     transform: translateY(-5px) translateZ(0);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Variantes de color explícitas (alineadas a Dashboard) */
+.statCardAzul {
+    background: linear-gradient(135deg, #1F448B 0%, #667eea 100%);
+}
+
+.statCardVerde {
+    background: linear-gradient(135deg, #B1CC34 0%, #9CAF88 100%);
+}
+
+.statCardMorado {
+    background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+}
+
+.statCardNaranja {
+    background: linear-gradient(135deg, #FF7D09 0%, #FF9A3C 100%);
 }
 
 .statIcon {
@@ -259,6 +277,30 @@
 }
 
 .addButton svg {
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+}
+
+/* Botón principal azul (consistente con los demás) */
+.primaryButtonBlue {
+    background: linear-gradient(135deg, #1F448B, #2a5bb8);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(31, 68, 139, 0.3);
+}
+
+.primaryButtonBlue:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(31, 68, 139, 0.4);
+}
+
+.primaryButtonBlue svg {
     width: 18px;
     height: 18px;
     margin-right: 8px;
@@ -556,6 +598,9 @@
 .actionButtons {
     display: flex;
     gap: 0.5rem;
+    align-items: center;
+    justify-content: center;
+    min-width: 80px;
 }
 
 .editButton,
@@ -567,14 +612,28 @@
     padding: 0.5rem;
     border-radius: 6px;
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    min-height: 32px;
+    color: #666;
 }
 
 .editButton:hover {
     background: rgba(31, 68, 139, 0.1);
+    color: #1F448B;
 }
 
 .deleteButton:hover {
     background: rgba(255, 107, 107, 0.1);
+    color: #ff6b6b;
+}
+
+.editButton svg,
+.deleteButton svg {
+    width: 16px;
+    height: 16px;
 }
 
 /* Grid de roles */
@@ -814,4 +873,122 @@
     .table td {
         padding: 0.75rem 0.5rem;
     }
+} 
+
+/* Estilos para la tabla de noticias */
+.newsInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.newsIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(31, 68, 139, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1F448B;
+}
+
+.documentLink {
+  color: #1F448B;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(31, 68, 139, 0.1);
+  transition: all 0.2s ease;
+}
+
+.documentLink:hover {
+  background: rgba(31, 68, 139, 0.2);
+  text-decoration: underline;
+}
+
+.noDocument {
+  color: #6b7280;
+  font-style: italic;
+  font-size: 0.875rem;
+}
+
+.statusBadge {
+  background: #10B981;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Switch para activar/desactivar noticia */
+.switchLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.switchLabel input[type="checkbox"] {
+  display: none;
+}
+
+.switchVisual {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  transition: background 0.2s ease;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+}
+
+.switchVisual::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  transition: transform 0.2s ease;
+}
+
+.switchLabel input[type="checkbox"]:checked + .switchVisual {
+  background: #10B981;
+}
+
+.switchLabel input[type="checkbox"]:checked + .switchVisual::after {
+  transform: translateX(20px);
+}
+
+.switchText {
+  font-size: 0.85rem;
+  color: #374151;
+  font-weight: 600;
+}
+
+/* Responsive para tabla de noticias */
+@media (max-width: 768px) {
+  .newsInfo {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .newsIcon {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .documentLink {
+    font-size: 0.8rem;
+    padding: 0.2rem 0.4rem;
+  }
 } 

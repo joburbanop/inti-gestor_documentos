@@ -5,6 +5,7 @@ import StatsSection from './dashboard/StatsSection';
 import QuickActionsSection from './dashboard/QuickActionsSection';
 import { DocumentIcon, BuildingIcon, ProcessIcon, AdminIcon } from './icons/DashboardIcons';
 import styles from '../styles/components/Dashboard.module.css';
+import DashboardHeader from './dashboard/DashboardHeader';
 
 const Dashboard = () => {
     const { apiRequest } = useAuth();
@@ -75,16 +76,16 @@ const Dashboard = () => {
             colorClass: 'statCardAzul'
         },
         {
-            title: 'Direcciones',
+            title: 'Procesos Estratégicos',
             value: stats.total_direcciones,
-            subtitle: 'Direcciones administrativas',
+            subtitle: 'Procesos estratégicos',
             icon: <BuildingIcon className="w-8 h-8" />,
             colorClass: 'statCardVerde'
         },
         {
-            title: 'Categorías',
+            title: 'Procesos Misionales',
             value: stats.total_procesos,
-            subtitle: 'Categorías configuradas',
+            subtitle: 'Procesos misionales configurados',
             icon: <ProcessIcon className="w-8 h-8" />,
             colorClass: 'statCardMorado'
         }
@@ -93,22 +94,22 @@ const Dashboard = () => {
     // Configuración optimizada de acciones rápidas con memoización
     const actionsConfig = useMemo(() => [
         {
-            title: 'Direcciones',
-            description: 'Crear, editar y eliminar direcciones administrativas. Organiza la estructura de la empresa evitando carpetas desordenadas.',
+            title: 'Procesos Estratégicos',
+            description: 'Crear, editar y eliminar procesos estratégicos. Organiza la estructura de la organización evitando carpetas desordenadas.',
             icon: <BuildingIcon className="w-6 h-6" />,
             hash: 'direcciones',
             colorClass: 'quickActionIconAzul'
         },
         {
-            title: 'Categorías',
-            description: 'Crear, editar y eliminar categorías dentro de cada dirección. Define flujos de trabajo y procedimientos administrativos.',
+            title: 'Procesos Misionales',
+            description: 'Crear, editar y eliminar procesos misionales dentro de cada proceso estratégico. Define flujos de trabajo y procedimientos administrativos.',
             icon: <ProcessIcon className="w-6 h-6" />,
             hash: 'procesos',
             colorClass: 'quickActionIconVerde'
         },
         {
             title: 'Formatos o Documentos',
-            description: 'Crear, editar y eliminar documentos del sistema. Organiza la información por dirección y categoría para fácil acceso.',
+            description: 'Crear, editar y eliminar documentos del sistema. Organiza la información por proceso estratégico y proceso misional para fácil acceso.',
             icon: <DocumentIcon className="w-6 h-6" />,
             hash: 'documentos',
             colorClass: 'quickActionIconNaranja'
@@ -124,17 +125,10 @@ const Dashboard = () => {
 
     return (
         <div className={styles.dashboardContainer}>
-            {/* Header optimizado */}
-            <div className={styles.dashboardHeader}>
-                <div className={styles.headerContent}>
-                    <div>
-                        <h1 className={styles.dashboardTitle}>
-                            Panel de Administración
-                        </h1>
-                        <p className={styles.dashboardSubtitle}>
-                            Gestiona la información documental de la empresa
-                        </p>
-                    </div>
+            <DashboardHeader
+                title="Panel de Administración"
+                subtitle="Gestiona la información documental de la empresa"
+                rightSlot={(
                     <button
                         onClick={fetchDashboardData}
                         disabled={loading}
@@ -146,8 +140,8 @@ const Dashboard = () => {
                         </svg>
                         {loading ? 'Actualizando...' : 'Actualizar'}
                     </button>
-                </div>
-            </div>
+                )}
+            />
 
             {/* Contenido optimizado con lazy loading */}
             <div className={styles.dashboardContent}>

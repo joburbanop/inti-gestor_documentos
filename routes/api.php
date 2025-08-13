@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\DocumentoController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\NoticiaController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -77,6 +78,11 @@ Route::middleware(['api.auth', \App\Http\Middleware\CheckUserActivity::class])->
         Route::get('/documentos/{id}/vista-previa', [DocumentoController::class, 'vistaPrevia'])->name('documentos.vista-previa');
     });
 
+    // Noticias: endpoints rápidos para el dashboard
+    Route::get('/noticias/latest', [NoticiaController::class, 'latest']);
+    // Listado paginado completo si se requiere
+    Route::get('/noticias', [NoticiaController::class, 'index']);
+
     // Ruta de prueba para debug
     Route::get('/debug/documentos', function (Request $request) {
         $query = \App\Models\Documento::with(['direccion:id,nombre,codigo', 'procesoApoyo:id,nombre,codigo']);
@@ -103,20 +109,28 @@ Route::middleware(['api.auth', \App\Http\Middleware\CheckUserActivity::class])->
 
     // Rutas de Administración (solo para administradores)
     Route::middleware('admin')->group(function () {
-        // Gestión de Usuarios
-        Route::apiResource('usuarios', UserController::class);
-        Route::patch('/usuarios/{id}/toggle-status', [UserController::class, 'toggleStatus']);
+        // Gestión de Usuarios (rutas específicas ANTES del apiResource para evitar colisiones)
         Route::get('/usuarios/stats', [UserController::class, 'stats']);
+        Route::patch('/usuarios/{id}/toggle-status', [UserController::class, 'toggleStatus']);
+        Route::apiResource('usuarios', UserController::class);
 
-        // Gestión de Roles
-        Route::apiResource('roles', RoleController::class);
-        Route::get('/roles/{id}/users', [RoleController::class, 'users']);
+        // Gestión de Roles (rutas específicas ANTES del apiResource para evitar colisiones)
         Route::get('/roles/stats', [RoleController::class, 'stats']);
         Route::get('/roles/permissions', [RoleController::class, 'permissions']);
+        Route::get('/roles/{id}/users', [RoleController::class, 'users']);
+        Route::apiResource('roles', RoleController::class);
 
         // Estadísticas Administrativas
         Route::get('/admin/stats', [AdminController::class, 'stats']);
         Route::get('/admin/activity', [AdminController::class, 'recentActivity']);
         Route::get('/admin/report', [AdminController::class, 'systemReport']);
+
+        // Noticias (crear y gestionar)
+        Route::get('/admin/noticias', [NoticiaController::class, 'indexAdmin']);
+        Route::post('/noticias', [NoticiaController::class, 'store']);
+        Route::put('/noticias/{id}', [NoticiaController::class, 'update']);
+        Route::patch('/noticias/{id}', [NoticiaController::class, 'update']);
+        Route::patch('/noticias/{id}/toggle', [NoticiaController::class, 'toggle']);
+        Route::delete('/noticias/{id}', [NoticiaController::class, 'destroy']);
     });
 }); 

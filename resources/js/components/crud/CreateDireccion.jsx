@@ -62,13 +62,13 @@ const CreateDireccion = () => {
             });
 
             if (response.success) {
-                // Redirigir inmediatamente a la lista de direcciones con mensaje de éxito
+                // Redirigir inmediatamente a la lista de procesos estratégicos con mensaje de éxito
                 window.location.href = '/#direcciones?success=created';
             } else {
-                setErrors({ general: response.message || 'Error al crear la dirección' });
+                setErrors({ general: response.message || 'Error al crear el proceso estratégico' });
             }
         } catch (error) {
-            console.error('Error al crear dirección:', error);
+            console.error('Error al crear proceso estratégico:', error);
             
             // Manejar errores de validación específicamente
             if (error.message === 'Error de validación' && error.errors) {
@@ -94,9 +94,9 @@ const CreateDireccion = () => {
             fields: [
                 {
                     name: 'nombre',
-                    label: 'Nombre de la Dirección',
+                    label: 'Nombre del Proceso Estratégico',
                     type: 'text',
-                    placeholder: 'Ej: Dirección de Talento Humano',
+                    placeholder: 'Ej: Proceso Estratégico de Talento Humano',
                     required: true,
                     maxLength: 100
                 },
@@ -116,9 +116,9 @@ const CreateDireccion = () => {
             fields: [
                 {
                     name: 'descripcion',
-                    label: 'Descripción de la Dirección',
+                    label: 'Descripción del Proceso Estratégico',
                     type: 'textarea',
-                    placeholder: 'Describe las funciones principales, responsabilidades y objetivos de esta dirección...',
+                    placeholder: 'Describe las funciones principales, responsabilidades y objetivos de este proceso estratégico...',
                     required: true,
                     maxLength: 500,
                     rows: 4
@@ -148,8 +148,8 @@ const CreateDireccion = () => {
         <>
             <CreateForm
                 entityType="direccion"
-                title="Crear Nueva Dirección"
-                subtitle="Completa la información básica para crear una nueva dirección administrativa"
+                title="Crear Proceso Estratégico"
+                subtitle="Completa la información básica para crear un nuevo proceso estratégico"
                 fields={direccionFields}
                 onSubmit={handleSubmit}
                 loading={loading}

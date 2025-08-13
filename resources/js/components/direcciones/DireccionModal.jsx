@@ -47,7 +47,7 @@ const DireccionModal = ({
 
     if (!show) return null;
 
-    // Configuración de campos para direcciones (igual que en CreateDireccion)
+    // Configuración de campos para procesos estratégicos (igual que en CreateDireccion)
     const direccionFields = [
         {
             title: 'Información Básica',
@@ -55,9 +55,9 @@ const DireccionModal = ({
             fields: [
                 {
                     name: 'nombre',
-                    label: 'Nombre de la Dirección',
+                    label: 'Nombre del Proceso Estratégico',
                     type: 'text',
-                    placeholder: 'Ej: Dirección de Talento Humano',
+                    placeholder: 'Ej: Proceso Estratégico de Talento Humano',
                     required: true,
                     maxLength: 100
                 },
@@ -77,9 +77,9 @@ const DireccionModal = ({
             fields: [
                 {
                     name: 'descripcion',
-                    label: 'Descripción de la Dirección',
+                    label: 'Descripción del Proceso Estratégico',
                     type: 'textarea',
-                    placeholder: 'Describe las funciones principales, responsabilidades y objetivos de esta dirección...',
+                    placeholder: 'Describe las funciones principales, responsabilidades y objetivos de este proceso estratégico...',
                     required: true,
                     maxLength: 500,
                     rows: 4
@@ -122,7 +122,7 @@ const DireccionModal = ({
                 {/* Header del Modal */}
                 <div className={styles.modalHeader}>
                     <h2 className={styles.modalTitle}>
-                        {mode === 'create' ? 'Nueva Dirección' : 'Editar Dirección'}
+                        {mode === 'create' ? 'Nuevo Proceso Estratégico' : 'Editar Proceso Estratégico'}
                     </h2>
                     <button
                         onClick={onClose}

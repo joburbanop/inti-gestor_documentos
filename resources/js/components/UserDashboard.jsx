@@ -5,6 +5,9 @@ import userStyles from '../styles/components/UserDashboard.module.css';
 // Componentes modulares
 import HierarchicalFilters from './dashboard/HierarchicalFilters';
 import ExtensionFilter from './dashboard/ExtensionFilter';
+import NewsSlider from './common/NewsSlider';
+import InfoCards from './common/InfoCards';
+import { MissionIcon, VisionIcon } from './icons/BrandIcons';
 
 // Iconos SVG
 import { PdfIcon, ExcelIcon, WordIcon, SearchIcon } from './icons/DashboardIcons';
@@ -38,9 +41,9 @@ const UserDashboard = () => {
     // Estado de carga de paginación
     const [paginationLoading, setPaginationLoading] = useState(false);
 
-    // Cargar documentos iniciales al montar el componente
+    // Cargar documentos iniciales al montar el componente (oculto si usamos slider)
     useEffect(() => {
-        performInitialSearch();
+        // performInitialSearch(); // Desactivado cuando mostramos slider de noticias
     }, []);
 
     const performInitialSearch = async () => {
@@ -80,8 +83,8 @@ const UserDashboard = () => {
             const type = doc.tipo_archivo?.toLowerCase() || 'otro';
             byType[type] = (byType[type] || 0) + 1;
             
-            // Estadísticas por dirección
-            const direction = doc.direccion?.nombre || 'Sin dirección';
+            // Estadísticas por proceso estratégico
+            const direction = doc.direccion?.nombre || 'Sin proceso estratégico';
             byDirection[direction] = (byDirection[direction] || 0) + 1;
         });
 
@@ -411,79 +414,56 @@ const UserDashboard = () => {
         return <SearchIcon />;
     };
 
+    const [newsItems, setNewsItems] = useState([]);
+
+    // Cargar últimas noticias para el slider (consulta optimizada)
+    useEffect(() => {
+        const loadLatestNews = async () => {
+            try {
+                const res = await apiRequest('/api/noticias/latest?limit=5', { ignoreAuthErrors: true });
+                if (res?.success) {
+                    const items = (res.data || []).map(n => ({
+                        id: n.id,
+                        title: n.title,
+                        subtitle: n.subtitle,
+                        publishedAt: n.published_at,
+                        ctaText: n.document_url ? 'Ver documento' : undefined,
+                        onClick: n.document_url ? () => window.open(n.document_url, '_blank') : undefined,
+                    }));
+                    setNewsItems(items);
+                } else {
+                    setNewsItems([]);
+                }
+            } catch (_) {
+                setNewsItems([]);
+            }
+        };
+        loadLatestNews();
+    }, []);
+
     return (
         <div className={userStyles.userDashboardContainer}>
-            {/* Header del usuario */}
-            <div className={userStyles.userHeader}>
-                <h1 className={userStyles.userTitle}>¡Bienvenido, {user?.name}!</h1>
-                <p className={userStyles.userSubtitle}>
-                    Explora y encuentra los documentos que necesitas de manera rápida y eficiente.
-                </p>
+
+            {/* Slider de noticias para usuarios */}
+            <div className={userStyles.sliderSection}>
+                <NewsSlider items={newsItems} autoPlay autoPlayMs={6000} />
             </div>
 
-            {/* Estadísticas */}
-            <div className={userStyles.statsContainer}>
-                <div className={userStyles.statCard}>
-                    <div className={userStyles.statIcon}>
-                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                    </div>
-                    <div className={userStyles.statContent}>
-                        <h3>{stats.filtered}</h3>
-                        <p>Resultados Encontrados</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Sección de búsqueda */}
-            <div className={userStyles.userSearchSection}>
-                <div className={userStyles.searchHeader}>
-                    <div className={userStyles.searchTitleContainer}>
-                        <SearchIcon className={userStyles.searchHeaderIcon} />
-                        <h2 className={userStyles.searchTitle}>Buscar Documentos</h2>
-                    </div>
-                    <p className={userStyles.searchSubtitle}>
-                        Encuentra documentos específicos usando filtros avanzados
-                    </p>
-                </div>
-
-                {/* Formulario de búsqueda */}
-                <form onSubmit={handleSearch} className={userStyles.searchForm}>
-                    <div className={userStyles.searchInputWrapper}>
-                        <SearchIcon className={userStyles.searchInputIcon} />
-                        <input
-                            type="text"
-                            value={searchTerm}
-                            onChange={handleSearchTermChange}
-                            placeholder="Buscar por título, descripción o contenido..."
-                            className={userStyles.modernSearchInput}
-                        />
-                        <button
-                            type="submit"
-                            disabled={searchLoading}
-                            className={userStyles.modernSearchButton}
-                        >
-                            <SearchIcon className={userStyles.searchButtonIcon} />
-                            Buscar
-                        </button>
-                    </div>
-                </form>
-
-                {/* Filtros de extensiones */}
-                <ExtensionFilter
-                    onFilterChange={handleExtensionFilterChange}
-                    selectedExtensions={selectedExtensions}
-                    selectedTypes={selectedTypes}
-                />
-
-                {/* Filtros jerárquicos */}
-                <HierarchicalFilters
-                    onFilterChange={handleFilterChange}
-                    onDocumentsLoad={(docs) => {
-                        setSearchResults(docs);
-                        setStats(prev => ({ ...prev, filtered: docs.length }));
-                    }}
+            {/* Misión y Visión */}
+            <div className={userStyles.infoCardsSection}>
+                <InfoCards
+                    items={[
+                        {
+                            title: 'Misión',
+                            text: 'Brindar soluciones energéticas eficientes y sostenibles, impulsando el desarrollo industrial con tecnología de vanguardia y un compromiso permanente con la excelencia operativa.',
+                            icon: <MissionIcon className="w-6 h-6" />
+                        },
+                        {
+                            title: 'Visión',
+                            text: 'Ser referente nacional en innovación y gestión energética, generando valor para nuestros clientes y la sociedad mediante prácticas responsables y un equipo humano de alto desempeño.',
+                            icon: <VisionIcon className="w-6 h-6" />
+                        }
+                    ]}
                 />
             </div>
 
