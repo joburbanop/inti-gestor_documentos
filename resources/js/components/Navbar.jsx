@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { useAuth } from '../contexts/AuthContext';
+import { useHasPermission } from '../hooks/useAuthorization';
+import { PERMISSIONS } from '../roles/permissions';
 import { INTILED_COLORS } from '../config/colors';
 import styles from '../styles/components/Navbar.module.css';
 import { QualityIcon, SafetyHealthIcon } from './icons/ManagementIcons';
@@ -15,16 +17,34 @@ const DashboardIcon = ({ className }) => (
     </svg>
 );
 
-const DirectionsIcon = ({ className }) => (
+const ProcessesIcon = ({ className }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+    </svg>
+);
+
+const StrategicProcessIcon = ({ className }) => (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
     </svg>
 );
 
-const ProcessesIcon = ({ className }) => (
+const MissionProcessIcon = ({ className }) => (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+);
+
+const SupportProcessIcon = ({ className }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+    </svg>
+);
+
+const EvaluationProcessIcon = ({ className }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
 );
 
@@ -72,23 +92,73 @@ const Navbar = ({ title = "Intranet Inti" }) => {
 
     const navItems = [
         { name: 'Dashboard', path: '/' , icon: DashboardIcon },
-        { name: 'Procesos Estratégicos', path: '/direcciones', icon: DirectionsIcon },
-        { name: 'Procesos Misionales', path: '/procesos', icon: ProcessesIcon },
+        { 
+            name: 'Procesos', 
+            path: null, 
+            icon: ProcessesIcon,
+            hasDropdown: true,
+            dropdownItems: [
+                { name: 'Procesos Estratégicos', path: '/procesos/estrategico', icon: StrategicProcessIcon },
+                { name: 'Procesos Misionales', path: '/procesos/misional', icon: MissionProcessIcon },
+                { name: 'Procesos de Apoyo', path: '/procesos/apoyo', icon: SupportProcessIcon },
+                { name: 'Procesos de Evaluación', path: '/procesos/evaluacion', icon: EvaluationProcessIcon }
+            ]
+        },
         { name: 'Documentos', path: '/documentos', icon: DocumentsIcon },
     ];
 
     const adminItems = [
-        { name: 'Administración', path: '/administracion', icon: AdminIcon },
+        { name: 'Administración', path: '/administracion', icon: AdminIcon, permission: PERMISSIONS.MANAGE_USERS },
     ];
 
     // Navegación simplificada para usuarios (no administradores)
     const userNavItems = [
         { name: 'Inicio', path: '/', icon: DashboardIcon },
-        { name: 'Sistema de Gestión', path: '/identidad', icon: DirectionsIcon },
+        { name: 'Sistema de Gestión', path: '/identidad', icon: StrategicProcessIcon },
     ];
 
     const renderNavItem = (item, classNameBtn, classNameIcon) => {
         const IconComponent = item.icon;
+        
+        // Manejar elementos con dropdown (Procesos)
+        if (item.hasDropdown) {
+            return (
+                <div key={item.name} className={styles.dropdownWrapper}>
+                    <button
+                        type="button"
+                        className={`${classNameBtn} ${styles.hasDropdown}`}
+                        aria-haspopup="menu"
+                        aria-expanded="false"
+                        aria-label={`${item.name} - abrir opciones`}
+                        onClick={(e) => e.preventDefault()}
+                        onFocus={(e) => e.currentTarget.parentElement.classList.add('focus-within')}
+                        onBlur={(e) => e.currentTarget.parentElement.classList.remove('focus-within')}
+                    >
+                        <IconComponent className={classNameIcon} />
+                        <span>{item.name}</span>
+                    </button>
+                    <div className={styles.dropdownMenu} role="menu" aria-label="Submenú procesos internos">
+                        {item.dropdownItems.map((dropdownItem) => {
+                            const DropdownIconComponent = dropdownItem.icon;
+                            return (
+                                <NavLink 
+                                    key={dropdownItem.path}
+                                    to={dropdownItem.path} 
+                                    className={styles.dropdownItem} 
+                                    onClick={closeMobileMenu} 
+                                    role="menuitem"
+                                >
+                                    <DropdownIconComponent className={styles.dropdownIcon} />
+                                    <span>{dropdownItem.name}</span>
+                                </NavLink>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        }
+
+        // Manejar elementos sin path (placeholder)
         if (!item.path) {
             return (
                 <button
@@ -103,8 +173,10 @@ const Navbar = ({ title = "Intranet Inti" }) => {
                 </button>
             );
         }
-        const hasDropdown = item.name === 'Sistema de Gestión';
-        if (hasDropdown) {
+
+        // Manejar Sistema de Gestión (dropdown especial para usuarios)
+        const hasSpecialDropdown = item.name === 'Sistema de Gestión';
+        if (hasSpecialDropdown) {
             return (
                 <div key={item.name} className={styles.dropdownWrapper}>
                     <button
@@ -133,6 +205,8 @@ const Navbar = ({ title = "Intranet Inti" }) => {
                 </div>
             );
         }
+
+        // Elementos normales con navegación
         return (
             <NavLink 
                 key={item.path}
@@ -174,7 +248,7 @@ const Navbar = ({ title = "Intranet Inti" }) => {
                         {(user?.is_admin ? navItems : userNavItems).map((item) => (
                             renderNavItem(item, styles.navButton, styles.navIcon)
                         ))}
-                        {user?.is_admin && adminItems.map((item) => {
+                        {adminItems.filter(i => useHasPermission(i.permission)).map((item) => {
                             const IconComponent = item.icon;
                             return (
                                 <NavLink 
@@ -235,10 +309,36 @@ const Navbar = ({ title = "Intranet Inti" }) => {
                 {isMobileMenuOpen && (
                     <div className={styles.mobileMenu}>
                         <div className={styles.mobileMenuContent}>
-                            {(user?.is_admin ? navItems : userNavItems).map((item) => (
-                                renderNavItem(item, styles.mobileNavButton, styles.mobileIcon)
-                            ))}
-                            {user?.is_admin && adminItems.map((item) => {
+                            {(user?.is_admin ? navItems : userNavItems).map((item) => {
+                                // Para móvil, expandir los dropdowns automáticamente
+                                if (item.hasDropdown) {
+                                    return (
+                                        <div key={item.name}>
+                                            <div className={`${styles.mobileNavButton} ${styles.mobileDropdownHeader}`}>
+                                                <item.icon className={styles.mobileIcon} />
+                                                <span>{item.name}</span>
+                                            </div>
+                                            {item.dropdownItems.map((dropdownItem) => {
+                                                const DropdownIconComponent = dropdownItem.icon;
+                                                return (
+                                                    <NavLink
+                                                        key={dropdownItem.path}
+                                                        to={dropdownItem.path}
+                                                        onClick={closeMobileMenu}
+                                                        className={`${styles.mobileNavButton} ${styles.mobileDropdownItem}`}
+                                                        aria-label={`Navegar a ${dropdownItem.name}`}
+                                                    >
+                                                        <DropdownIconComponent className={styles.mobileIcon} />
+                                                        <span>{dropdownItem.name}</span>
+                                                    </NavLink>
+                                                );
+                                            })}
+                                        </div>
+                                    );
+                                }
+                                return renderNavItem(item, styles.mobileNavButton, styles.mobileIcon);
+                            })}
+                            {adminItems.filter(i => useHasPermission(i.permission)).map((item) => {
                                 const IconComponent = item.icon;
                                 return (
                                     <NavLink

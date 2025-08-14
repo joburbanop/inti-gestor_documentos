@@ -6,6 +6,8 @@ import QuickActionsSection from './dashboard/QuickActionsSection';
 import { DocumentIcon, BuildingIcon, ProcessIcon, AdminIcon } from './icons/DashboardIcons';
 import styles from '../styles/components/Dashboard.module.css';
 import DashboardHeader from './dashboard/DashboardHeader';
+import { useHasPermission } from '../hooks/useAuthorization';
+import { PERMISSIONS } from '../roles/permissions';
 
 const Dashboard = () => {
     const { apiRequest } = useAuth();
@@ -66,68 +68,44 @@ const Dashboard = () => {
         fetchDashboardData();
     }, [fetchDashboardData]);
 
-    // Configuración optimizada de estadísticas con memoización
-    const statsConfig = useMemo(() => [
-        {
-            title: 'Total Documentos',
-            value: stats.total_documentos,
-            subtitle: 'Documentos disponibles en el sistema',
-            icon: <DocumentIcon className="w-8 h-8" />,
-            colorClass: 'statCardAzul'
-        },
-        {
-            title: 'Procesos Estratégicos',
-            value: stats.total_direcciones,
-            subtitle: 'Procesos estratégicos',
-            icon: <BuildingIcon className="w-8 h-8" />,
-            colorClass: 'statCardVerde'
-        },
-        {
-            title: 'Procesos Misionales',
-            value: stats.total_procesos,
-            subtitle: 'Procesos misionales configurados',
-            icon: <ProcessIcon className="w-8 h-8" />,
-            colorClass: 'statCardMorado'
-        }
-    ], [stats.total_documentos, stats.total_direcciones, stats.total_procesos]);
+   
 
-    // Configuración optimizada de acciones rápidas con memoización
-    const actionsConfig = useMemo(() => [
-        {
-            title: 'Procesos Estratégicos',
-            description: 'Crear, editar y eliminar procesos estratégicos. Organiza la estructura de la organización evitando carpetas desordenadas.',
-            icon: <BuildingIcon className="w-6 h-6" />,
-            hash: 'direcciones',
-            colorClass: 'quickActionIconAzul'
-        },
-        {
-            title: 'Procesos Misionales',
-            description: 'Crear, editar y eliminar procesos misionales dentro de cada proceso estratégico. Define flujos de trabajo y procedimientos administrativos.',
-            icon: <ProcessIcon className="w-6 h-6" />,
-            hash: 'procesos',
-            colorClass: 'quickActionIconVerde'
-        },
-        {
-            title: 'Formatos o Documentos',
-            description: 'Crear, editar y eliminar documentos del sistema. Organiza la información por proceso estratégico y proceso misional para fácil acceso.',
-            icon: <DocumentIcon className="w-6 h-6" />,
-            hash: 'documentos',
-            colorClass: 'quickActionIconNaranja'
-        },
-        {
-            title: 'Administración',
-            description: 'Crear, editar y eliminar usuarios y permisos. Gestiona el acceso y mantiene la seguridad del sistema.',
-            icon: <AdminIcon className="w-6 h-6" />,
-            hash: 'administracion',
-            colorClass: 'quickActionIconMorado'
+    const canManageUsers = useHasPermission(PERMISSIONS.MANAGE_USERS);
+    const canManageDocs = useHasPermission(PERMISSIONS.MANAGE_DOCUMENTS);
+
+    // Carga dinámica de conteos por tipo para construir acciones (rápido + cache backend)
+    const [tipoCounts, setTipoCounts] = useState({});
+    useEffect(() => {
+        let mounted = true;
+        (async () => {
+            try {
+                const res = await apiRequest('/procesos/tipos/stats');
+                if (res?.success && mounted) setTipoCounts(res.data || {});
+            } catch {}
+        })();
+        return () => { mounted = false; };
+    }, [apiRequest]);
+
+    const actionsConfig = useMemo(() => {
+        const items = [];
+        const push = (title, desc, hash, icon, color) => items.push({ title, description: desc, hash, icon, colorClass: color });
+        if (tipoCounts.estrategico > 0) push('Procesos Estratégicos', 'Explora procesos estratégicos.', 'procesos/estrategico', <BuildingIcon className="w-6 h-6" />, 'quickActionIconAzul');
+        if (tipoCounts.misional > 0) push('Procesos Misionales', 'Explora procesos misionales.', 'procesos/misional', <ProcessIcon className="w-6 h-6" />, 'quickActionIconVerde');
+        if (tipoCounts.apoyo > 0) push('Procesos de Apoyo', 'Procesos que soportan la operación.', 'procesos/apoyo', <ProcessIcon className="w-6 h-6" />, 'quickActionIconMorado');
+        if (tipoCounts.evaluacion > 0) push('Procesos de Evaluación', 'Evaluación y mejora continua.', 'procesos/evaluacion', <ProcessIcon className="w-6 h-6" />, 'quickActionIconMorado');
+        // Siempre documentos
+        push('Formatos o Documentos', 'Crea y consulta documentos.', 'documentos', <DocumentIcon className="w-6 h-6" />, 'quickActionIconNaranja');
+        if (canManageUsers) {
+            push('Administración', 'Usuarios, roles y noticias/circulares.', 'administracion', <AdminIcon className="w-6 h-6" />, 'quickActionIconMorado');
         }
-    ], []); // Memoizado sin dependencias ya que es estático
+        return items;
+    }, [tipoCounts, canManageUsers]);
 
     return (
         <div className={styles.dashboardContainer}>
             <DashboardHeader
-                title="Panel de Administración"
-                subtitle="Gestiona la información documental de la empresa"
+                title="Panel de Control"
+                subtitle="Documentos y procesos de la empresa organizados por tipo"
                 rightSlot={(
                     <button
                         onClick={fetchDashboardData}
@@ -143,18 +121,8 @@ const Dashboard = () => {
                 )}
             />
 
-            {/* Contenido optimizado con lazy loading */}
+            {/* Contenido */}
             <div className={styles.dashboardContent}>
-                {/* Estadísticas con loading optimizado */}
-                <StatsSection
-                    statsConfig={statsConfig}
-                    loading={loading}
-                    styles={styles}
-                    showDownloads={false}
-                    title=""
-                    subtitle=""
-                />
-
                 {/* Acciones rápidas */}
                 <QuickActionsSection
                     actionsConfig={actionsConfig}

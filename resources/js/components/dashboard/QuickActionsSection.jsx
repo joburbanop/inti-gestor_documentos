@@ -58,19 +58,19 @@ const QuickActionsSection = ({
     // Configuración por defecto si no se proporciona actionsConfig
     const defaultActions = [
         ...(showDirections ? [{
-            title: isUserDashboard ? "Explorar por Dirección" : "Gestionar Direcciones",
+            title: isUserDashboard ? "Explorar por Proceso Estratégico" : "Procesos Estratégicos",
             description: isUserDashboard 
-                ? "Encuentra todos los documentos organizados por dirección administrativa de la empresa"
-                : "Organiza la estructura organizacional de la empresa. Define las direcciones administrativas que conforman el organigrama institucional.",
+                ? "Encuentra documentos organizados por procesos estratégicos"
+                : "Gestiona los procesos estratégicos de la organización.",
             icon: <DirectionsIcon className="w-8 h-8" />,
-            hash: "direcciones",
+            hash: "procesos/estrategico",
             colorClass: "quickActionIconAzul"
         }] : []),
         ...(showProcesses ? [{
-            title: isUserDashboard ? "Explorar por Categoría" : "Categorías",
+            title: isUserDashboard ? "Explorar por Proceso Misional" : "Procesos Misionales",
             description: isUserDashboard 
-                ? "Explora documentos específicos por proceso de apoyo dentro de cada dirección"
-                : "Configura las categorías dentro de cada dirección. Define los flujos de trabajo y procedimientos administrativos.",
+                ? "Explora documentos por proceso misional dentro de cada dirección"
+                : "Configura los procesos misionales (procesos de apoyo) dentro de cada dirección.",
             icon: <ProcessIcon className="w-8 h-8" />,
             hash: "procesos",
             colorClass: "quickActionIconVerde"

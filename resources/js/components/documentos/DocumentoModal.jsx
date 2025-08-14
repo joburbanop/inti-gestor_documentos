@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import CreateForm from '../crud/CreateForm';
+import CreateForm from '../common/CreateForm';
 import { useAuth } from '../../contexts/AuthContext';
 import styles from '../../styles/components/Documentos.module.css';
 import { 

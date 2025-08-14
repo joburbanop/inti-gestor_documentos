@@ -14,8 +14,8 @@ return new class extends Migration
     {
         // 1. Índices compuestos para búsqueda rápida por dirección y proceso
         Schema::table('documentos', function (Blueprint $table) {
-            $table->index(['direccion_id', 'proceso_apoyo_id', 'created_at'], 'idx_documentos_direccion_proceso');
-            $table->index(['proceso_apoyo_id', 'direccion_id', 'created_at'], 'idx_documentos_proceso_direccion');
+            $table->index(['direccion_id', 'proceso_id', 'created_at'], 'idx_documentos_direccion_proceso');
+            $table->index(['proceso_id', 'direccion_id', 'created_at'], 'idx_documentos_proceso_direccion');
         });
 
         // 2. Índice para búsqueda por tipo de archivo
@@ -40,7 +40,7 @@ return new class extends Migration
 
         // 6. Índice compuesto para búsqueda completa
         Schema::table('documentos', function (Blueprint $table) {
-            $table->index(['direccion_id', 'proceso_apoyo_id', 'tipo_archivo', 'confidencialidad', 'created_at'], 'idx_documentos_search_complete');
+            $table->index(['direccion_id', 'proceso_id', 'tipo_archivo', 'confidencialidad', 'created_at'], 'idx_documentos_search_complete');
         });
 
         // 7. Optimizar tabla direcciones
@@ -49,10 +49,10 @@ return new class extends Migration
             $table->index('nombre', 'idx_direcciones_nombre');
         });
 
-        // 8. Optimizar tabla procesos_apoyo
-        Schema::table('procesos_apoyo', function (Blueprint $table) {
-            $table->index(['direccion_id', 'activo'], 'idx_procesos_apoyo_direccion');
-            $table->index('nombre', 'idx_procesos_apoyo_nombre');
+        // 8. Optimizar tabla procesos (nueva tabla unificada)
+        Schema::table('procesos', function (Blueprint $table) {
+            $table->index(['tipo', 'activo'], 'idx_procesos_tipo_activo');
+            $table->index('nombre', 'idx_procesos_nombre');
         });
     }
 
@@ -62,9 +62,9 @@ return new class extends Migration
     public function down(): void
     {
         // Eliminar índices en orden inverso
-        Schema::table('procesos_apoyo', function (Blueprint $table) {
-            $table->dropIndex('idx_procesos_apoyo_nombre');
-            $table->dropIndex('idx_procesos_apoyo_direccion');
+        Schema::table('procesos', function (Blueprint $table) {
+            $table->dropIndex('idx_procesos_nombre');
+            $table->dropIndex('idx_procesos_tipo_activo');
         });
 
         Schema::table('direcciones', function (Blueprint $table) {

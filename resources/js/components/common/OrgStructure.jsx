@@ -89,48 +89,14 @@ const OrgStructure = () => {
       </header>
 
       <div className={styles.hierarchicalStructure}>
-        {/* Nivel 1: Procesos Estratégicos */}
+        {/* Nivel 1: Procesos Estratégicos (Direcciones) */}
         <div className={styles.strategicLevel}>
           <div className={styles.levelHeader}>
             <h3 className={styles.levelTitle}>Procesos ESTRATÉGICOS</h3>
           </div>
           <div className={styles.strategicNodes}>
-            <div className={styles.strategicNode}>
-              <div className={styles.nodeContent}>
-                <h4>Planeación Estratégica</h4>
-              </div>
-            </div>
-            <div className={styles.strategicNode}>
-              <div className={styles.nodeContent}>
-                <h4>Gestión Ordenamiento Territorial</h4>
-              </div>
-            </div>
-            <div className={styles.strategicNode}>
-              <div className={styles.nodeContent}>
-                <h4>Seguridad y Privacidad de la Información</h4>
-              </div>
-            </div>
-            <div className={styles.strategicNode}>
-              <div className={styles.nodeContent}>
-                <h4>Comunicaciones</h4>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Conectores */}
-        <div className={styles.connectors}>
-          <div className={styles.verticalLine}></div>
-        </div>
-
-        {/* Nivel 2: Procesos Misionales */}
-        <div className={styles.misionalLevel}>
-          <div className={styles.levelHeader}>
-            <h3 className={styles.levelTitle}>Procesos MISIONALES</h3>
-          </div>
-          <div className={styles.misionalNodes}>
             {sortedDireccionesForView.map((dir) => (
-              <div key={dir.id} className={styles.misionalNode}>
+              <div key={dir.id} className={styles.strategicNode}>
                 <div className={styles.nodeContent}>
                   <DirectionIcon className={styles.nodeIcon} />
                   <h4>{dir.nombre}</h4>
@@ -146,14 +112,14 @@ const OrgStructure = () => {
           <div className={styles.verticalLine}></div>
         </div>
 
-        {/* Nivel 3: Procesos de Apoyo */}
-        <div className={styles.supportLevel}>
+        {/* Nivel 2: Procesos Misionales (Procesos de Apoyo) */}
+        <div className={styles.misionalLevel}>
           <div className={styles.levelHeader}>
-            <h3 className={styles.levelTitle}>Procesos DE APOYO</h3>
+            <h3 className={styles.levelTitle}>Procesos MISIONALES</h3>
           </div>
-          <div className={styles.supportNodes}>
+          <div className={styles.misionalNodes}>
             {allProcesos.map((proc) => (
-              <div key={proc.id || proc.nombre} className={styles.supportNode}>
+              <div key={proc.id || proc.nombre} className={styles.misionalNode}>
                 <div className={styles.nodeContent}>
                   <ProcessNodeIcon className={styles.nodeIcon} />
                   <h4>{proc.nombre}</h4>
@@ -170,6 +136,13 @@ const OrgStructure = () => {
             ))}
           </div>
         </div>
+
+        {/* Conectores */}
+        <div className={styles.connectors}>
+          <div className={styles.verticalLine}></div>
+        </div>
+
+        {/* Eliminado nivel de "Procesos de Apoyo" para Calidad; los procesos de apoyo se muestran como misionales */}
       </div>
     </section>
   );

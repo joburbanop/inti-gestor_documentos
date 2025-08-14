@@ -23,7 +23,7 @@ return new class extends Migration
             
             // Etiquetado por dirección y proceso
             $table->unsignedBigInteger('direccion_id');
-            $table->unsignedBigInteger('proceso_apoyo_id');
+            $table->unsignedBigInteger('proceso_id');
             $table->unsignedBigInteger('subido_por');
             
             $table->string('slug')->unique();
@@ -33,11 +33,11 @@ return new class extends Migration
             
             // Relaciones y índices optimizados
             $table->foreign('direccion_id')->references('id')->on('direcciones')->onDelete('cascade');
-            $table->foreign('proceso_apoyo_id')->references('id')->on('procesos_apoyo')->onDelete('cascade');
+            $table->foreign('proceso_id')->references('id')->on('procesos')->onDelete('cascade');
             $table->foreign('subido_por')->references('id')->on('users')->onDelete('cascade');
             
             // Índices para consultas optimizadas (sin incluir descripción en índice compuesto)
-            $table->index(['direccion_id', 'proceso_apoyo_id']);
+            $table->index(['direccion_id', 'proceso_id']);
             $table->index('titulo');
             $table->index('slug');
             $table->index('publico');

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DireccionController;
 use App\Http\Controllers\Api\ProcesoApoyoController;
+use App\Http\Controllers\Api\ProcesoController;
 use App\Http\Controllers\Api\DocumentoController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\RoleController;
@@ -42,6 +43,10 @@ Route::middleware(['api.auth', \App\Http\Middleware\CheckUserActivity::class])->
     // Alias de compatibilidad para llamadas antiguas del frontend
     Route::get('/direcciones/{direccionId}/procesos', [ProcesoApoyoController::class, 'porDireccion']);
     Route::apiResource('procesos-apoyo', ProcesoApoyoController::class);
+
+    // Rutas nuevas para procesos genéricos
+    Route::get('/procesos/tipos/stats', [ProcesoController::class, 'tiposStats']);
+    Route::apiResource('procesos', ProcesoController::class);
 
     // Rutas específicas de Documentos (DEBEN IR ANTES que apiResource)
     Route::get('/documentos/buscar', [DocumentoController::class, 'buscar']);

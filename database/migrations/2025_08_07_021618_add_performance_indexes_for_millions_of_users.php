@@ -25,17 +25,18 @@ return new class extends Migration
             try { $table->index(['nombre', 'activo'], 'direcciones_nombre_active_index'); } catch (\Throwable $e) {}
         });
 
-        // Índices para procesos de apoyo (sin campo 'orden')
-        Schema::table('procesos_apoyo', function (Blueprint $table) {
+        // Índices para procesos (nueva tabla unificada)
+        Schema::table('procesos', function (Blueprint $table) {
             try { $table->index(['codigo', 'activo'], 'procesos_codigo_active_index'); } catch (\Throwable $e) {}
             try { $table->index(['nombre', 'activo'], 'procesos_nombre_active_index'); } catch (\Throwable $e) {}
+            try { $table->index(['tipo', 'activo'], 'procesos_tipo_active_index'); } catch (\Throwable $e) {}
         });
 
         // Índices para documentos
         Schema::table('documentos', function (Blueprint $table) {
             // Índices compuestos para consultas frecuentes
             try { $table->index(['direccion_id', 'created_at'], 'documentos_direccion_created_index'); } catch (\Throwable $e) {}
-            try { $table->index(['proceso_apoyo_id'], 'documentos_proceso_index'); } catch (\Throwable $e) {}
+            try { $table->index(['proceso_id'], 'documentos_proceso_index'); } catch (\Throwable $e) {}
             try { $table->index(['tipo_archivo'], 'documentos_tipo_index'); } catch (\Throwable $e) {}
             // try { $table->index(['titulo'], 'documentos_titulo_index'); } catch (\Throwable $e) {} // Ya existe
             try { $table->index(['created_at'], 'documentos_created_index'); } catch (\Throwable $e) {}
@@ -72,9 +73,10 @@ return new class extends Migration
         });
 
         // Remover índices de procesos
-        Schema::table('procesos_apoyo', function (Blueprint $table) {
+        Schema::table('procesos', function (Blueprint $table) {
             $table->dropIndex('procesos_codigo_active_index');
             $table->dropIndex('procesos_nombre_active_index');
+            $table->dropIndex('procesos_tipo_active_index');
         });
 
         // Remover índices de documentos

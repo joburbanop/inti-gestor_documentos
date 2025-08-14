@@ -24,7 +24,7 @@ class Documento extends Model
         'extension',
         'tamaño_archivo',
         'direccion_id',
-        'proceso_apoyo_id',
+        'proceso_id',
         'subido_por',
         'slug',
         'tipo',
@@ -97,9 +97,9 @@ class Documento extends Model
     /**
      * Relación con proceso de apoyo
      */
-    public function procesoApoyo(): BelongsTo
+    public function proceso(): BelongsTo
     {
-        return $this->belongsTo(ProcesoApoyo::class, 'proceso_apoyo_id');
+        return $this->belongsTo(Proceso::class, 'proceso_id');
     }
 
     /**
@@ -127,7 +127,7 @@ class Documento extends Model
      */
     public function scopePorProceso(Builder $query, int $procesoId): Builder
     {
-        return $query->where('proceso_apoyo_id', $procesoId);
+        return $query->where('proceso_id', $procesoId);
     }
 
     /**
@@ -224,8 +224,8 @@ class Documento extends Model
     {
         return static::where('id', '!=', $this->id)
                     ->where('direccion_id', $this->direccion_id)
-                    ->where('proceso_apoyo_id', $this->proceso_apoyo_id)
-                    ->with(['direccion', 'procesoApoyo'])
+                    ->where('proceso_id', $this->proceso_id)
+                    ->with(['direccion', 'proceso'])
                     ->orderBy('created_at', 'desc')
                     ->limit($limit)
                     ->get();

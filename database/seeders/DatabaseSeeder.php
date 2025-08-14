@@ -15,7 +15,7 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             UserSeeder::class,
             DireccionSeeder::class,
-            ProcesoApoyoSeeder::class,
+            ProcesoSeeder::class,
         ]);
     }
 }

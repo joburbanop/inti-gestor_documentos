@@ -6,8 +6,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Documento;
-use App\Models\Direccion;
-use App\Models\ProcesoApoyo;
+use App\Models\Proceso;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -25,17 +24,12 @@ class DocumentoController extends Controller
         try {
             $perPage = min(max((int) $request->get('per_page', 10), 1), 100); // Optimizado para 10 por defecto
             $page = (int) $request->get('page', 1);
-            $query = Documento::with(['direccion:id,nombre,codigo', 'procesoApoyo:id,nombre,codigo', 'subidoPor:id,name']); // Solo campos necesarios
+            $query = Documento::with(['proceso:id,nombre,codigo', 'subidoPor:id,name']); // Solo campos necesarios
 
             // Filtros con logging para debug
-            if ($request->has('direccion_id')) {
-                \Log::info('🔍 Aplicando filtro dirección_id:', ['direccion_id' => $request->direccion_id]);
-                $query->porDireccion($request->direccion_id);
-            }
-
-            if ($request->has('proceso_apoyo_id')) {
-                \Log::info('🔍 Aplicando filtro proceso_apoyo_id:', ['proceso_apoyo_id' => $request->proceso_apoyo_id]);
-                $query->porProceso($request->proceso_apoyo_id);
+            if ($request->has('proceso_id')) {
+                \Log::info('🔍 Aplicando filtro proceso_id:', ['proceso_id' => $request->proceso_id]);
+                $query->porProceso($request->proceso_id);
             }
 
             // Filtro por extensión única
@@ -83,8 +77,7 @@ class DocumentoController extends Controller
                         }
                     }
                     if ($request->filled('etiqueta')) { $filters[] = 'etiquetas = "'.$request->etiqueta.'"'; }
-                    if ($request->filled('direccion_id')) { $filters[] = 'direccion.id = '.$request->direccion_id; }
-                    if ($request->filled('proceso_apoyo_id')) { $filters[] = 'proceso.id = '.$request->proceso_apoyo_id; }
+                     if ($request->filled('proceso_id')) { $filters[] = 'proceso.id = '.$request->proceso_id; }
                     if ($request->filled('tipo_archivo')) { $filters[] = 'tipo_archivo = "'.$request->tipo_archivo.'"'; }
 
                     $builder = \App\Models\Documento::search($q);
@@ -199,15 +192,10 @@ class DocumentoController extends Controller
                     'contador_descargas' => $documento->contador_descargas,
 
                     'fecha_creacion' => $documento->created_at->format('Y-m-d H:i:s'),
-                    'direccion' => [
-                        'id' => $documento->direccion->id,
-                        'nombre' => $documento->direccion->nombre,
-                        'codigo' => $documento->direccion->codigo,
-                    ],
-                    'proceso_apoyo' => [
-                        'id' => $documento->procesoApoyo->id,
-                        'nombre' => $documento->procesoApoyo->nombre,
-                        'codigo' => $documento->procesoApoyo->codigo,
+                    'proceso' => [
+                        'id' => optional($documento->proceso)->id,
+                        'nombre' => optional($documento->proceso)->nombre,
+                        'codigo' => optional($documento->proceso)->codigo,
                     ],
                     'subido_por' => [
                         'id' => $documento->subidoPor->id,
@@ -250,7 +238,7 @@ class DocumentoController extends Controller
     public function show(int $id): JsonResponse
     {
         try {
-            $documento = Documento::with(['direccion', 'procesoApoyo', 'subidoPor'])
+            $documento = Documento::with(['proceso', 'subidoPor'])
                 ->findOrFail($id);
 
             // Verificar permisos
@@ -271,15 +259,10 @@ class DocumentoController extends Controller
                 'contador_descargas' => $documento->contador_descargas,
 
                 'fecha_creacion' => $documento->created_at->format('Y-m-d H:i:s'),
-                'direccion' => [
-                    'id' => $documento->direccion->id,
-                    'nombre' => $documento->direccion->nombre,
-                    'codigo' => $documento->direccion->codigo,
-                ],
-                'proceso_apoyo' => [
-                    'id' => $documento->procesoApoyo->id,
-                    'nombre' => $documento->procesoApoyo->nombre,
-                    'codigo' => $documento->procesoApoyo->codigo,
+                'proceso' => [
+                    'id' => optional($documento->proceso)->id,
+                    'nombre' => optional($documento->proceso)->nombre,
+                    'codigo' => optional($documento->proceso)->codigo,
                 ],
                 'subido_por' => [
                     'id' => $documento->subidoPor->id,
@@ -340,8 +323,7 @@ class DocumentoController extends Controller
                 'titulo' => 'required|string|max:255',
                 'descripcion' => 'nullable|string',
                 'archivo' => 'required|file|max:8192', // 8MB máximo (temporalmente reducido)
-                'direccion_id' => 'required|exists:direcciones,id',
-                'proceso_apoyo_id' => 'required|exists:procesos_apoyo,id',
+                'proceso_id' => 'required|exists:procesos,id',
                 'tipo' => 'nullable|string|max:50',
                 'etiquetas' => 'nullable|array',
                 'etiquetas.*' => 'string|max:50',
@@ -351,8 +333,7 @@ class DocumentoController extends Controller
                 'titulo.required' => 'El título es obligatorio',
                 'archivo.required' => 'El archivo es obligatorio',
                 'archivo.max' => 'El archivo no puede ser mayor a 8MB (temporalmente)',
-                'direccion_id.required' => 'La dirección es obligatoria',
-                'proceso_apoyo_id.required' => 'El proceso de apoyo es obligatorio'
+                'proceso_id.required' => 'El proceso es obligatorio'
             ]);
 
             if ($validator->fails()) {
@@ -375,8 +356,7 @@ class DocumentoController extends Controller
                 'ruta_archivo' => $rutaArchivo,
                 'tipo_archivo' => $archivo->getClientMimeType(),
                 'tamaño_archivo' => $archivo->getSize(),
-                'direccion_id' => $request->direccion_id,
-                'proceso_apoyo_id' => $request->proceso_apoyo_id,
+                'proceso_id' => $request->proceso_id,
                 'subido_por' => auth()->id(),
                 'tipo' => $request->tipo,
                 'etiquetas' => $request->etiquetas,
@@ -427,8 +407,7 @@ class DocumentoController extends Controller
             $validator = Validator::make($request->all(), [
                 'titulo' => 'required|string|max:255',
                 'descripcion' => 'nullable|string',
-                'direccion_id' => 'required|exists:direcciones,id',
-                'proceso_apoyo_id' => 'required|exists:procesos_apoyo,id',
+                'proceso_id' => 'required|exists:procesos,id',
                 'tipo' => 'nullable|string|max:50',
                 'etiquetas' => 'nullable|array',
                 'etiquetas.*' => 'string|max:50',
@@ -445,31 +424,15 @@ class DocumentoController extends Controller
             }
 
             // Guardar IDs originales antes de actualizar
-            $oldDireccionId = $documento->direccion_id;
-            $oldProcesoApoyoId = $documento->proceso_apoyo_id;
+            $oldProcesoId = $documento->proceso_id;
             
             $documento->update($request->only([
-                'titulo', 'descripcion', 'direccion_id', 'proceso_apoyo_id',
-                'tipo', 'etiquetas', 'confidencialidad'
+                'titulo', 'descripcion', 'proceso_id', 'tipo', 'etiquetas', 'confidencialidad'
             ]));
 
             // Limpiar cache relacionado
             Cache::forget('dashboard_estadisticas');
-            Cache::forget("direccion_estadisticas_{$oldDireccionId}");
-            Cache::forget("direccion_{$oldDireccionId}");
-            Cache::forget("proceso_apoyo_{$oldProcesoApoyoId}");
-            Cache::forget("procesos_apoyo_direccion_{$oldDireccionId}");
-            
-            // Si cambió la dirección o proceso, limpiar cache de los nuevos también
-            if ($oldDireccionId != $documento->direccion_id) {
-                Cache::forget("direccion_estadisticas_{$documento->direccion_id}");
-                Cache::forget("direccion_{$documento->direccion_id}");
-                Cache::forget("procesos_apoyo_direccion_{$documento->direccion_id}");
-            }
-            if ($oldProcesoApoyoId != $documento->proceso_apoyo_id) {
-                Cache::forget("proceso_apoyo_{$documento->proceso_apoyo_id}");
-            }
-            Cache::increment('procesos_apoyo_cache_version');
+            Cache::forget('procesos_tipos_stats');
 
             return response()->json([
                 'success' => true,
@@ -515,18 +478,13 @@ class DocumentoController extends Controller
             }
 
             // Guardar IDs antes de eliminar para invalidar cache
-            $direccionId = $documento->direccion_id;
-            $procesoApoyoId = $documento->proceso_apoyo_id;
+            $procesoId = $documento->proceso_id;
             
             $documento->delete();
 
             // Limpiar cache relacionado
             Cache::forget('dashboard_estadisticas');
-            Cache::forget("direccion_estadisticas_{$direccionId}");
-            Cache::forget("direccion_{$direccionId}");
-            Cache::forget("proceso_apoyo_{$procesoApoyoId}");
-            Cache::forget("procesos_apoyo_direccion_{$direccionId}");
-            Cache::increment('procesos_apoyo_cache_version');
+            Cache::forget('procesos_tipos_stats');
 
             return response()->json([
                 'success' => true,

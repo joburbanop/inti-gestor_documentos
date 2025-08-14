@@ -314,6 +314,28 @@
     transform: translateX(4px);
 }
 
+/* Estilos para dropdowns en móvil */
+.mobileDropdownHeader {
+    background: rgba(31, 68, 139, 0.08) !important;
+    color: #1F448B;
+    font-weight: 700;
+    border-left: 3px solid #1F448B;
+}
+
+.mobileDropdownItem {
+    padding-left: 2.5rem !important;
+    font-size: 0.9rem !important;
+    color: #374151 !important;
+    background: rgba(31, 68, 139, 0.02) !important;
+    border-left: 3px solid rgba(31, 68, 139, 0.2);
+}
+
+.mobileDropdownItem:hover {
+    background: rgba(31, 68, 139, 0.08) !important;
+    color: #1F448B !important;
+    border-left-color: #1F448B;
+}
+
 .mobileAdminButton {
     color: #FF7D09;
 }

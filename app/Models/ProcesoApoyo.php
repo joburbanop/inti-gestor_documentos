@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -12,13 +13,14 @@ class ProcesoApoyo extends Model
 {
     use HasFactory;
 
-    protected $table = 'procesos_apoyo';
+    protected $table = 'procesos';
 
     protected $fillable = [
         'nombre',
         'descripcion',
-        'direccion_id',
+        'tipo',
         'codigo',
+        'color',
         'activo'
     ];
 
@@ -27,11 +29,34 @@ class ProcesoApoyo extends Model
     ];
 
     /**
-     * Relación con dirección
+     * Boot del modelo para asegurar que siempre sea tipo 'apoyo'
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::addGlobalScope('tipo_apoyo', function (Builder $builder) {
+            $builder->where('tipo', 'apoyo');
+        });
+    }
+
+    /**
+     * Relación con direcciones (many-to-many)
+     */
+    public function direcciones(): BelongsToMany
+    {
+        return $this->belongsToMany(Direccion::class, 'direccion_proceso', 'proceso_id', 'direccion_id')
+            ->withTimestamps();
+    }
+
+    /**
+     * Relación con dirección (para compatibilidad)
      */
     public function direccion(): BelongsTo
     {
-        return $this->belongsTo(Direccion::class, 'direccion_id');
+        return $this->belongsToMany(Direccion::class, 'direccion_proceso', 'proceso_id', 'direccion_id')
+            ->withTimestamps()
+            ->first();
     }
 
     /**
@@ -39,7 +64,7 @@ class ProcesoApoyo extends Model
      */
     public function documentos(): HasMany
     {
-        return $this->hasMany(Documento::class, 'proceso_apoyo_id');
+        return $this->hasMany(Documento::class, 'proceso_id');
     }
 
     /**
@@ -64,7 +89,9 @@ class ProcesoApoyo extends Model
      */
     public function scopePorDireccion(Builder $query, int $direccionId): Builder
     {
-        return $query->where('direccion_id', $direccionId);
+        return $query->whereHas('direcciones', function ($q) use ($direccionId) {
+            $q->where('direccion_id', $direccionId);
+        });
     }
 
     /**
@@ -74,7 +101,6 @@ class ProcesoApoyo extends Model
     {
         return [
             'total_documentos' => $this->documentos()->count(),
-
             'total_descargas' => $this->documentos()->sum('contador_descargas')
         ];
     }
@@ -88,5 +114,14 @@ class ProcesoApoyo extends Model
                     ->with(['direccion', 'subidoPor'])
                     ->orderBy('created_at', 'desc')
                     ->paginate($perPage);
+    }
+
+    /**
+     * Crear un proceso de apoyo
+     */
+    public static function create(array $attributes = [])
+    {
+        $attributes['tipo'] = 'apoyo';
+        return parent::create($attributes);
     }
 } 
