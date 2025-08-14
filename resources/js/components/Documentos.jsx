@@ -79,7 +79,7 @@ const Documentos = () => {
 
   // Opciones dinámicas para selects en cascada
   const [direccionesOptions, setDireccionesOptions] = useState([{ value: '', label: 'Todas las direcciones' }]);
-  const [procesosOptions, setProcesosOptions] = useState([{ value: '', label: 'Todas las categorías' }]);
+  const [procesosOptions, setProcesosOptions] = useState([{ value: '', label: 'Todos los procesos misionales' }]);
   const [etiquetasOptions, setEtiquetasOptions] = useState([]);
   const [tiposDocumentoOptions, setTiposDocumentoOptions] = useState([]);
   const abortRef = useRef(null);
@@ -162,7 +162,7 @@ const Documentos = () => {
   useEffect(() => {
     (async () => {
       try {
-        const response = await apiRequest('/api/documentos/etiquetas');
+        const response = await apiRequest('/documentos/etiquetas');
         if (response.success) {
           const etiquetas = response.data || [];
           setEtiquetasOptions(etiquetas);
@@ -177,7 +177,7 @@ const Documentos = () => {
   useEffect(() => {
     (async () => {
       try {
-        const response = await apiRequest('/api/documentos/tipos');
+        const response = await apiRequest('/documentos/tipos');
         if (response.success) {
           const tipos = response.data || [];
           setTiposDocumentoOptions(tipos);
@@ -192,7 +192,7 @@ const Documentos = () => {
   useEffect(() => {
     const dirId = advancedFilterValues.direccion_id;
     if (!dirId) {
-      setProcesosOptions([{ value: '', label: 'Todas las categorías' }]);
+      setProcesosOptions([{ value: '', label: 'Todos los procesos misionales' }]);
       setAdvancedFilterValues(prev => ({ ...prev, proceso_apoyo_id: '' }));
       return;
     }
@@ -200,16 +200,16 @@ const Documentos = () => {
       try {
         const p = await apiRequest(`/direcciones/${dirId}/procesos-apoyo`);
         if (p.success) {
-          const opts = [{ value: '', label: 'Todas las categorías' }].concat(
+          const opts = [{ value: '', label: 'Todos los procesos misionales' }].concat(
             (p.data || []).map(x => ({ value: x.id, label: x.nombre }))
           );
           setProcesosOptions(opts);
           setAdvancedFilterValues(prev => ({ ...prev, proceso_apoyo_id: '' }));
         } else {
-          setProcesosOptions([{ value: '', label: 'Todas las categorías' }]);
+          setProcesosOptions([{ value: '', label: 'Todos los procesos misionales' }]);
         }
       } catch {
-        setProcesosOptions([{ value: '', label: 'Todas las categorías' }]);
+        setProcesosOptions([{ value: '', label: 'Todos los procesos misionales' }]);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -327,7 +327,7 @@ const Documentos = () => {
 
   const handleView = async (documento) => {
     try {
-      const res = await apiRequest(`/api/documentos/${documento.id}/vista-previa`, { method: 'GET' });
+      const res = await apiRequest(`/documentos/${documento.id}/vista-previa`, { method: 'GET' });
       if (res.success && res.data?.url) {
         // Construir URL completa con el token de autenticación
         const token = localStorage.getItem('auth_token');
@@ -358,7 +358,7 @@ const Documentos = () => {
 
   const handleDownload = async (documento) => {
     try {
-      const res = await apiRequest(`/api/documentos/${documento.id}/descargar`, { method: 'POST' });
+      const res = await apiRequest(`/documentos/${documento.id}/descargar`, { method: 'POST' });
       if (res.success && res.data?.url) {
         // Si la URL es pública (storage local), forzar descarga con atributo download
         const a = document.createElement('a');
@@ -403,7 +403,7 @@ const Documentos = () => {
           // Forzar recarga de estadísticas del dashboard para actualizar contadores
           // Esto asegura que los contadores de documentos se actualicen en direcciones y procesos
           try {
-            await apiRequest('/api/documentos/estadisticas', { 
+            await apiRequest('/documentos/estadisticas', { 
               method: 'GET',
               ignoreAuthErrors: true 
             });
@@ -437,7 +437,7 @@ const Documentos = () => {
         (Array.isArray(data.etiquetas) ? data.etiquetas : []).forEach((t, i) => fd.append(`etiquetas[${i}]`, t));
         if (data.confidencialidad) fd.append('confidencialidad', data.confidencialidad);
 
-        res = await apiRequest('/api/documentos', { method: 'POST', body: fd });
+        res = await apiRequest('/documentos', { method: 'POST', body: fd });
       } else {
         // Actualizar documento existente
         const updateData = {
@@ -462,7 +462,7 @@ const Documentos = () => {
         
         // Forzar recarga de estadísticas del dashboard para actualizar contadores
         try {
-          await apiRequest('/api/documentos/estadisticas', { 
+          await apiRequest('/documentos/estadisticas', { 
             method: 'GET',
             ignoreAuthErrors: true 
           });

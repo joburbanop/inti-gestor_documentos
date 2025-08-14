@@ -145,7 +145,7 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
       return;
     }
     
-            const nombre = window.prompt('Escribe el nombre de la nueva categoría:');
+    const nombre = window.prompt('Escribe el nombre del nuevo proceso misional:');
     if (!nombre) return;
     const codigo = window.prompt('Escribe el código del proceso (opcional):');
     
@@ -164,12 +164,12 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
         const nuevoProceso = { value: res.data.id, label: res.data.nombre };
         setProcesosOptions(prev => [...prev, nuevoProceso]);
         setLocalData(prev => ({ ...prev, proceso_apoyo_id: res.data.id }));
-        alert('Categoría creada exitosamente');
+        alert('Proceso misional creado exitosamente');
       } else {
-        alert(res.message || 'Error al crear la categoría');
+        alert(res.message || 'Error al crear el proceso misional');
       }
     } catch (e) {
-              alert('Error al crear la categoría: ' + e.message);
+      alert('Error al crear el proceso misional: ' + e.message);
     }
   };
 
@@ -222,14 +222,14 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
         },
         { 
           name: 'proceso_apoyo_id', 
-          label: 'Categoría', 
+          label: 'Proceso Misional', 
           type: 'select', 
           required: true, 
           options: procesosOptions, 
           disabled: !localData?.direccion_id,
-          placeholder: 'Selecciona la categoría relacionada',
+          placeholder: 'Selecciona el proceso misional relacionado',
           hasAddButton: true,
-          addButtonText: 'Agregar categoría',
+          addButtonText: 'Agregar proceso misional',
           onAddClick: handleAddProceso
         },
         { 
@@ -238,7 +238,7 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
           type: 'select', 
           required: false, 
           options: tipoOptions, 
-          placeholder: 'Selecciona la categoría del documento',
+          placeholder: 'Selecciona el tipo de documento',
           hasAddButton: true,
           addButtonText: 'Agregar tipo',
           onAddClick: handleAddTipo

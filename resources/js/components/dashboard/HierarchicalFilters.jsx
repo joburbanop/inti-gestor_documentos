@@ -251,20 +251,20 @@ const HierarchicalFilters = ({
                     </select>
                 </div>
 
-                {/* Filtro de Categorías */}
+                {/* Filtro de Proceso Misional */}
                 <div className={styles.filterGroup}>
-                                            <label className={styles.filterLabel} htmlFor="proceso-select">
-                            Categoría
-                        </label>
+                    <label className={styles.filterLabel} htmlFor="proceso-select">
+                        Proceso Misional
+                    </label>
                     <select
                         id="proceso-select"
                         value={localFilters.procesoId || ''}
                         onChange={(e) => handleFilterChange('procesoId', e.target.value ? Number(e.target.value) : '')}
                         className={styles.filterSelect}
                         disabled={!localFilters.direccionId || loading}
-                                                    aria-label="Seleccionar categoría"
+                        aria-label="Seleccionar proceso misional"
                     >
-                                                    <option value="">Seleccionar categoría</option>
+                        <option value="">Seleccionar proceso misional</option>
                         {procesos.map((proceso) => (
                             <option key={proceso.id} value={proceso.id}>
                                 {proceso.nombre} ({proceso.estadisticas?.total_documentos || 0} docs)
@@ -286,7 +286,7 @@ const HierarchicalFilters = ({
             {!localFilters.direccionId && !loading && (
                 <div className={`${styles.statusMessage} ${styles.info}`}>
                     {direcciones.length > 0 
-                        ? 'Selecciona una dirección para ver las categorías disponibles'
+                        ? 'Selecciona una dirección para ver los procesos misionales disponibles'
                         : 'No hay direcciones con documentos disponibles'
                     }
                 </div>
@@ -295,7 +295,7 @@ const HierarchicalFilters = ({
             {/* Mensaje cuando hay dirección pero no hay procesos */}
             {localFilters.direccionId && procesos.length === 0 && !loading && (
                 <div className={`${styles.statusMessage} ${styles.warning}`}>
-                                            No hay categorías disponibles para esta dirección
+                    No hay procesos misionales disponibles para esta dirección
                 </div>
             )}
 
@@ -315,7 +315,7 @@ const HierarchicalFilters = ({
                         )}
                         {localFilters.procesoId && (
                             <>
-                                {' • '}Categoría: <span className={styles.resultsCount}>
+                                {' • '}Proceso Misional: <span className={styles.resultsCount}>
                                     {procesos.find(p => p.id === localFilters.procesoId)?.nombre}
                                 </span>
                                 <span className={styles.resultsStats}>

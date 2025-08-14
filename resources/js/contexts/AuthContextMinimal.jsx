@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import api from '../lib/apiClient';
 
 // Estados iniciales
 const initialState = {
@@ -103,52 +104,46 @@ export const AuthProvider = ({ children }) => {
     // Función para hacer peticiones a la API (simplificada)
     const apiRequest = async (url, options = {}) => {
         const token = state.token || localStorage.getItem('auth_token');
-        
         if (!token) {
             localStorage.removeItem('auth_token');
             dispatch({ type: AUTH_ACTIONS.LOGOUT });
             throw new Error('No autenticado');
         }
 
-        const config = {
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json',
-                ...options.headers
-            },
-            ...options
-        };
+        const method = (options.method || 'GET').toLowerCase();
+        const headers = { ...(options.headers || {}) };
+        let data = options.body;
+        if (data && typeof data === 'string') { try { data = JSON.parse(data); } catch (_) {} }
 
         try {
-            const response = await fetch(url.startsWith('/api') ? url : `/api/${url.replace(/^\//, '')}`, config);
-            
-            const contentType = response.headers.get('content-type');
-            let data;
-            
-            if (contentType && contentType.includes('application/json')) {
-                data = await response.json();
-            } else {
-                throw new Error('Respuesta no válida del servidor');
+            let response;
+            switch (method) {
+                case 'get':
+                    response = await api.get(url, { headers });
+                    break;
+                case 'post':
+                    response = await api.post(url, data, { headers });
+                    break;
+                case 'put':
+                    response = await api.put(url, data, { headers });
+                    break;
+                case 'patch':
+                    response = await api.patch(url, data, { headers });
+                    break;
+                case 'delete':
+                    response = await api.delete(url, { headers });
+                    break;
+                default:
+                    response = await api.request({ url, method, data, headers });
             }
-
-            if (!response.ok) {
-                if (response.status === 401) {
-                    localStorage.removeItem('auth_token');
-                    dispatch({ type: AUTH_ACTIONS.LOGOUT });
-                    throw new Error('No autenticado');
-                }
-                throw new Error(data.message || 'Error en la petición');
-            }
-
-            return data;
+            return response.data;
         } catch (error) {
-            if (error.message === 'No autenticado') {
+            if (error?.response?.status === 401) {
                 localStorage.removeItem('auth_token');
                 dispatch({ type: AUTH_ACTIONS.LOGOUT });
+                throw new Error('No autenticado');
             }
-            throw error;
+            throw new Error(error?.response?.data?.message || error.message || 'Error en la petición');
         }
     };
 
@@ -157,16 +152,7 @@ export const AuthProvider = ({ children }) => {
         try {
             dispatch({ type: AUTH_ACTIONS.LOGIN_START });
 
-            const response = await fetch('/api/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify({ email, password })
-            });
-
-            const data = await response.json();
+            const data = await api.post('/login', { email, password }).then(r => r.data);
 
             if (data.success) {
                 localStorage.setItem('auth_token', data.data.token);

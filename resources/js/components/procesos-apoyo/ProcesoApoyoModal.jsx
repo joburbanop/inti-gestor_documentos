@@ -35,7 +35,7 @@ const ProcesoApoyoModal = ({
     const loadDireccionesOptions = async () => {
         try {
             //
-            const response = await apiRequest('/api/direcciones');
+            const response = await apiRequest('/direcciones');
 
             if (response.success) {
                 setDireccionesOptions(response.data.map(direccion => ({
@@ -57,7 +57,7 @@ const ProcesoApoyoModal = ({
         const codigo = window.prompt('Escribe el código del proceso estratégico (opcional):');
         
         try {
-            const response = await apiRequest('/api/direcciones', {
+            const response = await apiRequest('/direcciones', {
                 method: 'POST',
                 body: JSON.stringify({
                     nombre: nombre.trim(),

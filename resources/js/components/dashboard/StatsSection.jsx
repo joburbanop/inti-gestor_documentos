@@ -38,11 +38,11 @@ const StatsSection = ({
             description: "Direcciones administrativas"
         }] : []),
         ...(showProcesses ? [{
-            title: "Categorías",
+            title: "Procesos Misionales",
             value: stats?.total_procesos || 0,
             icon: <BuildingIcon className="w-8 h-8" />,
             colorClass: "statCardMorado",
-            description: "Procesos configurados"
+            description: "Procesos misionales configurados"
         }] : [])
     ];
 

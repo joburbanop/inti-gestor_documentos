@@ -49,7 +49,7 @@ const UserDashboard = () => {
     const performInitialSearch = async () => {
         try {
             setSearchLoading(true);
-            const response = await apiRequest('/api/documentos?per_page=10&page=1');
+            const response = await apiRequest('/documentos?per_page=10&page=1');
             if (response.success) {
                 const docs = response.data?.documentos || response.data || [];
                 console.log('📄 UserDashboard: Cargados', docs.length, 'documentos iniciales');
@@ -177,7 +177,7 @@ const UserDashboard = () => {
             params.append('page', pageToUse.toString());
 
             // Determinar la URL correcta
-            let url = '/api/documentos';
+            let url = '/documentos';
             const hasText = Boolean(searchTerm && searchTerm.trim().length >= 3);
             
             if (hasText) {
@@ -377,7 +377,7 @@ const UserDashboard = () => {
 
     const handleViewDoc = async (documento) => {
         try {
-            const res = await apiRequest(`/api/documentos/${documento.id}/vista-previa`);
+            const res = await apiRequest(`/documentos/${documento.id}/vista-previa`);
             if (res.success && res.data?.url) {
                 window.open(res.data.url, '_blank');
             } else {
@@ -390,7 +390,7 @@ const UserDashboard = () => {
 
     const handleDownloadDoc = async (documento) => {
         try {
-            const res = await apiRequest(`/api/documentos/${documento.id}/descargar`, { method: 'POST' });
+            const res = await apiRequest(`/documentos/${documento.id}/descargar`, { method: 'POST' });
             if (res.success && res.data?.url) {
                 const a = document.createElement('a');
                 a.href = res.data.url;
@@ -420,7 +420,7 @@ const UserDashboard = () => {
     useEffect(() => {
         const loadLatestNews = async () => {
             try {
-                const res = await apiRequest('/api/noticias/latest?limit=5', { ignoreAuthErrors: true });
+                const res = await apiRequest('/noticias/latest?limit=5', { ignoreAuthErrors: true });
                 if (res?.success) {
                     const items = (res.data || []).map(n => ({
                         id: n.id,

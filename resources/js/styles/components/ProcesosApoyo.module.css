@@ -67,6 +67,12 @@
     transition: background-color 0.2s;
 }
 
+/* Reducir tamaño del ícono dentro del botón "Nuevo Proceso Misional" */
+.createButton svg {
+    width: 18px;
+    height: 18px;
+}
+
 .createButton:hover {
     background-color: #1a3a7a;
 }

@@ -67,7 +67,7 @@ const ProcesosApoyo = () => {
     const fetchProcesosApoyo = async () => {
         try {
             setLoading(true);
-            const response = await apiRequest('/api/procesos-apoyo');
+            const response = await apiRequest('/procesos-apoyo');
             
             if (response.success) {
                 setProcesosApoyo(response.data);
@@ -83,7 +83,7 @@ const ProcesosApoyo = () => {
     // Cargar opciones de direcciones para filtros
     const fetchDireccionesOptions = async () => {
         try {
-            const response = await apiRequest('/api/direcciones');
+            const response = await apiRequest('/direcciones');
             if (response.success) {
                 const options = [
                     { value: '', label: 'Todos los procesos estratégicos' },
@@ -233,7 +233,7 @@ const ProcesosApoyo = () => {
             
             if (modalMode === 'create') {
                 //
-                response = await apiRequest('/api/procesos-apoyo', {
+                response = await apiRequest('/procesos-apoyo', {
                     method: 'POST',
                     body: JSON.stringify(formData)
                 });

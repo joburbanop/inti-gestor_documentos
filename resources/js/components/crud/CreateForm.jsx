@@ -245,15 +245,9 @@ const CreateForm = ({
     useEffect(() => {
         const loadEtiquetas = async () => {
             try {
-                const response = await fetch('/api/documentos/etiquetas', {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                const data = await response.json();
-                if (data.success) {
-                    setEtiquetasDisponibles(data.data || []);
+                const res = await import('../../lib/apiClient').then(m => m.apiGet('/documentos/etiquetas'));
+                if (res?.success) {
+                    setEtiquetasDisponibles(res.data || []);
                 }
             } catch (error) {
                 console.error('Error al cargar etiquetas:', error);

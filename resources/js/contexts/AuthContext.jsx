@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import { SESSION_CONFIG, getTimeRemaining, shouldShowWarning, isSessionExpired } from '../config/session';
 import { PERFORMANCE_CONFIG, isActivityMonitoringEnabled } from '../config/performance';
+import api from '../lib/apiClient';
 
 // Estados iniciales
 const initialState = {
@@ -117,123 +118,84 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
     const [state, dispatch] = useReducer(authReducer, initialState);
 
-    // Función para hacer peticiones a la API
+    // Función para hacer peticiones a la API (axios)
     const apiRequest = async (url, options = {}) => {
         const token = state.token || localStorage.getItem('auth_token');
-        
-        console.log('🔍 AuthContext: apiRequest iniciado', { url, hasToken: !!token, tokenLength: token?.length });
-        
-        // Verificar si hay token antes de hacer la petición
         if (!token) {
-            console.log('🔍 AuthContext: No hay token, haciendo logout');
             localStorage.removeItem('auth_token');
             dispatch({ type: AUTH_ACTIONS.LOGOUT });
             throw new Error('No autenticado');
         }
-        
-        const ignoreAuthErrors = options.ignoreAuthErrors === true;
-        const isFormData = options && options.body instanceof FormData;
 
-        const config = {
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json',
-                ...(ignoreAuthErrors ? { 'X-Ignore-Auth-Errors': '1' } : {}),
-                ...options.headers
-            },
-            ...options
+        const method = (options.method || 'GET').toLowerCase();
+        const ignoreAuthErrors = options.ignoreAuthErrors === true;
+
+        // Preparar headers
+        const headers = {
+            'X-Requested-With': 'XMLHttpRequest',
+            Accept: 'application/json',
+            ...(ignoreAuthErrors ? { 'X-Ignore-Auth-Errors': '1' } : {}),
+            ...options.headers,
         };
 
-        // Si es FormData, no establecer Content-Type para permitir boundary automático
-        if (isFormData) {
-            try { delete config.headers['Content-Type']; } catch (e) {}
+        // Preparar data
+        let data = options.body;
+        if (data && typeof data === 'string') {
+            try { data = JSON.parse(data); } catch (_) {}
         }
 
-        // Debug removido
-
         try {
-            // Usar proxy de Vite con rutas relativas
-            const apiUrl = url.startsWith('/api') ? url : `/api/${url.replace(/^\//, '')}`;
-            const response = await fetch(apiUrl, config);
-            
-            console.log('🔍 AuthContext: Respuesta recibida', { 
-                url, 
-                status: response.status, 
-                statusText: response.statusText,
-                headers: Object.fromEntries(response.headers.entries())
-            });
-            
-            // Verificar si la respuesta es JSON
-            const contentType = response.headers.get('content-type');
-            let data;
-            
-            if (contentType && contentType.includes('application/json')) {
-                data = await response.json();
-            } else {
-                throw new Error('Respuesta no válida del servidor');
+            const axiosConfig = { headers };
+            let response;
+            const normalizedUrl = url; // apiClient normaliza prefijos
+
+            switch (method) {
+                case 'get':
+                    response = await api.get(normalizedUrl, axiosConfig);
+                    break;
+                case 'post':
+                    response = await api.post(normalizedUrl, data, axiosConfig);
+                    break;
+                case 'put':
+                    response = await api.put(normalizedUrl, data, axiosConfig);
+                    break;
+                case 'patch':
+                    response = await api.patch(normalizedUrl, data, axiosConfig);
+                    break;
+                case 'delete':
+                    response = await api.delete(normalizedUrl, axiosConfig);
+                    break;
+                default:
+                    response = await api.request({ url: normalizedUrl, method, data, ...axiosConfig });
             }
 
-            if (!response.ok) {
-                // Si es un error 401, manejar específicamente
-                if (response.status === 401) {
-                    if (ignoreAuthErrors) {
-                        throw new Error('No autenticado');
-                    } else {
-                        localStorage.removeItem('auth_token');
-                        dispatch({ type: AUTH_ACTIONS.LOGOUT });
-                        throw new Error('No autenticado');
-                    }
-                }
-                throw new Error(data.message || 'Error en la petición');
-            }
-
-            return data;
+            // Se asume respuesta JSON con shape { success, data, message }
+            return response.data;
         } catch (error) {
-            // Si es un error de red o 401, hacer logout
-            if (!ignoreAuthErrors) {
-                if (error.message === 'No autenticado' || error.name === 'TypeError') {
-                    localStorage.removeItem('auth_token');
-                    dispatch({ type: AUTH_ACTIONS.LOGOUT });
-                }
-            } else {
-                //
+            const status = error?.response?.status;
+            if (status === 401 && !ignoreAuthErrors) {
+                localStorage.removeItem('auth_token');
+                dispatch({ type: AUTH_ACTIONS.LOGOUT });
+                throw new Error('No autenticado');
             }
-            throw error;
+
+            const message = error?.response?.data?.message || error.message || 'Error en la petición';
+            throw new Error(message);
         }
     };
 
-    // Función de login optimizada para máxima velocidad
+    // Función de login usando axios
     const login = async (email, password) => {
         try {
             dispatch({ type: AUTH_ACTIONS.LOGIN_START });
 
-            // Usar ruta relativa para aprovechar el proxy
-            const response = await fetch('/api/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify({ email, password })
-            });
-
-            const data = await response.json();
+            const data = await api.post('/login', { email, password }).then(r => r.data);
 
             if (data.success) {
-                // Debug removido
-                
-                // Guardar token inmediatamente para acceso rápido
                 localStorage.setItem('auth_token', data.data.token);
-                
-                // Establecer actividad inicial
                 const now = new Date();
                 localStorage.setItem('last_activity', now.toISOString());
-                
-                // Debug removido
-                
-                // Dispatch inmediato sin esperar verificaciones adicionales
+
                 dispatch({
                     type: AUTH_ACTIONS.LOGIN_SUCCESS,
                     payload: {
@@ -242,18 +204,13 @@ export const AuthProvider = ({ children }) => {
                     }
                 });
 
-                // Redirección inmediata sin verificaciones adicionales
                 window.location.href = '/#dashboard';
-                
                 return { success: true };
             } else {
                 throw new Error(data.message || 'Error en el inicio de sesión');
             }
         } catch (error) {
-            dispatch({
-                type: AUTH_ACTIONS.LOGIN_FAILURE,
-                payload: error.message
-            });
+            dispatch({ type: AUTH_ACTIONS.LOGIN_FAILURE, payload: error.message });
             return { success: false, error: error.message };
         }
     };
@@ -361,27 +318,7 @@ export const AuthProvider = ({ children }) => {
         
     }, [state.isAuthenticated]); // Removido updateActivity de las dependencias
 
-    // Configurar interceptor para manejar errores de autenticación (SIMPLIFICADO)
-    useEffect(() => {
-        const originalFetch = window.fetch;
-        
-        window.fetch = async (...args) => {
-            const response = await originalFetch(...args);
-            
-            // Solo manejar errores 401 básicos sin procesamiento complejo
-            if (response.status === 401 && args[0] && typeof args[0] === 'string' && args[0].includes('/api/')) {
-                // Logout simple sin verificar contenido
-                localStorage.removeItem('auth_token');
-                dispatch({ type: AUTH_ACTIONS.LOGOUT });
-            }
-            
-            return response;
-        };
-
-        return () => {
-            window.fetch = originalFetch;
-        };
-    }, []);
+    // Ya no se sobreescribe fetch; el manejo de 401 se realiza en apiRequest/login
 
     const value = {
         ...state,

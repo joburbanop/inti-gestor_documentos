@@ -57,6 +57,12 @@
     letter-spacing: 0.05em;
 }
 
+/* Reducir tamaño del ícono dentro del botón "Nuevo Proceso Estratégico" */
+.newButton svg {
+    width: 18px;
+    height: 18px;
+}
+
 .newButton:hover {
     transform: translateY(-3px);
     box-shadow: 0 20px 25px -5px rgba(31, 68, 139, 0.25), 0 10px 10px -5px rgba(31, 68, 139, 0.1);

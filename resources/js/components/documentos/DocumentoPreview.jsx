@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import api from '../../lib/apiClient';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import styles from '../../styles/components/Documentos.module.css';
@@ -20,38 +21,24 @@ const DocumentoPreview = () => {
     (async () => {
       try {
         // Intentar obtener vista previa; si el backend devuelve archivo directo, content-type no será JSON
-        const response = await fetch(`/api/documentos/${id}/vista-previa`, {
-          headers: {
-            'Accept': 'application/json,*/*',
-            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-Ignore-Auth-Errors': '1'
-          }
-        });
-
-        const contentType = response.headers.get('content-type') || '';
+        const response = await api.get(`/documentos/${id}/vista-previa`, { responseType: 'blob' });
+        const contentType = response.headers['content-type'] || '';
         // Caso 1: backend devuelve el archivo directamente (PDF/imagen/texto)
         if (contentType && !contentType.includes('application/json')) {
-          const blob = await response.blob();
+          const blob = response.data;
           const objectUrl = URL.createObjectURL(blob);
           urlToRevoke = objectUrl;
           setState({ loading: false, error: '', contentUrl: objectUrl, contentType, fileName: '', downloadUrl: '' });
           return;
         }
 
-        // Caso 2: backend devuelve JSON con URL (tipos no visualizables)
-        const json = await response.json();
-        if (json.success && json.data?.url) {
-          // Intentar obtener como blob para algunos visores del navegador
-          const fileRes = await fetch(json.data.url, {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-              'X-Requested-With': 'XMLHttpRequest',
-              'X-Ignore-Auth-Errors': '1'
-            }
-          });
-          const fileType = fileRes.headers.get('content-type') || '';
-          const blob = await fileRes.blob();
+        // Caso 2: si el backend responde JSON con url, reintentar como blob
+        try {
+          const json = await api.get(`/documentos/${id}/vista-previa`, { responseType: 'json' }).then(r => r.data);
+          if (json.success && json.data?.url) {
+            const fileRes = await api.get(json.data.url, { responseType: 'blob' });
+            const fileType = fileRes.headers['content-type'] || '';
+            const blob = fileRes.data;
           const objectUrl = URL.createObjectURL(blob);
           urlToRevoke = objectUrl;
           setState({
@@ -62,9 +49,12 @@ const DocumentoPreview = () => {
             fileName: json.data?.nombre_original || '',
             downloadUrl: json.data.url
           });
-        } else {
-          setState({ loading: false, error: json.message || 'No se pudo cargar la vista previa', contentUrl: '', contentType: '', fileName: '', downloadUrl: '' });
+          return;
         }
+        } catch (e) {
+          // si falla parseo JSON, caerá al catch general abajo
+        }
+        setState({ loading: false, error: 'No se pudo cargar la vista previa', contentUrl: '', contentType: '', fileName: '', downloadUrl: '' });
       } catch (e) {
         setState({ loading: false, error: e.message || 'Error al cargar vista previa', contentUrl: '', contentType: '', fileName: '', downloadUrl: '' });
       }
