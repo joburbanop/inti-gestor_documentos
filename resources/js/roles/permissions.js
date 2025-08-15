@@ -6,6 +6,7 @@ export const PERMISSIONS = {
   VIEW_DOCUMENTS: 'view_documents',
   MANAGE_PROCESSES: 'manage_processes',
   MANAGE_NEWS: 'manage_news',
+  VIEW_NEWS: 'view_news',
 };
 
 export const ROLE_CAPABILITIES = {
@@ -15,8 +16,9 @@ export const ROLE_CAPABILITIES = {
     PERMISSIONS.MANAGE_PROCESSES,
     PERMISSIONS.MANAGE_NEWS,
     PERMISSIONS.VIEW_DOCUMENTS,
+    PERMISSIONS.VIEW_NEWS,
   ]),
   [ROLES.USUARIO]: new Set([
-    PERMISSIONS.VIEW_DOCUMENTS,
+    PERMISSIONS.VIEW_NEWS,
   ]),
 };

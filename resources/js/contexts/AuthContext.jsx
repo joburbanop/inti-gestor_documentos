@@ -3,6 +3,8 @@ import { SESSION_CONFIG, getTimeRemaining, shouldShowWarning, isSessionExpired }
 import { PERFORMANCE_CONFIG, isActivityMonitoringEnabled } from '../config/performance';
 import api from '../lib/apiClient';
 
+console.log('🔐 [AuthContext.jsx] Inicializando AuthContext');
+
 // Estados iniciales
 const initialState = {
     user: null,
@@ -12,6 +14,12 @@ const initialState = {
     error: null,
     lastActivity: localStorage.getItem('last_activity') ? new Date(localStorage.getItem('last_activity')) : null
 };
+
+console.log('🔐 [AuthContext.jsx] Estado inicial:', { 
+    hasToken: !!initialState.token, 
+    isAuthenticated: initialState.isAuthenticated,
+    isLoading: initialState.isLoading 
+});
 
 // Tipos de acciones
 const AUTH_ACTIONS = {
@@ -116,12 +124,17 @@ export const useAuth = () => {
 
 // Proveedor del contexto
 export const AuthProvider = ({ children }) => {
+    console.log('🔐 [AuthContext.jsx] Renderizando AuthProvider');
+    
     const [state, dispatch] = useReducer(authReducer, initialState);
 
     // Función para hacer peticiones a la API (axios)
     const apiRequest = async (url, options = {}) => {
+        console.log('🌐 [AuthContext.jsx] apiRequest llamado:', url, options.method || 'GET');
+        
         const token = state.token || localStorage.getItem('auth_token');
         if (!token) {
+            console.log('❌ [AuthContext.jsx] No hay token, redirigiendo a logout');
             localStorage.removeItem('auth_token');
             dispatch({ type: AUTH_ACTIONS.LOGOUT });
             throw new Error('No autenticado');
@@ -169,11 +182,15 @@ export const AuthProvider = ({ children }) => {
                     response = await api.request({ url: normalizedUrl, method, data, ...axiosConfig });
             }
 
+            console.log('✅ [AuthContext.jsx] apiRequest exitoso:', url);
             // Se asume respuesta JSON con shape { success, data, message }
             return response.data;
         } catch (error) {
             const status = error?.response?.status;
+            console.log('❌ [AuthContext.jsx] apiRequest error:', url, 'Status:', status, 'Error:', error.message);
+            
             if (status === 401 && !ignoreAuthErrors) {
+                console.log('🔐 [AuthContext.jsx] Error 401, redirigiendo a logout');
                 localStorage.removeItem('auth_token');
                 dispatch({ type: AUTH_ACTIONS.LOGOUT });
                 throw new Error('No autenticado');
@@ -186,12 +203,14 @@ export const AuthProvider = ({ children }) => {
 
     // Función de login usando axios
     const login = async (email, password) => {
+        console.log('🔐 [AuthContext.jsx] Iniciando login para:', email);
         try {
             dispatch({ type: AUTH_ACTIONS.LOGIN_START });
 
             const data = await api.post('/login', { email, password }).then(r => r.data);
 
             if (data.success) {
+                console.log('✅ [AuthContext.jsx] Login exitoso para:', email);
                 localStorage.setItem('auth_token', data.data.token);
                 const now = new Date();
                 localStorage.setItem('last_activity', now.toISOString());
@@ -207,9 +226,11 @@ export const AuthProvider = ({ children }) => {
                 window.location.href = '/#dashboard';
                 return { success: true };
             } else {
+                console.log('❌ [AuthContext.jsx] Login fallido:', data.message);
                 throw new Error(data.message || 'Error en el inicio de sesión');
             }
         } catch (error) {
+            console.log('❌ [AuthContext.jsx] Error en login:', error.message);
             dispatch({ type: AUTH_ACTIONS.LOGIN_FAILURE, payload: error.message });
             return { success: false, error: error.message };
         }
@@ -217,24 +238,28 @@ export const AuthProvider = ({ children }) => {
 
     // Función de logout
     const logout = async () => {
+        console.log('🚪 [AuthContext.jsx] Iniciando logout');
         try {
             if (state.token) {
                 await apiRequest('/logout', { method: 'POST' });
             }
         } catch (error) {
-            console.error('Error al cerrar sesión:', error);
+            console.log('⚠️ [AuthContext.jsx] Error al cerrar sesión:', error.message);
         } finally {
             // Limpiar localStorage
             localStorage.removeItem('auth_token');
             localStorage.removeItem('last_activity');
             
+            console.log('🧹 [AuthContext.jsx] Limpiando datos de sesión');
             dispatch({ type: AUTH_ACTIONS.LOGOUT });
         }
     };
 
     // Función para verificar el token
     const verifyToken = async () => {
+        console.log('🔍 [AuthContext.jsx] Verificando token');
         if (!state.token) {
+            console.log('❌ [AuthContext.jsx] No hay token para verificar');
             dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: false });
             return;
         }
@@ -243,10 +268,12 @@ export const AuthProvider = ({ children }) => {
             const data = await apiRequest('/verify');
             
             if (data.success) {
+                console.log('✅ [AuthContext.jsx] Token válido, obteniendo datos del usuario');
                 // Obtener información actualizada del usuario
                 const userData = await apiRequest('/user');
                 
                 if (userData.success) {
+                    console.log('✅ [AuthContext.jsx] Datos del usuario obtenidos:', userData.data.user.name);
                     dispatch({
                         type: AUTH_ACTIONS.LOGIN_SUCCESS,
                         payload: {
@@ -259,7 +286,7 @@ export const AuthProvider = ({ children }) => {
                 throw new Error('Token inválido');
             }
         } catch (error) {
-            console.error('Error verificando token:', error);
+            console.log('❌ [AuthContext.jsx] Error verificando token:', error.message);
             localStorage.removeItem('auth_token');
             dispatch({ type: AUTH_ACTIONS.LOGOUT });
         } finally {
@@ -269,6 +296,7 @@ export const AuthProvider = ({ children }) => {
 
     // Función para limpiar errores
     const clearError = () => {
+        console.log('🧹 [AuthContext.jsx] Limpiando errores');
         dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
     };
 
@@ -278,6 +306,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('last_activity', now.toISOString());
         // Solo actualizar el estado si ha pasado más de 1 minuto desde la última actualización
         if (!state.lastActivity || now.getTime() - state.lastActivity.getTime() > 60000) {
+            console.log('⏰ [AuthContext.jsx] Actualizando actividad del usuario');
             dispatch({ type: AUTH_ACTIONS.UPDATE_ACTIVITY });
         }
     }, [state.lastActivity]);
@@ -287,6 +316,7 @@ export const AuthProvider = ({ children }) => {
         if (!state.lastActivity || !state.isAuthenticated) return false;
         
         if (isSessionExpired(state.lastActivity)) {
+            console.log('⏰ [AuthContext.jsx] Sesión expirada por inactividad');
             logout();
             return true;
         }
@@ -295,8 +325,10 @@ export const AuthProvider = ({ children }) => {
 
     // Verificar token al cargar la aplicación
     useEffect(() => {
+        console.log('🔄 [AuthContext.jsx] useEffect - Verificando token al cargar');
         // Verificar inactividad antes de verificar el token
         if (state.lastActivity && checkInactivity()) {
+            console.log('⏰ [AuthContext.jsx] Usuario inactivo, no verificando token');
             return; // Si está inactivo, no verificar token
         }
         verifyToken();
@@ -304,8 +336,13 @@ export const AuthProvider = ({ children }) => {
 
     // Configurar monitoreo de actividad del usuario (COMPLETAMENTE DESHABILITADO)
     useEffect(() => {
-        if (!state.isAuthenticated) return;
+        console.log('🔄 [AuthContext.jsx] useEffect - Configurando monitoreo de actividad');
+        if (!state.isAuthenticated) {
+            console.log('❌ [AuthContext.jsx] Usuario no autenticado, no configurando monitoreo');
+            return;
+        }
 
+        console.log('✅ [AuthContext.jsx] Usuario autenticado, monitoreo deshabilitado');
         // COMPLETAMENTE DESHABILITADO - NO HACER NADA
         // Solo actualizar actividad al cargar la página una vez
         if (!state.lastActivity) {
@@ -329,6 +366,12 @@ export const AuthProvider = ({ children }) => {
         updateActivity,
         checkInactivity
     };
+
+    console.log('🎨 [AuthContext.jsx] Renderizando AuthProvider con valor:', {
+        isAuthenticated: value.isAuthenticated,
+        isLoading: value.isLoading,
+        hasUser: !!value.user
+    });
 
     return (
         <AuthContext.Provider value={value}>

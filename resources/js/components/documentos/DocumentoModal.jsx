@@ -31,58 +31,96 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
 
   useEffect(() => {
     if (!show) return;
+    console.log('🔄 [DocumentoModal.jsx] Cargando datos iniciales...');
     (async () => {
       try {
+        console.log('📡 [DocumentoModal.jsx] Haciendo requests a la API...');
         const [d, e] = await Promise.all([
-          apiRequest('/direcciones'),
+          apiRequest('/procesos-generales'),
           apiRequest('/documentos/etiquetas')
         ]);
         
-        if (d.success) setDireccionesOptions(d.data.map(x => ({ value: x.id, label: x.nombre })));
-        if (e.success) setEtiquetasOptions(e.data.map(x => ({ value: x, label: x })));
+        console.log('📊 [DocumentoModal.jsx] Respuesta procesos generales:', d);
+        console.log('🏷️ [DocumentoModal.jsx] Respuesta etiquetas:', e);
         
-        const dirId = (formData && formData.direccion_id) || localData?.direccion_id;
-        if (dirId) {
-          const p = await apiRequest(`/direcciones/${dirId}/procesos-apoyo`);
+        if (d.success) {
+          const procesosGenerales = d.data.map(x => ({ value: x.id, label: x.nombre }));
+          console.log('✅ [DocumentoModal.jsx] Procesos generales cargados:', procesosGenerales);
+          setDireccionesOptions(procesosGenerales);
+        } else {
+          console.error('❌ [DocumentoModal.jsx] Error cargando procesos generales:', d);
+        }
+        
+        if (e.success) {
+          const etiquetas = e.data.map(x => ({ value: x, label: x }));
+          console.log('✅ [DocumentoModal.jsx] Etiquetas cargadas:', etiquetas);
+          setEtiquetasOptions(etiquetas);
+        } else {
+          console.error('❌ [DocumentoModal.jsx] Error cargando etiquetas:', e);
+        }
+        
+        const procesoGeneralId = (formData && formData.proceso_general_id) || localData?.proceso_general_id;
+        console.log('🎯 [DocumentoModal.jsx] Proceso General ID para cargar procesos internos:', procesoGeneralId);
+        
+        if (procesoGeneralId) {
+          const p = await apiRequest(`/procesos-generales/${procesoGeneralId}/procesos-internos`);
+          console.log('📡 [DocumentoModal.jsx] Respuesta procesos internos:', p);
           if (p.success) {
-            setProcesosOptions((p.data || []).map(x => ({ value: x.id, label: x.nombre })));
+            const procesos = (p.data || []).map(x => ({ value: x.id, label: x.nombre }));
+            console.log('✅ [DocumentoModal.jsx] Procesos internos cargados:', procesos);
+            setProcesosOptions(procesos);
           } else {
+            console.error('❌ [DocumentoModal.jsx] Error cargando procesos internos:', p);
             setProcesosOptions([]);
           }
         } else {
+          console.log('ℹ️ [DocumentoModal.jsx] No hay proceso general seleccionado, procesos internos vacíos');
           setProcesosOptions([]);
         }
-      } catch {}
+      } catch (error) {
+        console.error('💥 [DocumentoModal.jsx] Error general cargando datos:', error);
+      }
     })();
   }, [show, apiRequest]);
 
-  // Cargar procesos cuando cambia la dirección seleccionada
+  // Cargar procesos internos cuando cambia el proceso general seleccionado
   useEffect(() => {
     if (!show) return;
-    const dirId = localData?.direccion_id;
-    if (!dirId) {
+    const procesoGeneralId = localData?.proceso_general_id;
+    console.log('🔄 [DocumentoModal.jsx] Cambio de proceso general detectado:', procesoGeneralId);
+    
+    if (!procesoGeneralId) {
+      console.log('ℹ️ [DocumentoModal.jsx] No hay proceso general seleccionado, limpiando procesos internos');
       setProcesosOptions([]);
       return;
     }
+    
     (async () => {
       try {
-        const p = await apiRequest(`/direcciones/${dirId}/procesos-apoyo`);
+        console.log('📡 [DocumentoModal.jsx] Cargando procesos internos para proceso general:', procesoGeneralId);
+        const p = await apiRequest(`/procesos-generales/${procesoGeneralId}/procesos-internos`);
+        console.log('📊 [DocumentoModal.jsx] Respuesta procesos internos por proceso general:', p);
+        
         if (p.success) {
-          setProcesosOptions((p.data || []).map(x => ({ value: x.id, label: x.nombre })));
-          setLocalData(prev => ({ ...prev, proceso_apoyo_id: '' }));
+          const procesos = (p.data || []).map(x => ({ value: x.id, label: x.nombre }));
+          console.log('✅ [DocumentoModal.jsx] Procesos internos cargados para proceso general:', procesos);
+          setProcesosOptions(procesos);
+          setLocalData(prev => ({ ...prev, proceso_interno_id: '' }));
         } else {
+          console.error('❌ [DocumentoModal.jsx] Error cargando procesos internos por proceso general:', p);
           setProcesosOptions([]);
         }
-      } catch {
+      } catch (error) {
+        console.error('💥 [DocumentoModal.jsx] Error cargando procesos internos por proceso general:', error);
         setProcesosOptions([]);
       }
     })();
-  }, [localData?.direccion_id, show, apiRequest]);
+  }, [localData?.proceso_general_id, show, apiRequest]);
 
   if (!show) return null;
 
   const handleAddTipo = () => {
-    const nuevo = window.prompt('Escribe el nuevo tipo de documento:');
+    const nuevo = window.prompt('Escribe el nombre de la nueva categoría:');
     if (!nuevo) return;
     const val = String(nuevo).trim();
     if (!val) return;
@@ -110,13 +148,13 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
     }
   };
 
-  const handleAddDireccion = async () => {
-    const nombre = window.prompt('Escribe el nombre del nuevo proceso estratégico:');
+  const handleAddProcesoGeneral = async () => {
+    const nombre = window.prompt('Escribe el nombre del nuevo proceso general:');
     if (!nombre) return;
-    const codigo = window.prompt('Escribe el código del proceso estratégico (opcional):');
+    const codigo = window.prompt('Escribe el código del proceso general (opcional):');
     
     try {
-      const res = await apiRequest('/direcciones', {
+      const res = await apiRequest('/procesos-generales', {
         method: 'POST',
         body: JSON.stringify({
           nombre: nombre.trim(),
@@ -127,49 +165,49 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
       });
       
       if (res.success) {
-        const nuevaDireccion = { value: res.data.id, label: res.data.nombre };
-        setDireccionesOptions(prev => [...prev, nuevaDireccion]);
-        setLocalData(prev => ({ ...prev, direccion_id: res.data.id, proceso_apoyo_id: '' }));
-        alert('Proceso estratégico creado exitosamente');
+        const nuevoProcesoGeneral = { value: res.data.id, label: res.data.nombre };
+        setDireccionesOptions(prev => [...prev, nuevoProcesoGeneral]);
+        setLocalData(prev => ({ ...prev, proceso_general_id: res.data.id, proceso_interno_id: '' }));
+        alert('Proceso general creado exitosamente');
       } else {
-        alert(res.message || 'Error al crear el proceso estratégico');
+        alert(res.message || 'Error al crear el proceso general');
       }
     } catch (e) {
-      alert('Error al crear el proceso estratégico: ' + e.message);
+      alert('Error al crear el proceso general: ' + e.message);
     }
   };
 
-  const handleAddProceso = async () => {
-    if (!localData?.direccion_id) {
-      alert('Primero selecciona un proceso estratégico');
+  const handleAddProcesoInterno = async () => {
+    if (!localData?.proceso_general_id) {
+      alert('Primero selecciona un proceso general');
       return;
     }
     
-    const nombre = window.prompt('Escribe el nombre del nuevo proceso misional:');
+    const nombre = window.prompt('Escribe el nombre del nuevo proceso interno:');
     if (!nombre) return;
-    const codigo = window.prompt('Escribe el código del proceso (opcional):');
+    const codigo = window.prompt('Escribe el código del proceso interno (opcional):');
     
     try {
-      const res = await apiRequest('/procesos-apoyo', {
+      const res = await apiRequest('/procesos-internos', {
         method: 'POST',
         body: JSON.stringify({
           nombre: nombre.trim(),
           codigo: codigo ? codigo.trim() : null,
           descripcion: '',
-          direccion_id: localData.direccion_id
+          proceso_general_id: localData.proceso_general_id
         })
       });
       
       if (res.success) {
         const nuevoProceso = { value: res.data.id, label: res.data.nombre };
         setProcesosOptions(prev => [...prev, nuevoProceso]);
-        setLocalData(prev => ({ ...prev, proceso_apoyo_id: res.data.id }));
-        alert('Proceso misional creado exitosamente');
+        setLocalData(prev => ({ ...prev, proceso_interno_id: res.data.id }));
+        alert('Proceso interno creado exitosamente');
       } else {
-        alert(res.message || 'Error al crear el proceso misional');
+        alert(res.message || 'Error al crear el proceso interno');
       }
     } catch (e) {
-      alert('Error al crear el proceso misional: ' + e.message);
+      alert('Error al crear el proceso interno: ' + e.message);
     }
   };
 
@@ -210,37 +248,37 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
       icon: BuildingIcon,
       fields: [
         { 
-          name: 'direccion_id', 
-          label: 'Proceso Estratégico', 
+          name: 'proceso_general_id', 
+          label: 'Proceso General', 
           type: 'select', 
           required: true, 
           options: direccionesOptions, 
-          placeholder: 'Selecciona el proceso estratégico responsable',
+          placeholder: 'Selecciona el proceso general',
           hasAddButton: true,
-          addButtonText: 'Agregar proceso estratégico',
-          onAddClick: handleAddDireccion
+          addButtonText: 'Agregar proceso general',
+          onAddClick: handleAddProcesoGeneral
         },
         { 
-          name: 'proceso_apoyo_id', 
-          label: 'Proceso Misional', 
+          name: 'proceso_interno_id', 
+          label: 'Proceso Interno', 
           type: 'select', 
           required: true, 
           options: procesosOptions, 
-          disabled: !localData?.direccion_id,
-          placeholder: 'Selecciona el proceso misional relacionado',
+          disabled: !localData?.proceso_general_id,
+          placeholder: 'Selecciona el proceso interno',
           hasAddButton: true,
-          addButtonText: 'Agregar proceso misional',
-          onAddClick: handleAddProceso
+          addButtonText: 'Agregar proceso interno',
+          onAddClick: handleAddProcesoInterno
         },
         { 
           name: 'tipo', 
-          label: 'Tipo de Documento', 
+          label: 'Categoría (carpeta)', 
           type: 'select', 
           required: false, 
           options: tipoOptions, 
-          placeholder: 'Selecciona el tipo de documento',
+          placeholder: 'Selecciona la categoría del documento',
           hasAddButton: true,
-          addButtonText: 'Agregar tipo',
+          addButtonText: 'Agregar categoría',
           onAddClick: handleAddTipo
         }
       ]

@@ -1,9 +1,9 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\DireccionController;
-use App\Http\Controllers\Api\ProcesoApoyoController;
-use App\Http\Controllers\Api\ProcesoController;
+use App\Http\Controllers\Api\ProcesoGeneralController;
+use App\Http\Controllers\Api\ProcesoInternoController;
+
 use App\Http\Controllers\Api\DocumentoController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\RoleController;
@@ -32,21 +32,25 @@ Route::middleware(['api.auth', \App\Http\Middleware\CheckUserActivity::class])->
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/verify', [AuthController::class, 'verify']);
 
-    // Rutas de Direcciones
-    Route::apiResource('direcciones', DireccionController::class);
-    Route::get('/direcciones/{id}/documentos', [DireccionController::class, 'documentos']);
+    // Rutas de Procesos Generales
+    Route::apiResource('procesos-generales', ProcesoGeneralController::class);
+    Route::get('/procesos-generales/{id}/documentos', [ProcesoGeneralController::class, 'documentos']);
 
-    // Rutas de Procesos de Apoyo (RUTAS ESPECÍFICAS ANTES DEL apiResource)
-    Route::get('/procesos-apoyo/todos', [ProcesoApoyoController::class, 'todos']);
-    Route::get('/procesos-apoyo/{id}/documentos', [ProcesoApoyoController::class, 'documentos']);
-    Route::get('/direcciones/{direccionId}/procesos-apoyo', [ProcesoApoyoController::class, 'porDireccion']);
-    // Alias de compatibilidad para llamadas antiguas del frontend
-    Route::get('/direcciones/{direccionId}/procesos', [ProcesoApoyoController::class, 'porDireccion']);
-    Route::apiResource('procesos-apoyo', ProcesoApoyoController::class);
+    // Rutas de Procesos Internos
+    Route::get('/procesos-internos', [ProcesoInternoController::class, 'index']);
+    Route::get('/procesos-generales/{procesoGeneralId}/procesos-internos', [ProcesoInternoController::class, 'porProcesoGeneral']);
+    Route::post('/procesos-internos', [ProcesoInternoController::class, 'store']);
 
-    // Rutas nuevas para procesos genéricos
-    Route::get('/procesos/tipos/stats', [ProcesoController::class, 'tiposStats']);
-    Route::apiResource('procesos', ProcesoController::class);
+    // Rutas para tipos de procesos (configuración)
+    Route::get('/procesos/tipos/stats', function () {
+        return response()->json(['success' => true, 'data' => []]);
+    });
+    Route::get('/procesos/tipos/config', function () {
+        return response()->json(['success' => true, 'data' => []]);
+    });
+    Route::get('/procesos/tipos/{tipo}/config', function ($tipo) {
+        return response()->json(['success' => true, 'data' => []]);
+    });
 
     // Rutas específicas de Documentos (DEBEN IR ANTES que apiResource)
     Route::get('/documentos/buscar', [DocumentoController::class, 'buscar']);

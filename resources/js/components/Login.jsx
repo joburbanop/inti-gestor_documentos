@@ -4,6 +4,8 @@ import { INTILED_COLORS } from '../config/colors';
 import styles from '../styles/components/Login.module.css';
 
 const Login = () => {
+    console.log('🔐 [Login.jsx] Renderizando componente Login');
+    
     const { login, error, clearError, isLoading, isAuthenticated } = useAuth();
     const [formData, setFormData] = useState({
         email: '',
@@ -13,6 +15,7 @@ const Login = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+        console.log('✏️ [Login.jsx] Cambio en input:', name, 'valor:', value ? '***' : 'vacío');
         setFormData(prev => ({
             ...prev,
             [name]: value
@@ -22,22 +25,28 @@ const Login = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        console.log('📝 [Login.jsx] Enviando formulario de login');
         
         const result = await login(formData.email, formData.password);
         
         if (result.success) {
-            console.log('Login exitoso');
+            console.log('✅ [Login.jsx] Login exitoso');
+        } else {
+            console.log('❌ [Login.jsx] Login fallido:', result.error);
         }
     };
 
     // Redirigir si ya está autenticado
     useEffect(() => {
+        console.log('🔄 [Login.jsx] useEffect - Estado de autenticación:', { isAuthenticated, isLoading });
         if (isAuthenticated) {
+            console.log('🔄 [Login.jsx] Usuario ya autenticado, redirigiendo a dashboard');
             // Usar el sistema de hash routing en lugar de redirección directa
             window.location.href = '/#dashboard';
         }
     }, [isAuthenticated]);
 
+    console.log('🎨 [Login.jsx] Renderizando JSX del Login');
     return (
         <div className={styles.loginContainer}>
             {/* Main Content */}

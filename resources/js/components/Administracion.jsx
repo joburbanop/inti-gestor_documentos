@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import styles from '../styles/components/Administracion.module.css';
-import { EditIcon, DeleteIcon } from './icons/CrudIcons';
+import { EditIcon, DeleteIcon, SettingsIcon, DocumentIcon } from './icons/CrudIcons';
+import CreateForm from './common/CreateForm';
+
+console.log('⚙️ [Administracion.jsx] Importando componente Administracion');
 
 const Administracion = () => {
+  console.log('⚙️ [Administracion.jsx] Renderizando componente Administracion');
+  
   const { apiRequest, user, token, isAuthenticated, isLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -37,22 +42,25 @@ const Administracion = () => {
 
   // Debug temporal
   useEffect(() => {
-    console.log('🔍 Debug Administracion:', {
-      user,
-      token: token ? 'Presente' : 'Ausente',
+    console.log('🔍 [Administracion.jsx] Estado de autenticación:', {
+      user: user?.name,
+      hasToken: !!token,
       isAuthenticated,
-      isLoading,
-      localStorageToken: localStorage.getItem('auth_token') ? 'Presente' : 'Ausente'
+      isLoading
     });
   }, [user, token, isAuthenticated, isLoading]);
 
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
+      console.log('✅ [Administracion.jsx] Usuario autenticado, cargando datos');
       fetchData();
+    } else {
+      console.log('❌ [Administracion.jsx] Usuario no autenticado o cargando');
     }
   }, [isAuthenticated, isLoading]);
 
   const fetchData = async () => {
+    console.log('📊 [Administracion.jsx] Iniciando fetchData');
     try {
       setLoading(true);
       setError(null);
@@ -63,6 +71,13 @@ const Administracion = () => {
         apiRequest('/usuarios/stats'),
         apiRequest('/admin/noticias')
       ]);
+
+      console.log('✅ [Administracion.jsx] Datos obtenidos:', {
+        usuarios: usuariosRes?.success ? usuariosRes.data?.length : 0,
+        roles: rolesRes?.success ? rolesRes.data?.length : 0,
+        stats: statsRes?.success ? 'OK' : 'Error',
+        noticias: noticiasRes?.success ? noticiasRes.data?.noticias?.length || noticiasRes.data?.length : 0
+      });
 
       if (usuariosRes?.success) setUsuarios(usuariosRes.data || []);
       if (rolesRes?.success) setRoles(rolesRes.data || []);
@@ -76,7 +91,7 @@ const Administracion = () => {
       if (noticiasRes?.success) setNoticias(noticiasRes.data?.noticias || noticiasRes.data || []);
 
     } catch (e) {
-      console.error('Error en fetchData:', e);
+      console.log('❌ [Administracion.jsx] Error en fetchData:', e.message);
       setError(e.message || 'Error cargando datos');
     } finally {
       setLoading(false);
@@ -85,6 +100,7 @@ const Administracion = () => {
 
   // Funciones para usuarios
   const resetUserForm = () => {
+    console.log('🔄 [Administracion.jsx] Reseteando formulario de usuario');
     setUserForm({
       name: '',
       email: '',
@@ -95,21 +111,116 @@ const Administracion = () => {
     });
   };
 
-  const handleUserSubmit = async (e) => {
-    e.preventDefault();
+  // Configuración de campos para formulario de usuarios
+  const getUserFields = () => {
+    const roleOptions = roles.map(role => ({
+      value: role.id,
+      label: role.name
+    }));
+
+    return [
+      {
+        title: 'Información Personal',
+        icon: SettingsIcon,
+        fields: [
+          {
+            name: 'name',
+            label: 'Nombre Completo',
+            type: 'text',
+            required: true,
+            placeholder: 'Ingresa el nombre completo del usuario'
+          },
+          {
+            name: 'email',
+            label: 'Correo Electrónico',
+            type: 'text',
+            required: true,
+            placeholder: 'usuario@empresa.com'
+          }
+        ]
+      },
+      {
+        title: 'Seguridad',
+        icon: SettingsIcon,
+        fields: [
+          {
+            name: 'password',
+            label: editingUser ? 'Contraseña (dejar en blanco para mantener)' : 'Contraseña',
+            type: 'text',
+            required: !editingUser,
+            placeholder: 'Ingresa una contraseña segura'
+          },
+          {
+            name: 'password_confirmation',
+            label: 'Confirmar Contraseña',
+            type: 'text',
+            required: !editingUser,
+            placeholder: 'Confirma la contraseña'
+          }
+        ]
+      },
+      {
+        title: 'Configuración',
+        icon: SettingsIcon,
+        fields: [
+          {
+            name: 'role_id',
+            label: 'Rol',
+            type: 'select',
+            required: true,
+            options: roleOptions,
+            placeholder: 'Seleccionar rol'
+          }
+        ]
+      }
+    ];
+  };
+
+  const handleUserSubmit = async (formData) => {
     try {
       setLoading(true);
-      if (editingUser) {
-        await apiRequest(`/usuarios/${editingUser.id}`, { method: 'PUT', body: JSON.stringify(userForm) });
+      
+      // Preparar datos del usuario
+      const userData = {
+        name: formData.name?.trim() || '',
+        email: formData.email?.trim() || '',
+        password: formData.password || '',
+        password_confirmation: formData.password_confirmation || '',
+        role_id: formData.role_id || ''
+      };
+
+      // Automáticamente establecer estado activo
+      if (!editingUser) {
+        // Para nuevos usuarios: estado activo por defecto
+        userData.is_active = true;
       } else {
-        await apiRequest('/usuarios', { method: 'POST', body: JSON.stringify(userForm) });
+        // Para edición: mantener estado actual
+        userData.is_active = editingUser.is_active;
       }
+
+      let res;
+      if (editingUser) {
+        res = await apiRequest(`/users/${editingUser.id}`, {
+          method: 'PUT',
+          body: JSON.stringify(userData)
+        });
+      } else {
+        res = await apiRequest('/users', {
+          method: 'POST',
+          body: JSON.stringify(userData)
+        });
+      }
+
+      if (!res?.success) {
+        throw new Error(res?.message || 'No se pudo guardar el usuario');
+      }
+
       await fetchData();
       setShowUserForm(false);
       setEditingUser(null);
       resetUserForm();
-    } catch (e) {
-      alert(e.message || 'Error al guardar usuario');
+    } catch (err) {
+      alert(err.message || 'Error al guardar el usuario');
     } finally {
       setLoading(false);
     }
@@ -158,6 +269,7 @@ const Administracion = () => {
 
   // Funciones para noticias
   const resetNewsForm = () => {
+    console.log('🔄 [Administracion.jsx] Reseteando formulario de noticia');
     setNewsForm({
       title: '',
       subtitle: '',
@@ -167,30 +279,81 @@ const Administracion = () => {
     });
   };
 
-  const handleNewsSubmit = async (e) => {
-    e.preventDefault();
+  // Configuración de campos para formulario de noticias
+  const getNewsFields = () => [
+    {
+      title: 'Información de la Noticia',
+      icon: DocumentIcon,
+      fields: [
+        {
+          name: 'title',
+          label: 'Título',
+          type: 'text',
+          required: true,
+          placeholder: 'Ej. Nueva política de seguridad'
+        },
+        {
+          name: 'subtitle',
+          label: 'Descripción',
+          type: 'textarea',
+          required: false,
+          placeholder: 'Breve resumen o texto del banner',
+          rows: 3
+        }
+      ]
+    },
+    {
+      title: 'Documento Adjunto',
+      icon: DocumentIcon,
+      fields: [
+        {
+          name: 'document',
+          label: 'Documento (opcional)',
+          type: 'file',
+          required: false,
+          accept: '.pdf,.doc,.docx,.txt,.jpg,.jpeg,.png'
+        }
+      ]
+    }
+  ];
+
+  const handleNewsSubmit = async (formData) => {
     try {
       setLoading(true);
-      const formData = new FormData();
-      formData.append('title', newsForm.title?.trim() || '');
-      if (newsForm.subtitle) formData.append('subtitle', newsForm.subtitle);
-      if (newsForm.published_at) formData.append('published_at', newsForm.published_at);
-      if (newsForm.document instanceof File) formData.append('document', newsForm.document);
-
-      if (editingNews) {
-        formData.append('_method', 'PUT');
-        formData.append('is_active', newsForm.is_active ? '1' : '0');
-        await apiRequest(`/noticias/${editingNews.id}`, { method: 'POST', body: formData });
+      const submitData = new FormData();
+      submitData.append('title', formData.title?.trim() || '');
+      if (formData.subtitle) submitData.append('subtitle', formData.subtitle);
+      if (formData.document instanceof File) submitData.append('document', formData.document);
+      
+      // Automáticamente establecer fecha de publicación y estado activo
+      if (!editingNews) {
+        // Para nuevas noticias: fecha actual y estado activo
+        submitData.append('published_at', new Date().toISOString().split('T')[0]);
+        submitData.append('is_active', '1');
       } else {
-        formData.append('is_active', newsForm.is_active ? '1' : '0');
-        await apiRequest('/noticias', { method: 'POST', body: formData });
+        // Para edición: mantener fecha original y estado actual
+        submitData.append('published_at', editingNews.published_at || new Date().toISOString().split('T')[0]);
+        submitData.append('is_active', editingNews.is_active ? '1' : '0');
       }
+
+      let res;
+      if (editingNews) {
+        submitData.append('_method', 'PUT');
+        res = await apiRequest(`/noticias/${editingNews.id}`, { method: 'POST', body: submitData });
+      } else {
+        res = await apiRequest('/noticias', { method: 'POST', body: submitData });
+      }
+
+      if (!res?.success) {
+        throw new Error(res?.message || 'No se pudo guardar la noticia');
+      }
+
       await fetchData();
       setShowNewsForm(false);
       setEditingNews(null);
       resetNewsForm();
-    } catch (e) {
-      alert(e.message || 'Error al guardar noticia');
+    } catch (err) {
+      alert(err.message || 'Error al guardar la noticia');
     } finally {
       setLoading(false);
     }
@@ -198,13 +361,6 @@ const Administracion = () => {
 
   const handleNewsEdit = (news) => {
     setEditingNews(news);
-    setNewsForm({
-      title: news.title,
-      subtitle: news.subtitle || '',
-      published_at: news.published_at ? new Date(news.published_at).toISOString().split('T')[0] : '',
-      document: null,
-      is_active: Boolean(news.is_active)
-    });
     setShowNewsForm(true);
   };
   const toggleNewsStatus = async (newsId, currentStatus) => {
@@ -386,85 +542,20 @@ const Administracion = () => {
                     <svg style={{ width: "20px", height: "20px", color: "white" }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
                 </div>
-                <form onSubmit={handleUserSubmit} className={styles.form}>
-                  <div className={styles.formGroup}>
-                    <label>Nombre Completo</label>
-                    <input
-                      type="text"
-                      value={userForm.name}
-                      onChange={(e) => setUserForm({...userForm, name: e.target.value})}
-                      required
-                    />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label>Correo Electrónico</label>
-                    <input
-                      type="email"
-                      value={userForm.email}
-                      onChange={(e) => setUserForm({...userForm, email: e.target.value})}
-                      required
-                    />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label>Contraseña {editingUser && '(dejar en blanco para mantener)'}</label>
-                    <input
-                      type="password"
-                      value={userForm.password}
-                      onChange={(e) => setUserForm({...userForm, password: e.target.value})}
-                      required={!editingUser}
-                    />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label>Confirmar Contraseña</label>
-                    <input
-                      type="password"
-                      value={userForm.password_confirmation}
-                      onChange={(e) => setUserForm({...userForm, password_confirmation: e.target.value})}
-                      required={!editingUser}
-                    />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label>Rol</label>
-                    <select
-                      value={userForm.role_id}
-                      onChange={(e) => setUserForm({...userForm, role_id: e.target.value})}
-                      required
-                    >
-                      <option value="">Seleccionar rol</option>
-                      {roles.map(role => (
-                        <option key={role.id} value={role.id}>
-                          {role.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label className={styles.checkboxLabel}>
-                      <input
-                        type="checkbox"
-                        checked={userForm.is_active}
-                        onChange={(e) => setUserForm({...userForm, is_active: e.target.checked})}
-                      />
-                      Usuario activo
-                    </label>
-                  </div>
-                  <div className={styles.formActions}>
-                    <button type="submit" className={styles.saveButton} disabled={loading}>
-                      {loading ? 'Guardando...' : (editingUser ? 'Actualizar' : 'Crear')}
-                    </button>
-                    <button 
-                      type="button" 
-                      className={styles.cancelButton}
-                      onClick={() => {
-                        setShowUserForm(false);
-                        setEditingUser(null);
-                        resetUserForm();
-                      }}
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                </form>
+                <CreateForm
+                  title={editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}
+                  subtitle="Gestiona la información del usuario del sistema"
+                  fields={getUserFields()}
+                  initialData={editingUser || {}}
+                  onSubmit={handleUserSubmit}
+                  onCancel={() => {
+                    setShowUserForm(false);
+                    setEditingUser(null);
+                    resetUserForm();
+                  }}
+                  loading={loading}
+                  headerIcon={SettingsIcon}
+                />
               </div>
             </div>
           )}
@@ -573,82 +664,20 @@ const Administracion = () => {
                     <svg style={{ width: "20px", height: "20px", color: "white" }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
                 </div>
-                <form onSubmit={handleNewsSubmit} className={styles.form}>
-                  <div className={styles.formGroup}>
-                    <label>Título</label>
-                    <input
-                      type="text"
-                      value={newsForm.title}
-                      onChange={(e) => setNewsForm({...newsForm, title: e.target.value})}
-                      placeholder="Ej. Nueva política de seguridad"
-                      required
-                    />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label>Descripción</label>
-                    <textarea
-                      value={newsForm.subtitle}
-                      onChange={(e) => setNewsForm({...newsForm, subtitle: e.target.value})}
-                      placeholder="Breve resumen o texto del banner"
-                      rows="3"
-                    />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label>Fecha de publicación</label>
-                    <input
-                      type="date"
-                      value={newsForm.published_at}
-                      onChange={(e) => setNewsForm({...newsForm, published_at: e.target.value})}
-                      style={{
-                        padding: '0.75rem',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '0.5rem',
-                        fontSize: '0.875rem',
-                        backgroundColor: '#f9fafb',
-                        color: '#374151',
-                        width: '100%',
-                        cursor: 'pointer'
-                      }}
-                    />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label>Documento (opcional)</label>
-                    <input
-                      type="file"
-                      onChange={(e) => setNewsForm({...newsForm, document: e.target.files[0]})}
-                      accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
-                      style={{
-                        padding: '0.75rem',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '0.5rem',
-                        fontSize: '0.875rem',
-                        backgroundColor: '#f9fafb',
-                        color: '#374151',
-                        width: '100%',
-                        cursor: 'pointer'
-                      }}
-                    />
-                    <small style={{ color: '#6b7280', fontSize: '0.75rem', marginTop: '0.25rem' }}>
-                      Formatos permitidos: PDF, DOC, DOCX, TXT, JPG, PNG
-                    </small>
-                  </div>
-                  <div className={styles.formActions}>
-                    <button type="submit" className={styles.saveButton} disabled={loading}>
-                      {loading ? 'Guardando...' : (editingNews ? 'Actualizar' : 'Crear')}
-                    </button>
-                    <button 
-                      type="button" 
-                      className={styles.cancelButton}
-                      onClick={() => {
-                        setShowNewsForm(false);
-                        setEditingNews(null);
-                        resetNewsForm();
-                      }}
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                </form>
+                <CreateForm
+                  title={editingNews ? 'Editar Noticia' : 'Nueva Noticia'}
+                  subtitle="Gestiona las noticias del slider"
+                  fields={getNewsFields()}
+                  initialData={editingNews || {}}
+                  onSubmit={handleNewsSubmit}
+                  onCancel={() => {
+                    setShowNewsForm(false);
+                    setEditingNews(null);
+                    resetNewsForm();
+                  }}
+                  loading={loading}
+                  headerIcon={DocumentIcon}
+                />
               </div>
             </div>
           )}

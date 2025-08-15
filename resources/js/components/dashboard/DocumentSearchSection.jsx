@@ -1,155 +1,431 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import HierarchicalFilters from './HierarchicalFilters';
 import ExtensionFilter from './ExtensionFilter';
-import styles from '../../styles/components/Dashboard.module.css';
-
-// Iconos modernos y legibles
-const SearchIcon = ({ className = "" }) => (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ width: '20px', height: '20px', color: '#1F448B' }}>
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-    </svg>
-);
-
-const FilterIcon = ({ className = "" }) => (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ width: '20px', height: '20px', color: '#1F448B' }}>
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z" />
-    </svg>
-);
-
-const DocumentIcon = ({ className = "" }) => (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ width: '32px', height: '32px', color: '#1F448B' }}>
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-    </svg>
-);
-
-const TypeIcon = ({ className = "" }) => (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ width: '20px', height: '20px', color: '#1F448B' }}>
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0a4 4 0 004-4v-4a2 2 0 012-2h4a2 2 0 012 2v4a4 4 0 01-4 4h-4z" />
-    </svg>
-);
 
 const DocumentSearchSection = ({ 
+    searchResults,
+    searchLoading,
+    searchTerm,
+    filters,
+    selectedExtensions,
+    selectedTypes,
+    pagination,
+    paginationLoading,
     onSearch, 
+    onSearchTermChange,
     onFilterChange, 
-    filters = {},
-    searchPlaceholder = "Buscar documentos...",
-    showFilters = true,
-    showExtensionFilter = true
+    onExtensionFilterChange,
+    onClearFilters,
+    onDocumentClick,
+    onViewDoc,
+    onDownloadDoc,
+    getDocumentIcon,
+    styles,
+    canManageDocs
 }) => {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [localFilters, setLocalFilters] = useState(filters);
-    const [selectedExtensions, setSelectedExtensions] = useState([]);
-    const [selectedTypes, setSelectedTypes] = useState([]);
+    console.log('🔍 [DocumentSearchSection.jsx] Renderizando sección de búsqueda de documentos');
+    
+    const typingTimerRef = useRef(null);
+    const searchAbortRef = useRef(null);
 
-    const handleSearch = (e) => {
-        e.preventDefault();
-        onSearch && onSearch(searchTerm, localFilters);
-    };
-
-    const handleFilterChange = (key, value) => {
-        const newFilters = { ...localFilters, [key]: value };
-        setLocalFilters(newFilters);
-        onFilterChange && onFilterChange(newFilters);
-    };
-
-    const handleExtensionFilterChange = ({ extensiones, tipos }) => {
-        setSelectedExtensions(extensiones);
-        setSelectedTypes(tipos);
+    // Funciones de paginación
+    const goToPage = async (page) => {
+        console.log('📄 [DocumentSearchSection.jsx] Navegando a página:', page);
         
-        // Actualizar filtros locales
-        const newFilters = { ...localFilters };
-        
-        if (extensiones.length > 0) {
-            newFilters.extensiones = extensiones;
+        if (page >= 1 && page <= pagination.lastPage) {
+            console.log('✅ [DocumentSearchSection.jsx] Navegación válida a página', page);
+            
+            // Actualizar el estado de paginación inmediatamente
+            const newPagination = { ...pagination, currentPage: page };
+            
+            // Ejecutar búsqueda con la nueva página
+            await performSearchWithFilters(null, page);
         } else {
-            delete newFilters.extensiones;
+            console.log('❌ [DocumentSearchSection.jsx] Navegación no válida - página:', page, 'lastPage:', pagination.lastPage);
+        }
+    };
+
+    const goToNextPage = async () => {
+        console.log('➡️ [DocumentSearchSection.jsx] Navegando a página siguiente');
+        const nextPage = pagination.currentPage + 1;
+        if (nextPage <= pagination.lastPage) {
+            console.log('✅ [DocumentSearchSection.jsx] Navegando a página siguiente:', nextPage);
+            await goToPage(nextPage);
+        } else {
+            console.log('⚠️ [DocumentSearchSection.jsx] Ya estamos en la última página');
+        }
+    };
+
+    const goToPrevPage = async () => {
+        console.log('⬅️ [DocumentSearchSection.jsx] Navegando a página anterior');
+        if (pagination.currentPage > 1) {
+            await goToPage(pagination.currentPage - 1);
+        }
+    };
+
+    const performSearchWithFilters = async (customFilters = null, customPage = null) => {
+        console.log('🔍 [DocumentSearchSection.jsx] Realizando búsqueda con filtros:', { customFilters, customPage });
+        
+        const filtersToUse = customFilters || filters;
+        const pageToUse = customPage || pagination.currentPage;
+        const params = new URLSearchParams();
+        
+        if (searchTerm && searchTerm.trim().length >= 3) {
+            params.append('termino', searchTerm.trim());
         }
         
-        if (tipos.length > 0) {
-            newFilters.tipos_documento = tipos;
-        } else {
-            delete newFilters.tipos_documento;
+        if (filtersToUse.direccionId) {
+            params.append('direccion_id', filtersToUse.direccionId);
         }
         
-        setLocalFilters(newFilters);
-        onFilterChange && onFilterChange(newFilters);
+        if (filtersToUse.procesoId) {
+            params.append('proceso_apoyo_id', filtersToUse.procesoId);
+        }
+        
+        if (filtersToUse.tipo) {
+            params.append('tipo', filtersToUse.tipo);
+        }
+        
+        if (filtersToUse.confidencialidad) {
+            params.append('confidencialidad', filtersToUse.confidencialidad);
+        }
+        
+        if (filtersToUse.etiqueta) {
+            params.append('etiqueta', filtersToUse.etiqueta);
+        }
+        
+        if (filtersToUse.fechaDesde) {
+            params.append('fecha_desde', filtersToUse.fechaDesde);
+        }
+        
+        if (filtersToUse.fechaHasta) {
+            params.append('fecha_hasta', filtersToUse.fechaHasta);
+        }
+        
+        if (filtersToUse.extensiones && filtersToUse.extensiones.length > 0) {
+            filtersToUse.extensiones.forEach(ext => {
+                params.append('extensiones[]', ext);
+            });
+        }
+        
+        params.append('sort_by', 'created_at');
+        params.append('sort_order', 'desc');
+        params.append('per_page', pagination.perPage.toString());
+        params.append('page', pageToUse.toString());
+
+        let url = '/documentos';
+        const hasText = Boolean(searchTerm && searchTerm.trim().length >= 3);
+        
+        if (hasText) {
+            url = `/api/documentos/buscar?${params.toString()}`;
+        } else {
+            url = `/api/documentos?${params.toString()}`;
+        }
+
+        if (searchAbortRef.current) {
+            try { searchAbortRef.current.abort(); } catch (e) {}
+        }
+        const controller = new AbortController();
+        searchAbortRef.current = controller;
+
+        console.log('🌐 [DocumentSearchSection.jsx] Haciendo petición a:', url);
+        
+        // Llamar a la función del padre para ejecutar la búsqueda
+        if (onSearch) {
+            await onSearch();
+        }
     };
 
+    // Debounce de búsqueda por texto
+    useEffect(() => {
+        if (searchTerm && searchTerm.trim().length >= 3) {
+            console.log('🔍 [DocumentSearchSection.jsx] Término de búsqueda válido, programando búsqueda');
+            if (typingTimerRef.current) {
+                clearTimeout(typingTimerRef.current);
+            }
+            typingTimerRef.current = setTimeout(() => {
+                performSearchWithFilters();
+            }, 500);
+        }
+    }, [searchTerm]);
+
+    console.log('🎨 [DocumentSearchSection.jsx] Renderizando JSX de DocumentSearchSection');
     return (
         <div className={styles.documentSearchSection}>
-            <div className={styles.searchHeader}>
-                <h2 className={styles.searchTitle}>Buscar Documentos</h2>
-                <p className={styles.searchSubtitle}>
-                    Encuentra los documentos que necesitas de forma rápida y ordenada
-                </p>
-            </div>
-
             {/* Barra de búsqueda */}
-            <form onSubmit={handleSearch} className={styles.searchForm}>
+            <div className={styles.searchBar}>
+                <form onSubmit={onSearch} className={styles.searchForm}>
                 <div className={styles.searchInputContainer}>
                     <input
                         type="text"
-                        placeholder={searchPlaceholder}
+                            placeholder="Buscar documentos..."
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={onSearchTermChange}
                         className={styles.searchInput}
                     />
                     <button type="submit" className={styles.searchButton}>
-                        <SearchIcon className="w-5 h-5" />
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
                     </button>
                 </div>
             </form>
+            </div>
 
             {/* Filtros */}
-            {showFilters && (
                 <div className={styles.filtersContainer}>
-                    <div className={styles.filterGroup}>
-                        <label className={styles.filterLabel}>Tipo de Archivo</label>
-                        <select
-                            value={localFilters.fileType || ''}
-                            onChange={(e) => handleFilterChange('fileType', e.target.value)}
-                            className={styles.filterSelect}
+                <HierarchicalFilters
+                    onFilterChange={onFilterChange}
+                    filters={filters}
+                    styles={styles}
+                />
+                
+                <ExtensionFilter
+                    onFilterChange={onExtensionFilterChange}
+                    selectedExtensions={selectedExtensions}
+                    selectedTypes={selectedTypes}
+                    styles={styles}
+                />
+            </div>
+
+            {/* Resultados de documentos */}
+            {searchResults.length > 0 && (
+                <div className={styles.documentResults}>
+                    <div className={styles.documentResultsHeader}>
+                        <h3 className={styles.documentResultsTitle}>
+                            Documentos Encontrados ({searchResults.length})
+                        </h3>
+                        <button
+                            onClick={onClearFilters}
+                            className={styles.clearResultsButton}
                         >
-                            <option value="">Todos los tipos</option>
-                            <option value="pdf">PDF</option>
-                            <option value="doc">DOC</option>
-                            <option value="xlsx">XLSX</option>
-                        </select>
+                            Limpiar búsqueda
+                        </button>
                     </div>
 
-                    <div className={styles.filterGroup}>
-                        <label className={styles.filterLabel}>Ordenar por</label>
-                        <select
-                            value={localFilters.sortBy || 'created_at'}
-                            onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-                            className={styles.filterSelect}
-                        >
-                            <option value="created_at">Fecha de creación</option>
-                            <option value="titulo">Título</option>
-                            <option value="updated_at">Última modificación</option>
-                        </select>
+                    <div className={styles.documentResultsList}>
+                        {searchResults.map((doc) => (
+                            <div key={doc.id} className={styles.documentItem}>
+                                <div className={`${styles.documentIcon} ${
+                                    doc.extension === 'pdf' ? styles.documentIconPDF :
+                                    doc.extension === 'xlsx' || doc.extension === 'xls' ? styles.documentIconXLSX :
+                                    doc.extension === 'doc' || doc.extension === 'docx' ? styles.documentIconDOC :
+                                    ''
+                                }`}>
+                                    {getDocumentIcon(doc.tipo_archivo)}
+                                </div>
+                                
+                                <div className={styles.documentInfo}>
+                                    <h4 className={styles.documentTitle}>{doc.titulo}</h4>
+                                    <div className={styles.documentMeta}>
+                                        <span className={styles.documentDirection}>
+                                            {doc.direccion?.nombre}
+                                        </span>
+                                        <span className={styles.documentSeparator}>•</span>
+                                        <span className={styles.documentProcess}>
+                                            {doc.proceso_apoyo?.nombre}
+                                        </span>
+                                        <span className={styles.documentSeparator}>•</span>
+                                        <span className={styles.documentType}>
+                                            {doc.tipo_archivo}
+                                        </span>
+                                    </div>
+                                    
+                                    {doc.etiquetas && doc.etiquetas.length > 0 && (
+                                        <div className={styles.documentTags}>
+                                            {doc.etiquetas.slice(0, 3).map((tag, index) => (
+                                                <span key={index} className={styles.documentTag}>
+                                                    {tag}
+                                                </span>
+                                            ))}
+                                            {doc.etiquetas.length > 3 && (
+                                                <span className={styles.documentTagMore}>
+                                                    +{doc.etiquetas.length - 3}
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
+                                    
+                                    <div className={styles.documentActions}>
+                                        <button
+                                            onClick={() => onViewDoc(doc)}
+                                            className={`${styles.actionButton} ${styles.viewButton}`}
+                                        >
+                                            Ver
+                                        </button>
+                                        <button
+                                            onClick={() => onDownloadDoc(doc)}
+                                            className={`${styles.actionButton} ${styles.downloadButton}`}
+                                        >
+                                            Descargar
+                                        </button>
+                                        {canManageDocs && (
+                                            <button
+                                                onClick={() => onDocumentClick(doc)}
+                                                className={`${styles.actionButton} ${styles.editButton}`}
+                                            >
+                                                Editar
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                                
+                                <div className={styles.documentDate}>
+                                    {doc.fecha_creacion ? new Date(doc.fecha_creacion).toLocaleDateString() : ''}
+                                </div>
+                            </div>
+                        ))}
                     </div>
 
-                    <div className={styles.filterGroup}>
-                        <label className={styles.filterLabel}>Orden</label>
-                        <select
-                            value={localFilters.sortOrder || 'desc'}
-                            onChange={(e) => handleFilterChange('sortOrder', e.target.value)}
-                            className={styles.filterSelect}
-                        >
-                            <option value="desc">Descendente</option>
-                            <option value="asc">Ascendente</option>
-                        </select>
-                    </div>
+                    {/* Paginación */}
+                    {pagination.lastPage > 1 && (
+                        <div className={styles.paginationContainer}>
+                            <div className={styles.paginationInfo}>
+                                <span>📄 Página {pagination.currentPage} de {pagination.lastPage}</span>
+                                <span>📊</span>
+                                <span>Mostrando {searchResults.length} de {pagination.total} documentos</span>
+                                {paginationLoading && (
+                                    <span style={{ color: '#1F448B', fontWeight: '600' }}>
+                                        🔄 Cargando...
+                                    </span>
+                                )}
+                            </div>
+                            
+                            <div className={styles.paginationControls}>
+                                <button
+                                    onClick={goToPrevPage}
+                                    disabled={pagination.currentPage === 1 || paginationLoading}
+                                    className={`${styles.paginationButton} ${styles.paginationPrev}`}
+                                    title="Página anterior"
+                                >
+                                    {paginationLoading ? (
+                                        <div className="animate-spin w-5 h-5 border-2 border-current border-t-transparent rounded-full"></div>
+                                    ) : (
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                        </svg>
+                                    )}
+                                    <span>Anterior</span>
+                                </button>
+                                
+                                <div className={styles.paginationNumbers}>
+                                    {(() => {
+                                        const pages = [];
+                                        const currentPage = pagination.currentPage;
+                                        const lastPage = pagination.lastPage;
+                                        
+                                        const addPageIfNotExists = (page) => {
+                                            if (page >= 1 && page <= lastPage && !pages.some(p => p.number === page)) {
+                                                pages.push({
+                                                    number: page,
+                                                    type: 'number',
+                                                    isActive: page === currentPage
+                                                });
+                                            }
+                                        };
+                                        
+                                        const start = Math.max(1, currentPage - 2);
+                                        const end = Math.min(lastPage, currentPage + 2);
+                                        
+                                        if (currentPage > 3 && start > 1) {
+                                            addPageIfNotExists(1);
+                                        }
+                                        
+                                        if (currentPage > 4 && start > 2) {
+                                            pages.push({ type: 'ellipsis', key: 'ellipsis-start' });
+                                        }
+                                        
+                                        for (let i = start; i <= end; i++) {
+                                            addPageIfNotExists(i);
+                                        }
+                                        
+                                        if (currentPage < lastPage - 3 && end < lastPage - 1) {
+                                            pages.push({ type: 'ellipsis', key: 'ellipsis-end' });
+                                        }
+                                        
+                                        if (currentPage < lastPage - 2 && end < lastPage) {
+                                            addPageIfNotExists(lastPage);
+                                        }
+                                        
+                                        return pages.map((item, index) => {
+                                            if (item.type === 'ellipsis') {
+                                                return (
+                                                    <span 
+                                                        key={item.key || `ellipsis-${index}`} 
+                                                        className={styles.paginationEllipsis}
+                                                    >
+                                                        ⋯
+                                                    </span>
+                                                );
+                                            }
+                                            
+                                            return (
+                                                <button
+                                                    key={`page-${item.number}`}
+                                                    onClick={() => goToPage(item.number)}
+                                                    disabled={paginationLoading}
+                                                    className={`${styles.paginationNumber} ${
+                                                        item.isActive ? styles.paginationActive : ''
+                                                    }`}
+                                                    title={`Ir a la página ${item.number}`}
+                                                >
+                                                    {item.number}
+                                                </button>
+                                            );
+                                        });
+                                    })()}
+                                </div>
+                                
+                                <button
+                                    onClick={goToNextPage}
+                                    disabled={pagination.currentPage === pagination.lastPage || paginationLoading}
+                                    className={`${styles.paginationButton} ${styles.paginationNext}`}
+                                    title="Página siguiente"
+                                >
+                                    <span>Siguiente</span>
+                                    {paginationLoading ? (
+                                        <div className="animate-spin w-5 h-5 border-2 border-current border-t-transparent rounded-full"></div>
+                                    ) : (
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 
-            {/* Filtro por extensión */}
-            {showExtensionFilter && (
-                <ExtensionFilter
-                    onFilterChange={handleExtensionFilterChange}
-                    selectedExtensions={selectedExtensions}
-                    selectedTypes={selectedTypes}
-                />
+            {/* Estado cuando no hay resultados */}
+            {!searchLoading && searchResults.length === 0 && (searchTerm || Object.keys(filters).some(key => filters[key])) && (
+                <div className={styles.noResultsContainer}>
+                    <div className={styles.noResultsIcon}>
+                        <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.47-.881-6.08-2.33" />
+                        </svg>
+                    </div>
+                    <h3 className={styles.noResultsTitle}>No se encontraron documentos</h3>
+                    <p className={styles.noResultsText}>
+                        Intenta ajustar tus filtros de búsqueda o usar términos diferentes.
+                    </p>
+                    <button
+                        onClick={onClearFilters}
+                        className={styles.noResultsButton}
+                    >
+                        Limpiar filtros
+                    </button>
+                </div>
+            )}
+
+            {/* Loading state */}
+            {searchLoading && (
+                <div className={styles.loadingContainer}>
+                    <div className={styles.loadingSpinner}></div>
+                    <p className="text-gray-600 text-lg font-medium mt-4">
+                        Buscando documentos...
+                    </p>
+                </div>
             )}
         </div>
     );

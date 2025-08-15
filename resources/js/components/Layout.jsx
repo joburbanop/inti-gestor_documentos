@@ -5,6 +5,8 @@ import Navbar from './Navbar';
 import styles from '../styles/components/Layout.module.css';
 
 const Layout = ({ children, title = "Intranet Inti" }) => {
+    console.log('🏗️ [Layout.jsx] Renderizando Layout con título:', title);
+    
     return (
         <div className={styles.layoutContainer}>
             <Navbar title={title} />

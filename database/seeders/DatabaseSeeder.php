@@ -14,8 +14,9 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             UserSeeder::class,
-            DireccionSeeder::class,
-            ProcesoSeeder::class,
+            ProcesoGeneralSeeder::class,
+            ProcesoInternoSeeder::class,
+            ProcesoTipoSeeder::class,
         ]);
     }
 }

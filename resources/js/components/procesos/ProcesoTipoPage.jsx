@@ -1,19 +1,29 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { getTipoConfig } from './tipoConfig';
+import { useTipoConfig } from '../../hooks/useTipoConfig';
+import { getTipoConfig } from '../../utils/tipoConfig';
+
+console.log('📄 [ProcesoTipoPage.jsx] Importando componente ProcesoTipoPage');
 
 const ProcesoTipoPage = () => {
+  console.log('📄 [ProcesoTipoPage.jsx] Renderizando ProcesoTipoPage');
+  
   const { tipo } = useParams();
   const navigate = useNavigate();
   const { apiRequest } = useAuth();
-  const config = getTipoConfig(tipo);
+  const { configs, loading: configLoading, error: configError } = useTipoConfig();
+  const config = getTipoConfig(tipo, configs);
+
+  console.log('🔍 [ProcesoTipoPage.jsx] Tipo solicitado:', tipo, 'Configuración:', config);
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    console.log('🔄 [ProcesoTipoPage.jsx] useEffect - Cargando procesos del tipo:', tipo);
+    
     let mounted = true;
     (async () => {
       try {
@@ -21,9 +31,15 @@ const ProcesoTipoPage = () => {
         setError(null);
         const res = await apiRequest(`/procesos?tipo=${encodeURIComponent(config.key)}`);
         if (!res?.success) throw new Error(res?.message || 'Error al cargar procesos');
-        if (mounted) setItems(res.data || []);
+        if (mounted) {
+          console.log('✅ [ProcesoTipoPage.jsx] Procesos cargados:', res.data?.length || 0);
+          setItems(res.data || []);
+        }
       } catch (e) {
-        if (mounted) setError(e.message || 'Error');
+        if (mounted) {
+          console.log('❌ [ProcesoTipoPage.jsx] Error al cargar procesos:', e.message);
+          setError(e.message || 'Error');
+        }
       } finally {
         if (mounted) setLoading(false);
       }
@@ -31,6 +47,8 @@ const ProcesoTipoPage = () => {
     return () => { mounted = false; };
   }, [apiRequest, config.key]);
 
+  console.log('🎨 [ProcesoTipoPage.jsx] Renderizando JSX con configuración:', config.title);
+  
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -47,8 +65,12 @@ const ProcesoTipoPage = () => {
             </div>
           </div>
 
-          {loading ? (
-            <div className="text-center py-12">Cargando…</div>
+          {configLoading ? (
+            <div className="text-center py-12">Cargando configuración...</div>
+          ) : configError ? (
+            <div className="text-center py-12 text-red-600">Error cargando configuración: {configError}</div>
+          ) : loading ? (
+            <div className="text-center py-12">Cargando procesos...</div>
           ) : error ? (
             <div className="text-center py-12 text-red-600">{String(error)}</div>
           ) : items.length === 0 ? (

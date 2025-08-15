@@ -19,24 +19,23 @@ return new class extends Migration
             try { $table->index(['created_at'], 'users_created_at_index'); } catch (\Throwable $e) {}
         });
 
-        // Índices para direcciones (sin campo 'orden')
-        Schema::table('direcciones', function (Blueprint $table) {
-            try { $table->index(['codigo', 'activo'], 'direcciones_codigo_active_index'); } catch (\Throwable $e) {}
-            try { $table->index(['nombre', 'activo'], 'direcciones_nombre_active_index'); } catch (\Throwable $e) {}
+        // Índices para procesos generales
+        Schema::table('procesos_generales', function (Blueprint $table) {
+            try { $table->index(['codigo', 'activo'], 'procesos_generales_codigo_active_index'); } catch (\Throwable $e) {}
+            try { $table->index(['nombre', 'activo'], 'procesos_generales_nombre_active_index'); } catch (\Throwable $e) {}
         });
 
-        // Índices para procesos (nueva tabla unificada)
-        Schema::table('procesos', function (Blueprint $table) {
-            try { $table->index(['codigo', 'activo'], 'procesos_codigo_active_index'); } catch (\Throwable $e) {}
-            try { $table->index(['nombre', 'activo'], 'procesos_nombre_active_index'); } catch (\Throwable $e) {}
-            try { $table->index(['tipo', 'activo'], 'procesos_tipo_active_index'); } catch (\Throwable $e) {}
+        // Índices para procesos internos
+        Schema::table('procesos_internos', function (Blueprint $table) {
+            try { $table->index(['codigo', 'activo'], 'procesos_internos_codigo_active_index'); } catch (\Throwable $e) {}
+            try { $table->index(['nombre', 'activo'], 'procesos_internos_nombre_active_index'); } catch (\Throwable $e) {}
+            try { $table->index(['proceso_general_id', 'activo'], 'procesos_internos_general_active_index'); } catch (\Throwable $e) {}
         });
 
         // Índices para documentos
         Schema::table('documentos', function (Blueprint $table) {
             // Índices compuestos para consultas frecuentes
-            try { $table->index(['direccion_id', 'created_at'], 'documentos_direccion_created_index'); } catch (\Throwable $e) {}
-            try { $table->index(['proceso_id'], 'documentos_proceso_index'); } catch (\Throwable $e) {}
+            try { $table->index(['proceso_interno_id', 'created_at'], 'documentos_proceso_interno_created_index'); } catch (\Throwable $e) {}
             try { $table->index(['tipo_archivo'], 'documentos_tipo_index'); } catch (\Throwable $e) {}
             // try { $table->index(['titulo'], 'documentos_titulo_index'); } catch (\Throwable $e) {} // Ya existe
             try { $table->index(['created_at'], 'documentos_created_index'); } catch (\Throwable $e) {}
@@ -66,23 +65,22 @@ return new class extends Migration
             $table->dropIndex('users_created_at_index');
         });
 
-        // Remover índices de direcciones
-        Schema::table('direcciones', function (Blueprint $table) {
-            $table->dropIndex('direcciones_codigo_active_index');
-            $table->dropIndex('direcciones_nombre_active_index');
+        // Remover índices de procesos generales
+        Schema::table('procesos_generales', function (Blueprint $table) {
+            $table->dropIndex('procesos_generales_codigo_active_index');
+            $table->dropIndex('procesos_generales_nombre_active_index');
         });
 
-        // Remover índices de procesos
-        Schema::table('procesos', function (Blueprint $table) {
-            $table->dropIndex('procesos_codigo_active_index');
-            $table->dropIndex('procesos_nombre_active_index');
-            $table->dropIndex('procesos_tipo_active_index');
+        // Remover índices de procesos internos
+        Schema::table('procesos_internos', function (Blueprint $table) {
+            $table->dropIndex('procesos_internos_codigo_active_index');
+            $table->dropIndex('procesos_internos_nombre_active_index');
+            $table->dropIndex('procesos_internos_general_active_index');
         });
 
         // Remover índices de documentos
         Schema::table('documentos', function (Blueprint $table) {
-            $table->dropIndex('documentos_direccion_created_index');
-            $table->dropIndex('documentos_proceso_index');
+            $table->dropIndex('documentos_proceso_interno_created_index');
             $table->dropIndex('documentos_tipo_index');
             $table->dropIndex('documentos_titulo_index');
             $table->dropIndex('documentos_created_index');

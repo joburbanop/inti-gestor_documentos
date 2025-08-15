@@ -8,6 +8,8 @@ import ConfirmModal from './common/ConfirmModal';
 import useConfirmModal from '../hooks/useConfirmModal';
 import styles from '../styles/components/Documentos.module.css';
 
+console.log('📄 [Documentos.jsx] Importando componente Documentos');
+
 const TIPO_OPTIONS = [
   { value: '', label: 'Todos los tipos' },
   { value: 'Política', label: 'Política' },
@@ -44,6 +46,8 @@ const EXTENSION_OPTIONS = [
 ];
 
 const Documentos = () => {
+  console.log('📄 [Documentos.jsx] Renderizando componente Documentos');
+  
   const { apiRequest } = useAuth();
   const location = useLocation();
   const [loading, setLoading] = useState(true);
@@ -85,6 +89,7 @@ const Documentos = () => {
   const abortRef = useRef(null);
 
   const fetchDocumentos = async () => {
+    console.log('🔍 [Documentos.jsx] Iniciando fetchDocumentos');
     try {
       setLoading(true);
       // Cancelar solicitud anterior en vuelo

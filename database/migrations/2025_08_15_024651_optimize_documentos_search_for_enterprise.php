@@ -12,10 +12,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // 1. Índices compuestos para búsqueda rápida por dirección y proceso
+        // 1. Índices compuestos para búsqueda rápida por proceso interno
         Schema::table('documentos', function (Blueprint $table) {
-            $table->index(['direccion_id', 'proceso_id', 'created_at'], 'idx_documentos_direccion_proceso');
-            $table->index(['proceso_id', 'direccion_id', 'created_at'], 'idx_documentos_proceso_direccion');
+            $table->index(['proceso_interno_id', 'created_at'], 'idx_documentos_proceso_interno_created');
         });
 
         // 2. Índice para búsqueda por tipo de archivo
@@ -40,19 +39,19 @@ return new class extends Migration
 
         // 6. Índice compuesto para búsqueda completa
         Schema::table('documentos', function (Blueprint $table) {
-            $table->index(['direccion_id', 'proceso_id', 'tipo_archivo', 'confidencialidad', 'created_at'], 'idx_documentos_search_complete');
+            $table->index(['proceso_interno_id', 'tipo_archivo', 'confidencialidad', 'created_at'], 'idx_documentos_search_complete');
         });
 
-        // 7. Optimizar tabla direcciones
-        Schema::table('direcciones', function (Blueprint $table) {
-            $table->index('activo', 'idx_direcciones_activo');
-            $table->index('nombre', 'idx_direcciones_nombre');
+        // 7. Optimizar tabla procesos generales
+        Schema::table('procesos_generales', function (Blueprint $table) {
+            $table->index('activo', 'idx_procesos_generales_activo');
+            $table->index('nombre', 'idx_procesos_generales_nombre');
         });
 
-        // 8. Optimizar tabla procesos (nueva tabla unificada)
-        Schema::table('procesos', function (Blueprint $table) {
-            $table->index(['tipo', 'activo'], 'idx_procesos_tipo_activo');
-            $table->index('nombre', 'idx_procesos_nombre');
+        // 8. Optimizar tabla procesos internos
+        Schema::table('procesos_internos', function (Blueprint $table) {
+            $table->index(['proceso_general_id', 'activo'], 'idx_procesos_internos_general_activo');
+            $table->index('nombre', 'idx_procesos_internos_nombre');
         });
     }
 
@@ -62,14 +61,14 @@ return new class extends Migration
     public function down(): void
     {
         // Eliminar índices en orden inverso
-        Schema::table('procesos', function (Blueprint $table) {
-            $table->dropIndex('idx_procesos_nombre');
-            $table->dropIndex('idx_procesos_tipo_activo');
+        Schema::table('procesos_internos', function (Blueprint $table) {
+            $table->dropIndex('idx_procesos_internos_nombre');
+            $table->dropIndex('idx_procesos_internos_general_activo');
         });
 
-        Schema::table('direcciones', function (Blueprint $table) {
-            $table->dropIndex('idx_direcciones_nombre');
-            $table->dropIndex('idx_direcciones_activo');
+        Schema::table('procesos_generales', function (Blueprint $table) {
+            $table->dropIndex('idx_procesos_generales_nombre');
+            $table->dropIndex('idx_procesos_generales_activo');
         });
 
         Schema::table('documentos', function (Blueprint $table) {
@@ -78,8 +77,7 @@ return new class extends Migration
             $table->dropIndex('idx_documentos_confidencialidad');
             $table->dropIndex('idx_documentos_created_at');
             $table->dropIndex('idx_documentos_tipo_archivo');
-            $table->dropIndex('idx_documentos_proceso_direccion');
-            $table->dropIndex('idx_documentos_direccion_proceso');
+            $table->dropIndex('idx_documentos_proceso_interno_created');
         });
     }
 };

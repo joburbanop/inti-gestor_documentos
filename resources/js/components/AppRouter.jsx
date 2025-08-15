@@ -2,7 +2,6 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Dashboard from './Dashboard';
-import UserDashboard from './UserDashboard';
 import ProcesoTipoPage from './procesos/ProcesoTipoPage';
 import ProcesoTipoDetail from './procesos/ProcesoTipoDetail';
 import Documentos from './Documentos';
@@ -15,7 +14,8 @@ import { INTILED_COLORS } from '../config/colors';
 
 const Home = () => {
     const { user } = useAuth();
-    return user?.is_admin ? <Dashboard /> : <UserDashboard />;
+    console.log('🏠 [AppRouter.jsx] Componente Home - Usando Dashboard Unificado');
+    return <Dashboard />;
 };
 
 
@@ -321,6 +321,8 @@ const ProcesosEvaluacion = () => {
 };
 
 const AppRouter = () => {
+    console.log('🗺️ [AppRouter.jsx] Renderizando AppRouter');
+    
     return (
         <Routes>
             <Route path="/" element={<Home />} />

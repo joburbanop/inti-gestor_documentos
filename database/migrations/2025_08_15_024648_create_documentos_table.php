@@ -21,9 +21,8 @@ return new class extends Migration
             $table->string('tipo_archivo');
             $table->bigInteger('tamaño_archivo');
             
-            // Etiquetado por dirección y proceso
-            $table->unsignedBigInteger('direccion_id');
-            $table->unsignedBigInteger('proceso_id');
+            // Etiquetado por proceso interno
+            $table->unsignedBigInteger('proceso_interno_id')->nullable();
             $table->unsignedBigInteger('subido_por');
             
             $table->string('slug')->unique();
@@ -32,12 +31,11 @@ return new class extends Migration
             $table->timestamps();
             
             // Relaciones y índices optimizados
-            $table->foreign('direccion_id')->references('id')->on('direcciones')->onDelete('cascade');
-            $table->foreign('proceso_id')->references('id')->on('procesos')->onDelete('cascade');
+            $table->foreign('proceso_interno_id')->references('id')->on('procesos_internos')->onDelete('set null');
             $table->foreign('subido_por')->references('id')->on('users')->onDelete('cascade');
             
-            // Índices para consultas optimizadas (sin incluir descripción en índice compuesto)
-            $table->index(['direccion_id', 'proceso_id']);
+            // Índices para consultas optimizadas
+            $table->index('proceso_interno_id');
             $table->index('titulo');
             $table->index('slug');
             $table->index('publico');

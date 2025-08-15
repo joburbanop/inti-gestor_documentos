@@ -23,8 +23,7 @@ class Documento extends Model
         'tipo_archivo',
         'extension',
         'tamaño_archivo',
-        'direccion_id',
-        'proceso_id',
+        'proceso_interno_id',
         'subido_por',
         'slug',
         'tipo',
@@ -87,19 +86,11 @@ class Documento extends Model
     }
 
     /**
-     * Relación con dirección
+     * Relación con proceso interno
      */
-    public function direccion(): BelongsTo
+    public function procesoInterno(): BelongsTo
     {
-        return $this->belongsTo(Direccion::class, 'direccion_id');
-    }
-
-    /**
-     * Relación con proceso de apoyo
-     */
-    public function proceso(): BelongsTo
-    {
-        return $this->belongsTo(Proceso::class, 'proceso_id');
+        return $this->belongsTo(ProcesoInterno::class, 'proceso_interno_id');
     }
 
     /**
@@ -115,19 +106,11 @@ class Documento extends Model
 
 
     /**
-     * Scope para filtrar por dirección
+     * Scope para filtrar por proceso interno
      */
-    public function scopePorDireccion(Builder $query, int $direccionId): Builder
+    public function scopePorProcesoInterno(Builder $query, int $procesoInternoId): Builder
     {
-        return $query->where('direccion_id', $direccionId);
-    }
-
-    /**
-     * Scope para filtrar por proceso
-     */
-    public function scopePorProceso(Builder $query, int $procesoId): Builder
-    {
-        return $query->where('proceso_id', $procesoId);
+        return $query->where('proceso_interno_id', $procesoInternoId);
     }
 
     /**
@@ -148,13 +131,8 @@ class Documento extends Model
                       ->orWhere('nombre_original', 'like', $like)
                       // Coincidencia exacta de etiqueta
                       ->orWhereJsonContains('etiquetas', (string) $token)
-                      // Buscar por nombre de dirección
-                      ->orWhereHas('direccion', function (Builder $dq) use ($like) {
-                          $dq->where('nombre', 'like', $like)
-                             ->orWhere('codigo', 'like', $like);
-                      })
-                      // Buscar por nombre/código del proceso de apoyo
-                      ->orWhereHas('procesoApoyo', function (Builder $pq) use ($like) {
+                      // Buscar por nombre/código del proceso interno
+                      ->orWhereHas('procesoInterno', function (Builder $pq) use ($like) {
                           $pq->where('nombre', 'like', $like)
                              ->orWhere('codigo', 'like', $like);
                       })
@@ -218,14 +196,13 @@ class Documento extends Model
     }
 
     /**
-     * Obtener documentos relacionados (misma dirección y proceso)
+     * Obtener documentos relacionados (mismo proceso interno)
      */
     public function documentosRelacionados(int $limit = 5)
     {
         return static::where('id', '!=', $this->id)
-                    ->where('direccion_id', $this->direccion_id)
-                    ->where('proceso_id', $this->proceso_id)
-                    ->with(['direccion', 'proceso'])
+                    ->where('proceso_interno_id', $this->proceso_interno_id)
+                    ->with(['procesoInterno'])
                     ->orderBy('created_at', 'desc')
                     ->limit($limit)
                     ->get();

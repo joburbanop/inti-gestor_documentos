@@ -79,16 +79,28 @@ const CloseIcon = ({ className }) => (
 );
 
 const Navbar = ({ title = "Intranet Inti" }) => {
+    console.log('🧭 [Navbar.jsx] Renderizando Navbar con título:', title);
+    
     const { user, logout } = useAuth();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    console.log('👤 [Navbar.jsx] Usuario actual:', { 
+        name: user?.name, 
+        isAdmin: user?.is_admin,
+        role: user?.is_admin ? 'Administrador' : 'Usuario'
+    });
 
     // Debug: Log del usuario
 
     const handleLogout = () => {
+        console.log('🚪 [Navbar.jsx] Iniciando logout');
         logout();
     };
 
-    const closeMobileMenu = () => setIsMobileMenuOpen(false);
+    const closeMobileMenu = () => {
+        console.log('📱 [Navbar.jsx] Cerrando menú móvil');
+        setIsMobileMenuOpen(false);
+    };
 
     const navItems = [
         { name: 'Dashboard', path: '/' , icon: DashboardIcon },
@@ -122,6 +134,7 @@ const Navbar = ({ title = "Intranet Inti" }) => {
         
         // Manejar elementos con dropdown (Procesos)
         if (item.hasDropdown) {
+            console.log('📋 [Navbar.jsx] Renderizando elemento dropdown:', item.name);
             return (
                 <div key={item.name} className={styles.dropdownWrapper}>
                     <button
@@ -160,6 +173,7 @@ const Navbar = ({ title = "Intranet Inti" }) => {
 
         // Manejar elementos sin path (placeholder)
         if (!item.path) {
+            console.log('📍 [Navbar.jsx] Renderizando elemento placeholder:', item.name);
             return (
                 <button
                     key={item.name}
@@ -177,6 +191,7 @@ const Navbar = ({ title = "Intranet Inti" }) => {
         // Manejar Sistema de Gestión (dropdown especial para usuarios)
         const hasSpecialDropdown = item.name === 'Sistema de Gestión';
         if (hasSpecialDropdown) {
+            console.log('⚙️ [Navbar.jsx] Renderizando Sistema de Gestión con dropdown especial');
             return (
                 <div key={item.name} className={styles.dropdownWrapper}>
                     <button
@@ -207,6 +222,7 @@ const Navbar = ({ title = "Intranet Inti" }) => {
         }
 
         // Elementos normales con navegación
+        console.log('🔗 [Navbar.jsx] Renderizando elemento de navegación:', item.name, '->', item.path);
         return (
             <NavLink 
                 key={item.path}
@@ -221,6 +237,7 @@ const Navbar = ({ title = "Intranet Inti" }) => {
         );
     };
 
+    console.log('🎨 [Navbar.jsx] Renderizando JSX del Navbar');
     return (
         <nav className={styles.navbar}>
             <div className={styles.container}>
@@ -233,7 +250,7 @@ const Navbar = ({ title = "Intranet Inti" }) => {
                                 alt="Intiled Logo" 
                                 className={styles.logo}
                                 onError={(e) => {
-        // Silenciar logs de carga de logo
+                                    console.log('❌ [Navbar.jsx] Error al cargar logo');
                                     e.target.style.display = 'none';
                                 }}
                             />
@@ -297,7 +314,10 @@ const Navbar = ({ title = "Intranet Inti" }) => {
 
                     {/* Botón de menú móvil */}
                     <button
-                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        onClick={() => {
+                            console.log('📱 [Navbar.jsx] Toggle menú móvil:', !isMobileMenuOpen);
+                            setIsMobileMenuOpen(!isMobileMenuOpen);
+                        }}
                         className={styles.mobileMenuButton}
                         aria-label={isMobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
                     >
