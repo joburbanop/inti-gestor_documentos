@@ -32,14 +32,12 @@ const HierarchicalFilters = ({
     // Escuchar eventos de creación/actualización de direcciones
     useEffect(() => {
         const handleDireccionCreated = (event) => {
-            console.log('🏢 Dirección creada, actualizando filtros:', event.detail);
             // Mostrar notificación temporal
             showUpdateNotification('Nueva dirección agregada a los filtros');
             loadDirecciones(); // Recargar direcciones
         };
 
         const handleDireccionUpdated = (event) => {
-            console.log('🏢 Dirección actualizada, actualizando filtros:', event.detail);
             // Mostrar notificación temporal
             showUpdateNotification('Filtros actualizados');
             loadDirecciones(); // Recargar direcciones
@@ -128,13 +126,10 @@ const HierarchicalFilters = ({
                 const hayCambios = JSON.stringify(direccionesAnteriores) !== JSON.stringify(direccionesNuevas);
                 
                 setDirecciones(direccionesConContenido || []);
-                console.log('🏢 Direcciones cargadas:', direccionesConContenido.length);
-                
                 // Si hay cambios y hay una dirección seleccionada, verificar si sigue existiendo
                 if (hayCambios && localFilters.direccionId) {
                     const direccionExiste = direccionesConContenido.some(d => d.id === localFilters.direccionId);
                     if (!direccionExiste) {
-                        console.log('🔄 Dirección seleccionada ya no existe, limpiando filtro');
                         handleFilterChange('direccionId', '');
                     }
                 }
@@ -174,11 +169,9 @@ const HierarchicalFilters = ({
                 params.append('proceso_apoyo_id', procesoId);
             }
             
-            console.log('🔍 Cargando documentos con parámetros:', params.toString());
             const response = await apiRequest(`/api/documentos?${params}`);
             
             if (response.success && onDocumentsLoad) {
-                console.log('📄 Documentos cargados:', response.data?.documentos?.length || 0);
                 onDocumentsLoad(response.data?.documentos || []);
             } else {
                 console.error('❌ Error en respuesta:', response);
@@ -191,17 +184,13 @@ const HierarchicalFilters = ({
     };
 
     const handleFilterChange = (key, value) => {
-        console.log('🔍 HierarchicalFilters: Cambio de filtro:', { key, value, currentFilters: localFilters });
-        
         let newFilters = { ...localFilters, [key]: value };
 
         // Resetear proceso cuando cambie la dirección
         if (key === 'direccionId') {
             newFilters.procesoId = '';
-            console.log('🔄 Reseteando procesoId porque cambió dirección');
-        }
+            }
 
-        console.log('🔍 HierarchicalFilters: Nuevos filtros:', newFilters);
         setLocalFilters(newFilters);
         onFilterChange && onFilterChange(newFilters);
     };

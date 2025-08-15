@@ -8,8 +8,6 @@ import ConfirmModal from './common/ConfirmModal';
 import useConfirmModal from '../hooks/useConfirmModal';
 import styles from '../styles/components/Documentos.module.css';
 
-console.log('📄 [Documentos.jsx] Importando componente Documentos');
-
 const TIPO_OPTIONS = [
   { value: '', label: 'Todos los tipos' },
   { value: 'Política', label: 'Política' },
@@ -46,8 +44,6 @@ const EXTENSION_OPTIONS = [
 ];
 
 const Documentos = () => {
-  console.log('📄 [Documentos.jsx] Renderizando componente Documentos');
-  
   const { apiRequest } = useAuth();
   const location = useLocation();
   const [loading, setLoading] = useState(true);
@@ -89,7 +85,6 @@ const Documentos = () => {
   const abortRef = useRef(null);
 
   const fetchDocumentos = async () => {
-    console.log('🔍 [Documentos.jsx] Iniciando fetchDocumentos');
     try {
       setLoading(true);
       // Cancelar solicitud anterior en vuelo
@@ -126,7 +121,6 @@ const Documentos = () => {
       const res = await apiRequest(url, { signal: controller.signal });
       if (res.success) {
         const docs = res.data.documentos || res.data || [];
-        console.log('📄 Documentos: Cargados', docs.length, 'documentos desde:', url);
         setDocumentos(docs);
       } else {
         setDocumentos([]);
@@ -248,19 +242,14 @@ const Documentos = () => {
 
   // Manejar cambios en filtros avanzados
   const handleAdvancedFilterChange = (filterKey, value) => {
-    console.log('🔍 Documentos: Cambio de filtro avanzado:', { filterKey, value });
-    
     setAdvancedFilterValues(prev => {
       const newValues = {
         ...prev,
         [filterKey]: value
       };
-      console.log('🔍 Documentos: Nuevos valores de filtros:', newValues);
       return newValues;
     });
   };
-
-
 
   // Limpiar todos los filtros
   const clearAllFilters = () => {
@@ -472,8 +461,7 @@ const Documentos = () => {
             ignoreAuthErrors: true 
           });
         } catch (e) {
-          console.log('No se pudieron actualizar estadísticas:', e);
-        }
+          }
       } else {
         setErrors({ general: res.message || `Error al ${modalMode === 'create' ? 'crear' : 'actualizar'} documento` });
       }

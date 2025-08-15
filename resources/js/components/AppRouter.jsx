@@ -14,10 +14,8 @@ import { INTILED_COLORS } from '../config/colors';
 
 const Home = () => {
     const { user } = useAuth();
-    console.log('🏠 [AppRouter.jsx] Componente Home - Usando Dashboard Unificado');
     return <Dashboard />;
 };
-
 
 // Componente para Procesos de Apoyo (placeholder informativo)
 const ProcesosApoyoPage = () => {
@@ -321,8 +319,6 @@ const ProcesosEvaluacion = () => {
 };
 
 const AppRouter = () => {
-    console.log('🗺️ [AppRouter.jsx] Renderizando AppRouter');
-    
     return (
         <Routes>
             <Route path="/" element={<Home />} />

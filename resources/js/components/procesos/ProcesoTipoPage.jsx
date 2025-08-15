@@ -4,26 +4,18 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTipoConfig } from '../../hooks/useTipoConfig';
 import { getTipoConfig } from '../../utils/tipoConfig';
 
-console.log('📄 [ProcesoTipoPage.jsx] Importando componente ProcesoTipoPage');
-
 const ProcesoTipoPage = () => {
-  console.log('📄 [ProcesoTipoPage.jsx] Renderizando ProcesoTipoPage');
-  
   const { tipo } = useParams();
   const navigate = useNavigate();
   const { apiRequest } = useAuth();
   const { configs, loading: configLoading, error: configError } = useTipoConfig();
   const config = getTipoConfig(tipo, configs);
 
-  console.log('🔍 [ProcesoTipoPage.jsx] Tipo solicitado:', tipo, 'Configuración:', config);
-
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    console.log('🔄 [ProcesoTipoPage.jsx] useEffect - Cargando procesos del tipo:', tipo);
-    
     let mounted = true;
     (async () => {
       try {
@@ -32,12 +24,10 @@ const ProcesoTipoPage = () => {
         const res = await apiRequest(`/procesos?tipo=${encodeURIComponent(config.key)}`);
         if (!res?.success) throw new Error(res?.message || 'Error al cargar procesos');
         if (mounted) {
-          console.log('✅ [ProcesoTipoPage.jsx] Procesos cargados:', res.data?.length || 0);
           setItems(res.data || []);
         }
       } catch (e) {
         if (mounted) {
-          console.log('❌ [ProcesoTipoPage.jsx] Error al cargar procesos:', e.message);
           setError(e.message || 'Error');
         }
       } finally {
@@ -47,8 +37,6 @@ const ProcesoTipoPage = () => {
     return () => { mounted = false; };
   }, [apiRequest, config.key]);
 
-  console.log('🎨 [ProcesoTipoPage.jsx] Renderizando JSX con configuración:', config.title);
-  
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

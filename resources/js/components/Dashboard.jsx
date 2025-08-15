@@ -23,8 +23,6 @@ import { MissionIcon, VisionIcon } from './icons/BrandIcons';
 import styles from '../styles/components/Dashboard.module.css';
 
 const Dashboard = () => {
-    console.log('📊 [Dashboard.jsx] Renderizando Dashboard Unificado');
-    
     const { user, apiRequest } = useAuth();
     const navigate = useNavigate();
     const userRole = useUserRole();
@@ -37,16 +35,6 @@ const Dashboard = () => {
     const canManageNews = useHasPermission(PERMISSIONS.MANAGE_NEWS);
     const canViewNews = useHasPermission(PERMISSIONS.VIEW_NEWS);
     
-    console.log('🔐 [Dashboard.jsx] Rol del usuario:', userRole);
-    console.log('🔐 [Dashboard.jsx] Permisos:', { 
-        canManageUsers, 
-        canManageDocs, 
-        canViewDocs, 
-        canManageProcesses, 
-        canManageNews,
-        canViewNews
-    });
-
     // Estados compartidos
     const [stats, setStats] = useState({
         total_documentos: 0,
@@ -82,7 +70,6 @@ const Dashboard = () => {
     const fetchDashboardData = useCallback(async () => {
         if (!canManageDocs && !canManageProcesses) return;
         
-        console.log('📡 [Dashboard.jsx] Iniciando fetchDashboardData');
         try {
             setLoading(true);
             setError(null);
@@ -97,12 +84,10 @@ const Dashboard = () => {
             clearTimeout(timeoutId);
             
             if (response.success) {
-                console.log('✅ [Dashboard.jsx] Estadísticas cargadas exitosamente:', response.data);
                 setStats(response.data);
             }
         } catch (error) {
             if (error.name !== 'AbortError') {
-                console.log('❌ [Dashboard.jsx] Error al cargar estadísticas:', error.message);
                 setError('Error al cargar datos');
                 setStats({
                     total_documentos: 0,
@@ -120,18 +105,15 @@ const Dashboard = () => {
     useEffect(() => {
         if (!canManageProcesses) return;
         
-        console.log('📊 [Dashboard.jsx] Cargando conteos por tipo de proceso');
         let mounted = true;
         (async () => {
             try {
                 const res = await apiRequest('/procesos/tipos/stats');
                 if (res?.success && mounted) {
-                    console.log('✅ [Dashboard.jsx] Conteos por tipo cargados:', res.data);
                     setTipoCounts(res.data || {});
                 }
             } catch (error) {
-                console.log('❌ [Dashboard.jsx] Error al cargar conteos por tipo:', error.message);
-            }
+                }
         })();
         return () => { mounted = false; };
     }, [apiRequest, canManageProcesses]);
@@ -140,7 +122,6 @@ const Dashboard = () => {
     useEffect(() => {
         if (!canViewNews) return;
         
-        console.log('📰 [Dashboard.jsx] Cargando noticias para el slider');
         const loadLatestNews = async () => {
             try {
                 const res = await apiRequest('/noticias/latest?limit=5', { ignoreAuthErrors: true });
@@ -153,14 +134,11 @@ const Dashboard = () => {
                         ctaText: n.document_url ? 'Ver documento' : undefined,
                         onClick: n.document_url ? () => window.open(n.document_url, '_blank') : undefined,
                     }));
-                    console.log('✅ [Dashboard.jsx] Noticias cargadas:', items.length);
                     setNewsItems(items);
                 } else {
-                    console.log('⚠️ [Dashboard.jsx] No se pudieron cargar las noticias');
                     setNewsItems([]);
                 }
             } catch (error) {
-                console.log('❌ [Dashboard.jsx] Error al cargar noticias:', error.message);
                 setNewsItems([]);
             }
         };
@@ -169,7 +147,6 @@ const Dashboard = () => {
 
     // Configuración de acciones rápidas según rol
     const actionsConfig = useMemo(() => {
-        console.log('⚙️ [Dashboard.jsx] Configurando acciones rápidas para rol:', userRole);
         const items = [];
         const push = (title, desc, hash, icon, color) => items.push({ title, description: desc, hash, icon, colorClass: color });
         
@@ -191,7 +168,6 @@ const Dashboard = () => {
             push('Administración', 'Usuarios, roles y noticias/circulares.', 'administracion', <AdminIcon className="w-6 h-6" />, 'quickActionIconMorado');
         }
         
-        console.log('✅ [Dashboard.jsx] Acciones configuradas:', items.length, 'acciones');
         return items;
     }, [tipoCounts, canManageProcesses, canViewDocs, canManageDocs, canManageUsers, userRole]);
 
@@ -199,7 +175,6 @@ const Dashboard = () => {
     const performSearchWithFilters = async (customFilters = null, customPage = null) => {
         if (!canViewDocs) return;
         
-        console.log('🔍 [Dashboard.jsx] Realizando búsqueda con filtros:', { customFilters, customPage });
         try {
             setSearchLoading(true);
             
@@ -265,13 +240,10 @@ const Dashboard = () => {
             const controller = new AbortController();
             searchAbortRef.current = controller;
 
-            console.log('🌐 [Dashboard.jsx] Haciendo petición a:', url);
             let response = await apiRequest(url, { signal: controller.signal });
             
             if (response.success) {
                 let results = response.data?.documentos || response.data || [];
-                console.log('✅ [Dashboard.jsx] Resultados obtenidos:', results.length);
-                
                 setSearchResults(results);
                 
                 if (response.data?.pagination) {
@@ -285,7 +257,6 @@ const Dashboard = () => {
                 }
             }
         } catch (error) {
-            console.log('❌ [Dashboard.jsx] Error en la búsqueda:', error.message);
             setSearchResults([]);
         } finally {
             setSearchLoading(false);
@@ -294,13 +265,11 @@ const Dashboard = () => {
 
     const handleSearch = async (e) => {
         e.preventDefault();
-        console.log('🔍 [Dashboard.jsx] Búsqueda manual iniciada');
         await performSearchWithFilters();
     };
 
     const handleSearchTermChange = (e) => {
         const value = e.target.value;
-        console.log('✏️ [Dashboard.jsx] Cambio en término de búsqueda:', value ? '***' : 'vacío');
         setSearchTerm(value);
         
         if (typingTimerRef.current) {
@@ -315,7 +284,6 @@ const Dashboard = () => {
     };
 
     const handleFilterChange = async (newFilters) => {
-        console.log('🔧 [Dashboard.jsx] Cambio de filtros:', newFilters);
         setPagination(prev => ({ ...prev, currentPage: 1 }));
         setFilters(newFilters);
         
@@ -329,7 +297,6 @@ const Dashboard = () => {
     };
 
     const handleExtensionFilterChange = ({ extensiones, tipos }) => {
-        console.log('📁 [Dashboard.jsx] Cambio en filtros de extensión:', { extensiones, tipos });
         setSelectedExtensions(extensiones);
         setSelectedTypes(tipos);
         
@@ -361,7 +328,6 @@ const Dashboard = () => {
     };
 
     const clearAllFilters = () => {
-        console.log('🧹 [Dashboard.jsx] Limpiando todos los filtros');
         setFilters({});
         setSearchTerm('');
         setSelectedExtensions([]);
@@ -376,14 +342,12 @@ const Dashboard = () => {
     };
 
     const handleDocumentClick = (document) => {
-        console.log('📄 [Dashboard.jsx] Documento clickeado:', document.titulo);
         if (document.url) {
             window.open(document.url, '_blank');
         }
     };
 
     const handleViewDoc = async (documento) => {
-        console.log('👁️ [Dashboard.jsx] Abriendo vista previa de documento:', documento.titulo);
         try {
             const res = await apiRequest(`/documentos/${documento.id}/vista-previa`);
             if (res.success && res.data?.url) {
@@ -392,13 +356,11 @@ const Dashboard = () => {
                 alert(res.message || 'No se pudo abrir la vista previa');
             }
         } catch (e) {
-            console.log('❌ [Dashboard.jsx] Error al abrir vista previa:', e.message);
             alert(e.message || 'Error al abrir vista previa');
         }
     };
 
     const handleDownloadDoc = async (documento) => {
-        console.log('⬇️ [Dashboard.jsx] Descargando documento:', documento.titulo);
         try {
             const res = await apiRequest(`/documentos/${documento.id}/descargar`, { method: 'POST' });
             if (res.success && res.data?.url) {
@@ -412,7 +374,6 @@ const Dashboard = () => {
                 alert(res.message || 'No se pudo generar la descarga');
             }
         } catch (e) {
-            console.log('❌ [Dashboard.jsx] Error al descargar documento:', e.message);
             alert(e.message || 'Error al descargar documento');
         }
     };
@@ -427,7 +388,6 @@ const Dashboard = () => {
 
     // Efectos iniciales
     useEffect(() => {
-        console.log('🔄 [Dashboard.jsx] useEffect - Inicializando dashboard para rol:', userRole);
         fetchDashboardData();
     }, [fetchDashboardData, userRole]);
 
@@ -456,7 +416,6 @@ const Dashboard = () => {
         }
     };
 
-    console.log('🎨 [Dashboard.jsx] Renderizando JSX del Dashboard Unificado');
     return (
         <div className={styles.dashboardContainer}>
             <DashboardHeader
@@ -522,7 +481,6 @@ const Dashboard = () => {
                         styles={styles}
                         isUserDashboard={userRole === ROLES.USUARIO}
                         onActionClick={(hash) => { 
-                            console.log('🖱️ [Dashboard.jsx] Acción rápida clickeada:', hash);
                             if (hash) navigate(hash.startsWith('/') ? hash : `/${hash}`); 
                         }}
                     />

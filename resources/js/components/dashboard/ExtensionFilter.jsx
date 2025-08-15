@@ -74,7 +74,6 @@ const ExtensionFilter = ({
     const [loading, setLoading] = useState(true);
     const [isExpanded, setIsExpanded] = useState(false);
 
-
     // Usar estilos personalizados si se proporcionan, sino usar los por defecto
     const currentStyles = customStyles || styles;
 
@@ -141,8 +140,7 @@ const ExtensionFilter = ({
             
             if (response.success) {
                 setEstadisticas(response.data);
-                console.log('🔍 ExtensionFilter: Estadísticas actualizadas:', response.data);
-            }
+                }
         } catch (error) {
             console.error('Error al cargar estadísticas:', error);
         } finally {
@@ -151,7 +149,6 @@ const ExtensionFilter = ({
     };
 
     const recargarDatos = async () => {
-        console.log('🔍 ExtensionFilter: Recargando datos...');
         await cargarExtensiones();
         await cargarEstadisticas();
     };
@@ -356,8 +353,6 @@ const ExtensionFilter = ({
                     )}
                 </>
             )}
-
-
 
             {/* Indicador de filtros activos */}
             {(selectedExtensions.length > 0 || selectedTypes.length > 0) && (

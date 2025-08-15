@@ -31,21 +31,15 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
 
   useEffect(() => {
     if (!show) return;
-    console.log('🔄 [DocumentoModal.jsx] Cargando datos iniciales...');
     (async () => {
       try {
-        console.log('📡 [DocumentoModal.jsx] Haciendo requests a la API...');
         const [d, e] = await Promise.all([
           apiRequest('/procesos-generales'),
           apiRequest('/documentos/etiquetas')
         ]);
         
-        console.log('📊 [DocumentoModal.jsx] Respuesta procesos generales:', d);
-        console.log('🏷️ [DocumentoModal.jsx] Respuesta etiquetas:', e);
-        
         if (d.success) {
           const procesosGenerales = d.data.map(x => ({ value: x.id, label: x.nombre }));
-          console.log('✅ [DocumentoModal.jsx] Procesos generales cargados:', procesosGenerales);
           setDireccionesOptions(procesosGenerales);
         } else {
           console.error('❌ [DocumentoModal.jsx] Error cargando procesos generales:', d);
@@ -53,28 +47,22 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
         
         if (e.success) {
           const etiquetas = e.data.map(x => ({ value: x, label: x }));
-          console.log('✅ [DocumentoModal.jsx] Etiquetas cargadas:', etiquetas);
           setEtiquetasOptions(etiquetas);
         } else {
           console.error('❌ [DocumentoModal.jsx] Error cargando etiquetas:', e);
         }
         
         const procesoGeneralId = (formData && formData.proceso_general_id) || localData?.proceso_general_id;
-        console.log('🎯 [DocumentoModal.jsx] Proceso General ID para cargar procesos internos:', procesoGeneralId);
-        
         if (procesoGeneralId) {
           const p = await apiRequest(`/procesos-generales/${procesoGeneralId}/procesos-internos`);
-          console.log('📡 [DocumentoModal.jsx] Respuesta procesos internos:', p);
           if (p.success) {
             const procesos = (p.data || []).map(x => ({ value: x.id, label: x.nombre }));
-            console.log('✅ [DocumentoModal.jsx] Procesos internos cargados:', procesos);
             setProcesosOptions(procesos);
           } else {
             console.error('❌ [DocumentoModal.jsx] Error cargando procesos internos:', p);
             setProcesosOptions([]);
           }
         } else {
-          console.log('ℹ️ [DocumentoModal.jsx] No hay proceso general seleccionado, procesos internos vacíos');
           setProcesosOptions([]);
         }
       } catch (error) {
@@ -87,23 +75,16 @@ const DocumentoModal = ({ show, mode, formData, onClose, onSubmit, onChange, loa
   useEffect(() => {
     if (!show) return;
     const procesoGeneralId = localData?.proceso_general_id;
-    console.log('🔄 [DocumentoModal.jsx] Cambio de proceso general detectado:', procesoGeneralId);
-    
     if (!procesoGeneralId) {
-      console.log('ℹ️ [DocumentoModal.jsx] No hay proceso general seleccionado, limpiando procesos internos');
       setProcesosOptions([]);
       return;
     }
     
     (async () => {
       try {
-        console.log('📡 [DocumentoModal.jsx] Cargando procesos internos para proceso general:', procesoGeneralId);
         const p = await apiRequest(`/procesos-generales/${procesoGeneralId}/procesos-internos`);
-        console.log('📊 [DocumentoModal.jsx] Respuesta procesos internos por proceso general:', p);
-        
         if (p.success) {
           const procesos = (p.data || []).map(x => ({ value: x.id, label: x.nombre }));
-          console.log('✅ [DocumentoModal.jsx] Procesos internos cargados para proceso general:', procesos);
           setProcesosOptions(procesos);
           setLocalData(prev => ({ ...prev, proceso_interno_id: '' }));
         } else {

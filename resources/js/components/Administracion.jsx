@@ -4,11 +4,7 @@ import styles from '../styles/components/Administracion.module.css';
 import { EditIcon, DeleteIcon, SettingsIcon, DocumentIcon } from './icons/CrudIcons';
 import CreateForm from './common/CreateForm';
 
-console.log('⚙️ [Administracion.jsx] Importando componente Administracion');
-
 const Administracion = () => {
-  console.log('⚙️ [Administracion.jsx] Renderizando componente Administracion');
-  
   const { apiRequest, user, token, isAuthenticated, isLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -42,25 +38,16 @@ const Administracion = () => {
 
   // Debug temporal
   useEffect(() => {
-    console.log('🔍 [Administracion.jsx] Estado de autenticación:', {
-      user: user?.name,
-      hasToken: !!token,
-      isAuthenticated,
-      isLoading
-    });
-  }, [user, token, isAuthenticated, isLoading]);
+    }, [user, token, isAuthenticated, isLoading]);
 
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
-      console.log('✅ [Administracion.jsx] Usuario autenticado, cargando datos');
       fetchData();
     } else {
-      console.log('❌ [Administracion.jsx] Usuario no autenticado o cargando');
-    }
+      }
   }, [isAuthenticated, isLoading]);
 
   const fetchData = async () => {
-    console.log('📊 [Administracion.jsx] Iniciando fetchData');
     try {
       setLoading(true);
       setError(null);
@@ -71,13 +58,6 @@ const Administracion = () => {
         apiRequest('/usuarios/stats'),
         apiRequest('/admin/noticias')
       ]);
-
-      console.log('✅ [Administracion.jsx] Datos obtenidos:', {
-        usuarios: usuariosRes?.success ? usuariosRes.data?.length : 0,
-        roles: rolesRes?.success ? rolesRes.data?.length : 0,
-        stats: statsRes?.success ? 'OK' : 'Error',
-        noticias: noticiasRes?.success ? noticiasRes.data?.noticias?.length || noticiasRes.data?.length : 0
-      });
 
       if (usuariosRes?.success) setUsuarios(usuariosRes.data || []);
       if (rolesRes?.success) setRoles(rolesRes.data || []);
@@ -91,7 +71,6 @@ const Administracion = () => {
       if (noticiasRes?.success) setNoticias(noticiasRes.data?.noticias || noticiasRes.data || []);
 
     } catch (e) {
-      console.log('❌ [Administracion.jsx] Error en fetchData:', e.message);
       setError(e.message || 'Error cargando datos');
     } finally {
       setLoading(false);
@@ -100,7 +79,6 @@ const Administracion = () => {
 
   // Funciones para usuarios
   const resetUserForm = () => {
-    console.log('🔄 [Administracion.jsx] Reseteando formulario de usuario');
     setUserForm({
       name: '',
       email: '',
@@ -269,7 +247,6 @@ const Administracion = () => {
 
   // Funciones para noticias
   const resetNewsForm = () => {
-    console.log('🔄 [Administracion.jsx] Reseteando formulario de noticia');
     setNewsForm({
       title: '',
       subtitle: '',

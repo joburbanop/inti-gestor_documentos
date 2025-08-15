@@ -23,49 +23,36 @@ const DocumentSearchSection = ({
     styles,
     canManageDocs
 }) => {
-    console.log('🔍 [DocumentSearchSection.jsx] Renderizando sección de búsqueda de documentos');
-    
     const typingTimerRef = useRef(null);
     const searchAbortRef = useRef(null);
 
     // Funciones de paginación
     const goToPage = async (page) => {
-        console.log('📄 [DocumentSearchSection.jsx] Navegando a página:', page);
-        
         if (page >= 1 && page <= pagination.lastPage) {
-            console.log('✅ [DocumentSearchSection.jsx] Navegación válida a página', page);
-            
             // Actualizar el estado de paginación inmediatamente
             const newPagination = { ...pagination, currentPage: page };
             
             // Ejecutar búsqueda con la nueva página
             await performSearchWithFilters(null, page);
         } else {
-            console.log('❌ [DocumentSearchSection.jsx] Navegación no válida - página:', page, 'lastPage:', pagination.lastPage);
-        }
+            }
     };
 
     const goToNextPage = async () => {
-        console.log('➡️ [DocumentSearchSection.jsx] Navegando a página siguiente');
         const nextPage = pagination.currentPage + 1;
         if (nextPage <= pagination.lastPage) {
-            console.log('✅ [DocumentSearchSection.jsx] Navegando a página siguiente:', nextPage);
             await goToPage(nextPage);
         } else {
-            console.log('⚠️ [DocumentSearchSection.jsx] Ya estamos en la última página');
-        }
+            }
     };
 
     const goToPrevPage = async () => {
-        console.log('⬅️ [DocumentSearchSection.jsx] Navegando a página anterior');
         if (pagination.currentPage > 1) {
             await goToPage(pagination.currentPage - 1);
         }
     };
 
     const performSearchWithFilters = async (customFilters = null, customPage = null) => {
-        console.log('🔍 [DocumentSearchSection.jsx] Realizando búsqueda con filtros:', { customFilters, customPage });
-        
         const filtersToUse = customFilters || filters;
         const pageToUse = customPage || pagination.currentPage;
         const params = new URLSearchParams();
@@ -128,8 +115,6 @@ const DocumentSearchSection = ({
         const controller = new AbortController();
         searchAbortRef.current = controller;
 
-        console.log('🌐 [DocumentSearchSection.jsx] Haciendo petición a:', url);
-        
         // Llamar a la función del padre para ejecutar la búsqueda
         if (onSearch) {
             await onSearch();
@@ -139,7 +124,6 @@ const DocumentSearchSection = ({
     // Debounce de búsqueda por texto
     useEffect(() => {
         if (searchTerm && searchTerm.trim().length >= 3) {
-            console.log('🔍 [DocumentSearchSection.jsx] Término de búsqueda válido, programando búsqueda');
             if (typingTimerRef.current) {
                 clearTimeout(typingTimerRef.current);
             }
@@ -149,7 +133,6 @@ const DocumentSearchSection = ({
         }
     }, [searchTerm]);
 
-    console.log('🎨 [DocumentSearchSection.jsx] Renderizando JSX de DocumentSearchSection');
     return (
         <div className={styles.documentSearchSection}>
             {/* Barra de búsqueda */}

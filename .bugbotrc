@@ -1,0 +1,65 @@
+{
+  "project": {
+    "name": "Intranet Inti",
+    "type": "fullstack",
+    "languages": ["php", "javascript", "jsx", "css", "sql"],
+    "frameworks": ["laravel", "react", "tailwindcss"]
+  },
+  "analysis": {
+    "enabled": true,
+    "rules": {
+      "performance": true,
+      "security": true,
+      "code_quality": true,
+      "best_practices": true
+    }
+  },
+  "targets": {
+    "php": {
+      "paths": [
+        "app/**/*.php",
+        "config/**/*.php",
+        "database/**/*.php",
+        "routes/**/*.php"
+      ],
+      "rules": [
+        "laravel_best_practices",
+        "security_vulnerabilities",
+        "performance_optimization"
+      ]
+    },
+    "javascript": {
+      "paths": [
+        "resources/js/**/*.js",
+        "resources/js/**/*.jsx"
+      ],
+      "rules": [
+        "react_best_practices",
+        "es6_features",
+        "performance_optimization"
+      ]
+    }
+  },
+  "performance": {
+    "database": {
+      "analyze_queries": true,
+      "optimize_indexes": true
+    },
+    "frontend": {
+      "bundle_size": true,
+      "lazy_loading": true
+    }
+  },
+  "security": {
+    "authentication": true,
+    "authorization": true,
+    "input_validation": true,
+    "sql_injection": true,
+    "xss_protection": true
+  },
+  "code_quality": {
+    "complexity": true,
+    "duplication": true,
+    "maintainability": true
+  }
+}

@@ -74,8 +74,6 @@ const SearchFilterBar = ({
 
     // Handle advanced filter change
     const handleAdvancedFilterChange = (filterKey, value) => {
-        console.log('🔍 SearchFilterBar: Cambio de filtro avanzado:', { filterKey, value });
-        
         // Limpiar el filtro anterior si existe
         const newFilters = activeFilters.filter(f => f.key !== filterKey);
         
@@ -95,7 +93,6 @@ const SearchFilterBar = ({
             newFilters.push({ key: filterKey, value, label });
         }
         
-        console.log('🔍 SearchFilterBar: Nuevos filtros:', newFilters);
         setActiveFilters(newFilters);
         onFiltersChange(newFilters);
         
@@ -106,8 +103,6 @@ const SearchFilterBar = ({
 
     // Handle multiselect filter change
     const handleMultiselectChange = (filterKey, selectedValues) => {
-        console.log('🔍 SearchFilterBar: Cambio de multiselect:', { filterKey, selectedValues });
-        
         // Limpiar filtros anteriores de este tipo
         const newFilters = activeFilters.filter(f => f.key !== filterKey);
         
@@ -128,8 +123,6 @@ const SearchFilterBar = ({
             onAdvancedFilterChange(filterKey, selectedValues);
         }
     };
-
-
 
     // Focus search on Ctrl/Cmd + K
     useEffect(() => {
@@ -416,7 +409,6 @@ const SearchFilterBar = ({
                 <kbd className={styles.kbd}>K</kbd>
                 <span>para buscar</span>
             </div>
-
 
         </div>
     );

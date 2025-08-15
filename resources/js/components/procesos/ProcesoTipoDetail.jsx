@@ -4,25 +4,17 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTipoConfig } from '../../hooks/useTipoConfig';
 import { getTipoConfig } from '../../utils/tipoConfig';
 
-console.log('📄 [ProcesoTipoDetail.jsx] Importando componente ProcesoTipoDetail');
-
 const ProcesoTipoDetail = () => {
-  console.log('📄 [ProcesoTipoDetail.jsx] Renderizando ProcesoTipoDetail');
-  
   const { tipo, id } = useParams();
   const { apiRequest } = useAuth();
   const { configs, loading: configLoading, error: configError } = useTipoConfig();
   const config = getTipoConfig(tipo, configs);
-
-  console.log('🔍 [ProcesoTipoDetail.jsx] Tipo:', tipo, 'ID:', id, 'Configuración:', config);
 
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    console.log('🔄 [ProcesoTipoDetail.jsx] useEffect - Cargando detalles del proceso:', id);
-    
     let mounted = true;
     (async () => {
       try {
@@ -31,12 +23,10 @@ const ProcesoTipoDetail = () => {
         const res = await apiRequest(`/procesos/${id}`);
         if (!res?.success) throw new Error(res?.message || 'Error al cargar proceso');
         if (mounted) {
-          console.log('✅ [ProcesoTipoDetail.jsx] Proceso cargado:', res.data);
           setItem(res.data);
         }
       } catch (e) {
         if (mounted) {
-          console.log('❌ [ProcesoTipoDetail.jsx] Error al cargar proceso:', e.message);
           setError(e.message || 'Error');
         }
       } finally {
@@ -46,8 +36,6 @@ const ProcesoTipoDetail = () => {
     return () => { mounted = false; };
   }, [apiRequest, id]);
 
-  console.log('🎨 [ProcesoTipoDetail.jsx] Renderizando JSX con configuración:', config.title);
-  
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
