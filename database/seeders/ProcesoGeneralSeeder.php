@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\ProcesoTipo;
 use App\Models\ProcesoGeneral;
 use Illuminate\Database\Seeder;
 
@@ -12,49 +13,101 @@ class ProcesoGeneralSeeder extends Seeder
      */
     public function run(): void
     {
+        // Obtener los tipos de procesos
+        $tiposProcesos = ProcesoTipo::all()->keyBy('nombre');
+
+        // Definir los procesos generales con sus tipos correspondientes
         $procesosGenerales = [
+            // Procesos Estratégicos
             [
-                'nombre' => 'Administración',
-                'descripcion' => 'Gestión administrativa y operativa de la organización',
-                'codigo' => 'ADM',
-                'color' => '#1F448B',
-                'orden' => 1
+                'nombre' => 'Planeación Estratégica',
+                'descripcion' => 'Procesos de planeación estratégica y dirección de la organización',
+                'icono' => 'chart-bar',
+                'tipo' => 'estrategico'
             ],
             [
-                'nombre' => 'Ingeniería',
-                'descripcion' => 'Desarrollo técnico y de proyectos de ingeniería',
-                'codigo' => 'ING',
-                'color' => '#059669',
-                'orden' => 2
+                'nombre' => 'Dirección General',
+                'descripcion' => 'Dirección y gestión estratégica de la organización',
+                'icono' => 'office-building',
+                'tipo' => 'estrategico'
+            ],
+            
+            // Procesos Misionales
+            [
+                'nombre' => 'Salud Pública',
+                'descripcion' => 'Procesos misionales relacionados con la salud pública',
+                'icono' => 'heart',
+                'tipo' => 'misional'
             ],
             [
-                'nombre' => 'Finanzas',
-                'descripcion' => 'Gestión financiera y contable de la organización',
-                'codigo' => 'FIN',
-                'color' => '#7C3AED',
-                'orden' => 3
+                'nombre' => 'Atención al Usuario',
+                'descripcion' => 'Procesos de atención y servicio al usuario',
+                'icono' => 'user-group',
+                'tipo' => 'misional'
             ],
             [
-                'nombre' => 'Comercial',
-                'descripcion' => 'Gestión comercial y de ventas',
-                'codigo' => 'COM',
-                'color' => '#DC2626',
-                'orden' => 4
+                'nombre' => 'Gestión de Proyectos',
+                'descripcion' => 'Gestión y ejecución de proyectos misionales',
+                'icono' => 'clipboard-list',
+                'tipo' => 'misional'
+            ],
+            
+            // Procesos de Apoyo
+            [
+                'nombre' => 'Gestión del Talento Humano',
+                'descripcion' => 'Gestión integral del talento humano de la organización',
+                'icono' => 'users',
+                'tipo' => 'apoyo'
             ],
             [
-                'nombre' => 'Recursos Humanos',
-                'descripcion' => 'Gestión del talento humano y desarrollo organizacional',
-                'codigo' => 'DHH',
-                'color' => '#EA580C',
-                'orden' => 5
+                'nombre' => 'Gestión Financiera',
+                'descripcion' => 'Gestión financiera, contable y presupuestal',
+                'icono' => 'currency-dollar',
+                'tipo' => 'apoyo'
+            ],
+            [
+                'nombre' => 'Gestión Administrativa',
+                'descripcion' => 'Procesos administrativos y de soporte',
+                'icono' => 'document-text',
+                'tipo' => 'apoyo'
+            ],
+            [
+                'nombre' => 'Tecnología de la Información',
+                'descripcion' => 'Gestión de sistemas y tecnologías de información',
+                'icono' => 'computer-desktop',
+                'tipo' => 'apoyo'
+            ],
+            
+            // Procesos de Evaluación
+            [
+                'nombre' => 'Control Interno',
+                'descripcion' => 'Procesos de control interno y auditoría',
+                'icono' => 'shield-check',
+                'tipo' => 'evaluacion'
+            ],
+            [
+                'nombre' => 'Mejora Continua',
+                'descripcion' => 'Procesos de evaluación y mejora continua',
+                'icono' => 'arrow-up',
+                'tipo' => 'evaluacion'
             ]
         ];
 
         foreach ($procesosGenerales as $proceso) {
-            ProcesoGeneral::updateOrCreate(
-                ['codigo' => $proceso['codigo']],
-                $proceso
-            );
+            $tipoProceso = $tiposProcesos[$proceso['tipo']] ?? null;
+            
+            if ($tipoProceso) {
+                ProcesoGeneral::updateOrCreate(
+                    ['nombre' => $proceso['nombre']],
+                    [
+                        'nombre' => $proceso['nombre'],
+                        'descripcion' => $proceso['descripcion'],
+                        'icono' => $proceso['icono'],
+                        'tipo_proceso_id' => $tipoProceso->id,
+                        'activo' => true
+                    ]
+                );
+            }
         }
     }
 }

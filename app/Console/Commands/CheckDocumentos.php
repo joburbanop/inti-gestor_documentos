@@ -4,8 +4,8 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\Documento;
-use App\Models\Direccion;
-use App\Models\ProcesoApoyo;
+use App\Models\ProcesoGeneral;
+use App\Models\ProcesoInterno;
 use Illuminate\Support\Facades\Cache;
 
 class CheckDocumentos extends Command
@@ -34,29 +34,29 @@ class CheckDocumentos extends Command
         // Limpiar caché primero
         Cache::forget('dashboard_estadisticas');
         Cache::forget('total_documentos');
-        Cache::forget('total_direcciones');
-        Cache::forget('total_procesos');
+        Cache::forget('total_procesos_generales');
+        Cache::forget('total_procesos_internos');
         
         $this->info('✅ Caché limpiada');
         
         // Obtener datos reales
         $totalDocumentos = Documento::count();
-        $totalDirecciones = Direccion::where('activo', true)->count();
-        $totalProcesos = ProcesoApoyo::where('activo', true)->count();
+        $totalProcesosGenerales = ProcesoGeneral::where('activo', true)->count();
+        $totalProcesosInternos = ProcesoInterno::where('activo', true)->count();
         
         // Mostrar estadísticas
         $this->table(
             ['Métrica', 'Valor Real', 'Valor en Caché'],
             [
                 ['Total Documentos', $totalDocumentos, Cache::get('total_documentos', 'No cacheado')],
-                ['Total Direcciones', $totalDirecciones, Cache::get('total_direcciones', 'No cacheado')],
-                ['Total Procesos', $totalProcesos, Cache::get('total_procesos', 'No cacheado')],
+                ['Total Procesos Generales', $totalProcesosGenerales, Cache::get('total_procesos_generales', 'No cacheado')],
+                ['Total Procesos Internos', $totalProcesosInternos, Cache::get('total_procesos_internos', 'No cacheado')],
             ]
         );
         
         // Mostrar documentos recientes
         $this->info('📄 Documentos recientes:');
-        $documentos = Documento::with(['direccion', 'procesoApoyo', 'subidoPor'])
+        $documentos = Documento::with(['procesoInterno.procesoGeneral', 'subidoPor'])
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
@@ -68,15 +68,15 @@ class CheckDocumentos extends Command
                 return [
                     'ID' => $doc->id,
                     'Título' => $doc->titulo,
-                    'Dirección' => optional($doc->direccion)->nombre ?? 'N/A',
-                    'Proceso' => optional($doc->procesoApoyo)->nombre ?? 'N/A',
+                    'Proceso General' => optional($doc->procesoInterno->procesoGeneral)->nombre ?? 'N/A',
+                    'Proceso Interno' => optional($doc->procesoInterno)->nombre ?? 'N/A',
                     'Creado' => $doc->created_at->format('Y-m-d H:i:s'),
                     'Tamaño' => $doc->tamaño_formateado,
                 ];
             });
             
             $this->table(
-                ['ID', 'Título', 'Dirección', 'Proceso', 'Creado', 'Tamaño'],
+                ['ID', 'Título', 'Proceso General', 'Proceso Interno', 'Creado', 'Tamaño'],
                 $documentosData->toArray()
             );
         }
@@ -87,14 +87,14 @@ class CheckDocumentos extends Command
         // Forzar regeneración de caché
         $estadisticas = [
             'total_documentos' => $totalDocumentos,
-            'total_direcciones' => $totalDirecciones,
-            'total_procesos' => $totalProcesos
+            'total_procesos_generales' => $totalProcesosGenerales,
+            'total_procesos_internos' => $totalProcesosInternos
         ];
         
         Cache::put('dashboard_estadisticas', $estadisticas, 120);
         Cache::put('total_documentos', $totalDocumentos, 60);
-        Cache::put('total_direcciones', $totalDirecciones, 60);
-        Cache::put('total_procesos', $totalProcesos, 60);
+        Cache::put('total_procesos_generales', $totalProcesosGenerales, 60);
+        Cache::put('total_procesos_internos', $totalProcesosInternos, 60);
         
         $this->info('✅ Caché regenerada con datos actualizados');
         
@@ -111,8 +111,8 @@ class CheckDocumentos extends Command
                     ['Métrica', 'API Response'],
                     [
                         ['Total Documentos', $data['data']['total_documentos']],
-                        ['Total Direcciones', $data['data']['total_direcciones']],
-                        ['Total Procesos', $data['data']['total_procesos']],
+                        ['Total Procesos Generales', $data['data']['total_procesos_generales']],
+                        ['Total Procesos Internos', $data['data']['total_procesos_internos']],
                     ]
                 );
             } else {

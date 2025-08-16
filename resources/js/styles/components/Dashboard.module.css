@@ -666,79 +666,185 @@
 
 /* Quick Actions Section */
 .quickActionsSection {
-    margin-bottom: 3rem;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sectionHeader {
+    margin-bottom: 20px;
+}
+
+.sectionHeader h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 4px 0;
+}
+
+.sectionHeader p {
+    color: #6b7280;
+    margin: 0;
+    font-size: 0.875rem;
 }
 
 .quickActionsGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 3rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
 }
 
 .quickActionCard {
-    padding: 1.5rem;
-    border-radius: 1rem;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    background: #ffffff;
     border: 1px solid #e5e7eb;
-    background: white;
-    cursor: pointer;
-    text-align: left;
-    will-change: transform;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
 }
 
 .quickActionCard:hover {
-    transform: translateY(-3px) translateZ(0);
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-color: #d1d5db;
 }
 
-.quickActionContent {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.quickActionIcon {
-    width: 3rem;
-    height: 3rem;
-    border-radius: 1rem;
+.actionIcon {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
-    color: white;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.05);
 }
 
-.quickActionIconAzul {
-    background: linear-gradient(135deg, #1F448B 0%, #667eea 100%);
+.actionContent {
+    flex: 1;
+    min-width: 0;
 }
 
-.quickActionIconVerde {
-    background: linear-gradient(135deg, #B1CC34 0%, #9CAF88 100%);
-}
-
-.quickActionIconNaranja {
-    background: linear-gradient(135deg, #FF7D09 0%, #FF9A3C 100%);
-}
-
-.quickActionIconMorado {
-    background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
-}
-
-.quickActionText h3 {
-    font-size: 1.125rem;
+.actionTitle {
+    font-size: 1rem;
     font-weight: 600;
     color: #1f2937;
-    margin-bottom: 0.25rem;
+    margin: 0 0 4px 0;
+    line-height: 1.4;
 }
 
-.quickActionText p {
+.actionDescription {
     font-size: 0.875rem;
     color: #6b7280;
-    line-height: 1.5;
+    margin: 0 0 8px 0;
+    line-height: 1.4;
+}
+
+.actionStats {
+    display: flex;
+    gap: 8px;
+}
+
+.statBadge {
+    background: #f3f4f6;
+    color: #374151;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.actionArrow {
+    color: #9ca3af;
+    font-size: 1.25rem;
+    transition: transform 0.2s ease;
+}
+
+.quickActionCard:hover .actionArrow {
+    transform: translateX(4px);
+    color: #6b7280;
+}
+
+/* Loading States */
+.loadingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    color: #6b7280;
+}
+
+.loadingSpinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #f3f4f6;
+    border-top: 3px solid #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 12px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Error States */
+.errorContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    color: #dc2626;
+}
+
+.retryButton {
+    background: #dc2626;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-top: 12px;
+}
+
+.retryButton:hover {
+    background: #b91c1c;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .quickActionsGrid {
+        grid-template-columns: 1fr;
+    }
+    
+    .quickActionCard {
+        padding: 16px;
+    }
+    
+    .actionIcon {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .actionTitle {
+        font-size: 0.875rem;
+    }
+    
+    .actionDescription {
+        font-size: 0.75rem;
+    }
 }
 
 /* Recent Documents Section */

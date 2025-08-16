@@ -24,13 +24,17 @@ return [
         'index-settings' => [
             'documentos' => [
                 'filterableAttributes' => [
-                    'tipo', 'confidencialidad', 'direccion.id', 'direccion.nombre', 'proceso.id', 'proceso.nombre', 'etiquetas', 'created_at', 'tamaño_archivo', 'contador_descargas'
+                    'tipo', 'confidencialidad', 'direccion.id', 'direccion.nombre', 
+                    'proceso.id', 'proceso.nombre', 'etiquetas', 'created_at', 
+                    'tamaño_archivo', 'contador_descargas'
                 ],
                 'sortableAttributes' => [
                     'created_at', 'updated_at', 'titulo', 'contador_descargas', 'tamaño_archivo'
                 ],
                 'searchableAttributes' => [
-                    'titulo', 'descripcion', 'nombre_original', 'etiquetas', 'tipo', 'confidencialidad', 'direccion.nombre', 'direccion.codigo', 'proceso.nombre', 'proceso.codigo'
+                    'titulo', 'descripcion', 'nombre_original', 'etiquetas', 'tipo', 
+                    'confidencialidad', 'direccion.nombre', 'direccion.codigo', 
+                    'proceso.nombre', 'proceso.codigo'
                 ],
             ],
         ],

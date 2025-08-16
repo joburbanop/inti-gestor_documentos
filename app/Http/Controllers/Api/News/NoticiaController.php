@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\News;
 
 use App\Http\Controllers\Controller;
 use App\Models\Noticia;
@@ -212,7 +212,9 @@ class NoticiaController extends Controller
 
         // Manejar archivo nuevo
         if ($request->hasFile('document')) {
-            if ($noticia->document_path && !str_starts_with($noticia->document_path, 'remote:') && \Illuminate\Support\Facades\Storage::disk('public')->exists($noticia->document_path)) {
+            if ($noticia->document_path && !str_starts_with($noticia->document_path, 'remote:') && 
+                \Illuminate\Support\Facades\Storage::disk('public')->exists($noticia->document_path)) {
+            
                 \Illuminate\Support\Facades\Storage::disk('public')->delete($noticia->document_path);
             }
             $file = $request->file('document');

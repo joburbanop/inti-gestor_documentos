@@ -21,13 +21,12 @@ return new class extends Migration
 
         // Índices para procesos generales
         Schema::table('procesos_generales', function (Blueprint $table) {
-            try { $table->index(['codigo', 'activo'], 'procesos_generales_codigo_active_index'); } catch (\Throwable $e) {}
             try { $table->index(['nombre', 'activo'], 'procesos_generales_nombre_active_index'); } catch (\Throwable $e) {}
+            try { $table->index(['tipo_proceso_id', 'activo'], 'procesos_generales_tipo_active_index'); } catch (\Throwable $e) {}
         });
 
         // Índices para procesos internos
         Schema::table('procesos_internos', function (Blueprint $table) {
-            try { $table->index(['codigo', 'activo'], 'procesos_internos_codigo_active_index'); } catch (\Throwable $e) {}
             try { $table->index(['nombre', 'activo'], 'procesos_internos_nombre_active_index'); } catch (\Throwable $e) {}
             try { $table->index(['proceso_general_id', 'activo'], 'procesos_internos_general_active_index'); } catch (\Throwable $e) {}
         });
@@ -67,13 +66,12 @@ return new class extends Migration
 
         // Remover índices de procesos generales
         Schema::table('procesos_generales', function (Blueprint $table) {
-            $table->dropIndex('procesos_generales_codigo_active_index');
             $table->dropIndex('procesos_generales_nombre_active_index');
+            $table->dropIndex('procesos_generales_tipo_active_index');
         });
 
         // Remover índices de procesos internos
         Schema::table('procesos_internos', function (Blueprint $table) {
-            $table->dropIndex('procesos_internos_codigo_active_index');
             $table->dropIndex('procesos_internos_nombre_active_index');
             $table->dropIndex('procesos_internos_general_active_index');
         });

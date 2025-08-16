@@ -1,14 +1,17 @@
 <?php
 
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\ProcesoGeneralController;
-use App\Http\Controllers\Api\ProcesoInternoController;
-
+use App\Http\Controllers\Api\Auth\AuthController;
+use App\Http\Controllers\Api\Auth\RoleController;
+use App\Http\Controllers\Api\Processes\ProcesoTipoController;
+use App\Http\Controllers\Api\Processes\ProcesoGeneralController;
+use App\Http\Controllers\Api\Processes\ProcesoInternoController;
+use App\Http\Controllers\Api\Users\UserController;
+use App\Http\Controllers\Api\Users\AdminController;
+use App\Http\Controllers\Api\News\NoticiaController;
+use App\Http\Controllers\Api\Documents\DocumentController;
 use App\Http\Controllers\Api\DocumentoController;
-use App\Http\Controllers\Api\UserController;
-use App\Http\Controllers\Api\RoleController;
-use App\Http\Controllers\Api\AdminController;
-use App\Http\Controllers\Api\NoticiaController;
+use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\CategoriaController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -28,31 +31,75 @@ Route::post('/login', [AuthController::class, 'login']);
 
 // Rutas protegidas
 Route::middleware(['api.auth', \App\Http\Middleware\CheckUserActivity::class])->group(function () {
-    Route::get('/user', [AuthController::class, 'user']);
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/verify', [AuthController::class, 'verify']);
+    // ========================================
+    // RUTAS DE AUTENTICACIÓN
+    // ========================================
+    Route::prefix('auth')->group(function () {
+        Route::get('/user', [AuthController::class, 'user']);
+        Route::post('/logout', [AuthController::class, 'logout']);
+        Route::get('/verify', [AuthController::class, 'verify']);
+    });
 
-    // Rutas de Procesos Generales
+    // ========================================
+    // RUTAS DE PROCESOS (Nueva estructura)
+    // ========================================
+    Route::prefix('processes')->group(function () {
+        // Tipos de procesos
+        Route::apiResource('types', ProcesoTipoController::class);
+        Route::get('/types/{tipoId}/generals', [ProcesoTipoController::class, 'procesosGenerales']);
+        
+        // Procesos generales
+        Route::apiResource('generals', ProcesoGeneralController::class);
+        Route::get('/generals/{id}/documents', [ProcesoGeneralController::class, 'documentos']);
+        Route::get('/generals/types/available', [ProcesoGeneralController::class, 'tiposDisponibles']);
+        
+        // Procesos internos
+        Route::apiResource('internals', ProcesoInternoController::class);
+        Route::get('/generals/{procesoGeneralId}/internals', [ProcesoInternoController::class, 'porProcesoGeneral']);
+    });
+
+    // ========================================
+    // RUTAS DE DOCUMENTOS (Nueva estructura)
+    // ========================================
+    Route::prefix('documents')->group(function () {
+        Route::middleware(\App\Http\Middleware\HandleLargeUploads::class)->group(function () {
+            Route::apiResource('/', DocumentController::class);
+            Route::post('/{id}/download', [DocumentController::class, 'descargar'])->name('documents.download');
+        });
+    });
+
+    // ========================================
+    // RUTAS DE USUARIOS (Nueva estructura)
+    // ========================================
+    Route::prefix('users')->group(function () {
+        Route::apiResource('/', UserController::class);
+        Route::apiResource('admins', AdminController::class);
+    });
+
+    // ========================================
+    // RUTAS DE NOTICIAS (Nueva estructura)
+    // ========================================
+    Route::prefix('news')->group(function () {
+        Route::apiResource('/', NoticiaController::class);
+    });
+
+    // ========================================
+    // RUTAS LEGACY (Compatibilidad)
+    // ========================================
+    
+    // Rutas legacy de procesos
     Route::apiResource('procesos-generales', ProcesoGeneralController::class);
     Route::get('/procesos-generales/{id}/documentos', [ProcesoGeneralController::class, 'documentos']);
-
-    // Rutas de Procesos Internos
-    Route::get('/procesos-internos', [ProcesoInternoController::class, 'index']);
-    Route::get('/procesos-generales/{procesoGeneralId}/procesos-internos', [ProcesoInternoController::class, 'porProcesoGeneral']);
+    Route::get('/procesos-generales/tipos/disponibles', [ProcesoGeneralController::class, 'tiposDisponibles']);
+    Route::apiResource('tipos-procesos', ProcesoTipoController::class);
+    Route::get('/tipos-procesos/{tipoId}/procesos-generales', [ProcesoTipoController::class, 'procesosGenerales']);
+    Route::apiResource('procesos-internos', ProcesoInternoController::class);
+    Route::get('/procesos-generales/{procesoGeneralId}/procesos-internos', 
+        [ProcesoInternoController::class, 'porProcesoGeneral']);
+    Route::get('/procesos', [ProcesoGeneralController::class, 'index']);
     Route::post('/procesos-internos', [ProcesoInternoController::class, 'store']);
 
-    // Rutas para tipos de procesos (configuración)
-    Route::get('/procesos/tipos/stats', function () {
-        return response()->json(['success' => true, 'data' => []]);
-    });
-    Route::get('/procesos/tipos/config', function () {
-        return response()->json(['success' => true, 'data' => []]);
-    });
-    Route::get('/procesos/tipos/{tipo}/config', function ($tipo) {
-        return response()->json(['success' => true, 'data' => []]);
-    });
-
-    // Rutas específicas de Documentos (DEBEN IR ANTES que apiResource)
+    // Rutas legacy de documentos
     Route::get('/documentos/buscar', [DocumentoController::class, 'buscar']);
     Route::get('/documentos/recientes', [DocumentoController::class, 'recientes']);
     Route::get('/documentos/estadisticas', [DocumentoController::class, 'estadisticas']);
@@ -60,7 +107,8 @@ Route::middleware(['api.auth', \App\Http\Middleware\CheckUserActivity::class])->
     Route::get('/documentos/extensiones-disponibles', [DocumentoController::class, 'extensionesDisponibles']);
     Route::get('/documentos/etiquetas', [DocumentoController::class, 'etiquetas']);
     Route::get('/documentos/tipos', [DocumentoController::class, 'tipos']);
-    // Sugerencias de etiquetas (autosuggest simple desde documentos existentes)
+    
+    // Sugerencias de etiquetas
     Route::get('/documentos/etiquetas/sugerencias', function (Request $request) {
         $q = trim($request->get('q', ''));
         $limit = min((int) $request->get('limit', 10), 50);
@@ -80,66 +128,38 @@ Route::middleware(['api.auth', \App\Http\Middleware\CheckUserActivity::class])->
         return response()->json(['success' => true, 'data' => $tags->take($limit)]);
     });
     
-    // Rutas de Documentos (apiResource debe ir DESPUÉS de las rutas específicas)
+    // Rutas legacy de documentos (apiResource)
     Route::middleware(\App\Http\Middleware\HandleLargeUploads::class)->group(function () {
         Route::apiResource('documentos', DocumentoController::class);
-        Route::post('/documentos/{id}/descargar', [DocumentoController::class, 'descargar'])->name('documentos.descargar');
-        Route::get('/documentos/{id}/vista-previa', [DocumentoController::class, 'vistaPrevia'])->name('documentos.vista-previa');
+        Route::post('/documentos/{id}/descargar', 
+            [DocumentoController::class, 'descargar'])->name('documentos.descargar');
     });
 
-    // Noticias: endpoints rápidos para el dashboard
-    Route::get('/noticias/latest', [NoticiaController::class, 'latest']);
-    // Listado paginado completo si se requiere
-    Route::get('/noticias', [NoticiaController::class, 'index']);
+    // Rutas legacy de usuarios
+    Route::apiResource('users', UserController::class);
+    Route::apiResource('roles', RoleController::class);
+    Route::apiResource('admins', AdminController::class);
 
-    // Ruta de prueba para debug
-    Route::get('/debug/documentos', function (Request $request) {
-        $query = \App\Models\Documento::with(['direccion:id,nombre,codigo', 'procesoApoyo:id,nombre,codigo']);
-        
-        if ($request->has('direccion_id')) {
-            $query->where('direccion_id', $request->direccion_id);
-        }
-        
-        if ($request->has('proceso_apoyo_id')) {
-            $query->where('proceso_apoyo_id', $request->proceso_apoyo_id);
-        }
-        
-        $documentos = $query->get();
-        
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'documentos' => $documentos,
-                'count' => $documentos->count(),
-                'params' => $request->all()
-            ]
-        ]);
+    // Rutas legacy de noticias
+    Route::apiResource('noticias', NoticiaController::class);
+
+    // ========================================
+    // RUTAS DE DASHBOARD
+    // ========================================
+    Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
+    Route::get('/dashboard/recent-documents', [DashboardController::class, 'recentDocuments']);
+    Route::get('/dashboard/quick-actions', [DashboardController::class, 'quickActions']);
+
+    // ========================================
+    // RUTAS DE CONFIGURACIÓN
+    // ========================================
+    Route::get('/procesos/tipos/stats', function () {
+        return response()->json(['success' => true, 'data' => []]);
     });
-
-    // Rutas de Administración (solo para administradores)
-    Route::middleware('admin')->group(function () {
-        // Gestión de Usuarios (rutas específicas ANTES del apiResource para evitar colisiones)
-        Route::get('/usuarios/stats', [UserController::class, 'stats']);
-        Route::patch('/usuarios/{id}/toggle-status', [UserController::class, 'toggleStatus']);
-        Route::apiResource('usuarios', UserController::class);
-
-        // Gestión de Roles (rutas específicas ANTES del apiResource para evitar colisiones)
-        Route::get('/roles/stats', [RoleController::class, 'stats']);
-        Route::get('/roles/permissions', [RoleController::class, 'permissions']);
-        Route::get('/roles/{id}/users', [RoleController::class, 'users']);
-        Route::apiResource('roles', RoleController::class);
-
-        // Estadísticas Administrativas
-        Route::get('/admin/stats', [AdminController::class, 'stats']);
-        Route::get('/admin/activity', [AdminController::class, 'recentActivity']);
-        Route::get('/admin/report', [AdminController::class, 'systemReport']);
-
-        // Noticias (crear y gestionar)
-        Route::get('/admin/noticias', [NoticiaController::class, 'indexAdmin']);
-        Route::post('/noticias', [NoticiaController::class, 'store']);
-        Route::put('/noticias/{id}', [NoticiaController::class, 'update']);
-        Route::patch('/noticias/{id}', [NoticiaController::class, 'update']);
-        Route::patch('/noticias/{id}/toggle', [NoticiaController::class, 'toggle']);
-        Route::delete('/noticias/{id}', [NoticiaController::class, 'destroy']);
+    Route::get('/procesos/tipos/config', function () {
+        return response()->json(['success' => true, 'data' => []]);
+    });
+    Route::get('/procesos/tipos/{tipo}/config', function ($tipo) {
+        return response()->json(['success' => true, 'data' => []]);
     });
 }); 

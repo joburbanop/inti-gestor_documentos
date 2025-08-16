@@ -1,125 +1,99 @@
-import React, { useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-    DirectionsIcon, 
-    ProcessIcon, 
-    FolderIcon, 
-    AdminIcon, 
-    MyDocumentsIcon, 
-    StarIcon,
-    ArrowRightIcon 
-} from '../icons/DashboardIcons';
-
-const QuickActionCard = React.memo(({ title, description, icon, hash, colorClass, onClick, styles = {} }) => (
-    <button
-        type="button"
-        onClick={() => { if (onClick) onClick(hash); }}
-        className={styles.quickActionCard || ''}
-        aria-label={`Ir a ${title}`}
-    >
-        <div className={styles.quickActionContent || ''}>
-            <div className={`${styles.quickActionIcon || ''} ${styles[colorClass] || ''}`}>
-                {icon}
-            </div>
-            <div className={styles.quickActionText || ''}>
-                <h3>{title}</h3>
-                <p>{description}</p>
-            </div>
-            <div className="text-gray-300">
-                <ArrowRightIcon className="w-6 h-6" />
-            </div>
-        </div>
-    </button>
-));
-
-const QuickActionsSection = ({ 
-    user, 
-    showAdmin = true, 
-    showDirections = true, 
-    showProcesses = true, 
-    showDocuments = true,
-    customActions = [],
-    onActionClick,
-    isUserDashboard = false,
-    title = "Acciones Rápidas",
-    subtitle = "Accede rápidamente a las funciones principales",
-    actionsConfig = [],
-    styles = {},
-    className = ""
-}) => {
-    const navigate = useNavigate();
-
-    // Navegación por defecto usando React Router si no se provee onActionClick
-    const handleActionClick = useCallback((hash) => {
-        if (!hash) return;
-        const normalized = hash.startsWith('/') ? hash : `/${hash}`;
-        navigate(normalized);
-    }, [navigate]);
-    // Configuración por defecto si no se proporciona actionsConfig
-    const defaultActions = [
-        ...(showDirections ? [{
-            title: isUserDashboard ? "Explorar por Proceso Estratégico" : "Procesos Estratégicos",
-            description: isUserDashboard 
-                ? "Encuentra documentos organizados por procesos estratégicos"
-                : "Gestiona los procesos estratégicos de la organización.",
-            icon: <DirectionsIcon className="w-8 h-8" />,
-            hash: "procesos/estrategico",
-            colorClass: "quickActionIconAzul"
-        }] : []),
-        ...(showProcesses ? [{
-            title: isUserDashboard ? "Explorar por Proceso Misional" : "Procesos Misionales",
-            description: isUserDashboard 
-                ? "Explora documentos por proceso misional dentro de cada dirección"
-                : "Configura los procesos misionales (procesos de apoyo) dentro de cada dirección.",
-            icon: <ProcessIcon className="w-8 h-8" />,
-            hash: "procesos",
-            colorClass: "quickActionIconVerde"
-        }] : []),
-        ...(showDocuments ? [{
-            title: isUserDashboard ? "Todos los Documentos" : "Gestión Documental",
-            description: isUserDashboard 
-                ? "Accede a todos los documentos y formatos disponibles en el sistema organizados por dirección y proceso"
-                : "Administra los documentos y formatos generados por las direcciones y procesos. Organiza, categoriza y facilita el acceso a la información institucional.",
-            icon: <FolderIcon className="w-8 h-8" />,
-            hash: "documentos",
-            colorClass: "quickActionIconNaranja"
-        }] : []),
-        ...(showAdmin && user?.is_admin ? [{
-            title: "Administración del Sistema",
-            description: "Configuración general del sistema, gestión de usuarios, permisos y parámetros de la intranet documental.",
-            icon: <AdminIcon className="w-8 h-8" />,
-            hash: "administracion",
-            colorClass: "quickActionIconMorado"
-        }] : [])
-    ];
-
-    const finalActions = actionsConfig.length > 0 ? actionsConfig : [...defaultActions, ...customActions];
-
-    return (
-        <div className={`${styles.quickActionsSection || ''} ${className}`}>
-            {(title || subtitle) && (
-                <div className={styles.quickActionsHeader || ''}>
-                    {title && <h2 className={styles.quickActionsTitle || ''}>{title}</h2>}
-                    {subtitle && <p className={styles.quickActionsSubtitle || ''}>{subtitle}</p>}
-                </div>
-            )}
-            
-            <div className={styles.quickActionsGrid || ''}>
-                {finalActions.map((action, index) => (
-                    <QuickActionCard
-                        key={index}
-                        title={action.title}
-                        description={action.description}
-                        icon={action.icon}
-                        hash={action.hash}
-                        colorClass={action.colorClass}
-                        onClick={onActionClick || handleActionClick}
-                        styles={styles}
-                    />
-                ))}
-            </div>
-        </div>
-    );
-};
-
-export default QuickActionsSection; 
+import React from 'react'; import { useQuickActions } from '../../hooks/useQuickActions';
+ import {
+ StrategicIcon,
+ MissionIcon,
+ SupportIcon,
+ EvaluationIcon,
+ ArrowRightIcon
+ } from '../icons/DashboardIcons';
+ import styles from '../../styles/components/Dashboard.module.css';
+ const QuickActionsSection = () => {
+ const {
+ accionesRapidas,
+ loading,
+ error,
+ cargarAccionesRapidas,
+ handleAccionClick
+ } = useQuickActions();
+ const getIconComponent = (iconName) => {
+ const iconMap = {
+ 'building': StrategicIcon,
+ 'target': MissionIcon,
+ 'support': SupportIcon,
+ 'chart': EvaluationIcon
+ };
+ const IconComponent = iconMap[iconName] || StrategicIcon;
+ return <IconComponent className="w-8 h-8" />;
+ };
+ if (loading) {
+ return (
+ <div className={styles.quickActionsSection}>
+ <div className={styles.sectionHeader}>
+ <h2>Acciones Rápidas</h2>
+ <p>Accede rápidamente a las funciones principales</p>
+ </div>
+ <div className={styles.loadingContainer}>
+ <div className={styles.loadingSpinner}></div>
+ <p>Cargando acciones rápidas...</p>
+ </div>
+ </div>
+ );
+ }
+ if (error) {
+ return (
+ <div className={styles.quickActionsSection}>
+ <div className={styles.sectionHeader}>
+ <h2>Acciones Rápidas</h2>
+ <p>Accede rápidamente a las funciones principales</p>
+ </div>
+ <div className={styles.errorContainer}>
+ <p>❌ {error}</p>
+ <button
+ onClick={cargarAccionesRapidas}
+ className={styles.retryButton}
+ >
+ Reintentar
+ </button>
+ </div>
+ </div>
+ );
+ }
+ return (
+ <div className={styles.quickActionsSection}>
+ <div className={styles.sectionHeader}>
+ <h2>Acciones Rápidas</h2>
+ <p>Accede rápidamente a las funciones principales</p>
+ </div>
+ <div className={styles.quickActionsGrid}>
+ {accionesRapidas.map((accion) => (
+ <div
+ key={accion.id}
+ className={styles.quickActionCard}
+ onClick={() => handleAccionClick(accion)}
+ style={{
+ borderLeft: `4px solid ${accion.color}`,
+ cursor: 'pointer'
+ }}
+ >
+ <div className={styles.actionIcon} style={{ color: accion.color }}>
+ {getIconComponent(accion.icono)}
+ </div>
+ <div className={styles.actionContent}>
+ <h3 className={styles.actionTitle}>{accion.titulo}</h3>
+ <p className={styles.actionDescription}>{accion.descripcion}</p>
+ <div className={styles.actionStats}>
+ <span className={styles.statBadge}>
+ {accion.total_procesos} proceso{accion.total_procesos !== 1 ? 's' : ''}
+ </span>
+ </div>
+ </div>
+ <div className={styles.actionArrow}>
+ <ArrowRightIcon className="w-6 h-6" />
+ </div>
+ </div>
+ ))}
+ </div>
+ </div>
+ );
+ };
+ export default QuickActionsSection;

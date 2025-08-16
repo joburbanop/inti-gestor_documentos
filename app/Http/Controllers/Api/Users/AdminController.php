@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Users;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -169,6 +169,7 @@ class AdminController extends Controller
                 ],
                 'documents' => [
                     'uploaded_this_month' => Documento::where('created_at', '>=', Carbon::now()->startOfMonth())->count(),
+                    
                     'downloaded_this_month' => $this->getDownloadsThisMonth(),
                     'popular_documents' => $this->getPopularDocuments()
                 ],

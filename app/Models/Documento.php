@@ -23,6 +23,8 @@ class Documento extends Model
         'tipo_archivo',
         'extension',
         'tamaño_archivo',
+        'tipo_proceso_id',
+        'proceso_general_id',
         'proceso_interno_id',
         'subido_por',
         'slug',
@@ -94,9 +96,33 @@ class Documento extends Model
     }
 
     /**
+     * Relación con proceso general
+     */
+    public function procesoGeneral(): BelongsTo
+    {
+        return $this->belongsTo(ProcesoGeneral::class, 'proceso_general_id');
+    }
+
+    /**
+     * Relación con tipo de proceso
+     */
+    public function tipoProceso(): BelongsTo
+    {
+        return $this->belongsTo(ProcesoTipo::class, 'tipo_proceso_id');
+    }
+
+    /**
      * Relación con usuario que subió el documento
      */
     public function subidoPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'subido_por');
+    }
+
+    /**
+     * Alias para compatibilidad con servicios
+     */
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'subido_por');
     }

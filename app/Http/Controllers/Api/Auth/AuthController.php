@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -38,8 +38,12 @@ class AuthController extends Controller
             $credentials = $request->only('email', 'password');
             
             // Rate limit por email + IP (5/min) definido en AppServiceProvider
-            if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts('login:'.md5($credentials['email'].'|'.$request->ip()), 5)) {
-                $seconds = \Illuminate\Support\Facades\RateLimiter::availableIn('login:'.md5($credentials['email'].'|'.$request->ip()));
+            if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts(
+                'login:' . md5($credentials['email'] . '|' . $request->ip()), 5
+            )) {
+                $seconds = \Illuminate\Support\Facades\RateLimiter::availableIn(
+                    'login:' . md5($credentials['email'] . '|' . $request->ip())
+                );
                 return response()->json([
                     'success' => false,
                     'message' => 'Demasiados intentos. Intenta de nuevo en '.$seconds.' segundos.'
@@ -62,7 +66,10 @@ class AuthController extends Controller
                 }
 
                 // Rotación/expiración de tokens Sanctum: revocar tokens antiguos y emitir uno nuevo con expiración
-                try { $user->tokens()->where('name', 'auth-token')->delete(); } catch (\Throwable $e) {}
+                try { 
+                    $user->tokens()->where('name', 'auth-token')->delete(); 
+                } catch (\Throwable $e) {}
+                
                 $token = $user->createToken('auth-token', ['*'], now()->addHours(4))->plainTextToken; // Reducido de 7 días a 4 horas
 
                 // Respuesta mínima para máxima velocidad
@@ -80,7 +87,10 @@ class AuthController extends Controller
                                 'id' => $user->role->id,
                                 'name' => $user->role->name,
                                 'display_name' => $user->role->display_name,
-                                'permissions' => is_array($user->role->permissions) ? array_column($user->role->permissions, 'name') : $user->role->permissions->pluck('name')->toArray()
+                                                                'permissions' => is_array($user->role->permissions) ? 
+                                    array_column($user->role->permissions, 'name') : 
+                                    $user->role->permissions->pluck('name')->toArray()
+                                
                             ]
                         ],
                         'token' => $token,
@@ -90,7 +100,9 @@ class AuthController extends Controller
 
             } else {
                 // Registrar intento fallido en rate limiter
-                \Illuminate\Support\Facades\RateLimiter::hit('login:'.md5($credentials['email'].'|'.$request->ip()), 60);
+                \Illuminate\Support\Facades\RateLimiter::hit(
+                    'login:' . md5($credentials['email'] . '|' . $request->ip()), 60
+                );
                 
                 return response()->json([
                     'success' => false,

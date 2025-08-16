@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
@@ -17,15 +18,13 @@ class ProcesoGeneral extends Model
     protected $fillable = [
         'nombre',
         'descripcion',
-        'codigo',
-        'color',
-        'orden',
+        'icono',
+        'tipo_proceso_id',
         'activo'
     ];
 
     protected $casts = [
-        'activo' => 'boolean',
-        'orden' => 'integer'
+        'activo' => 'boolean'
     ];
 
     protected $hidden = [
@@ -55,6 +54,14 @@ class ProcesoGeneral extends Model
     }
 
     /**
+     * Relación con tipo de proceso
+     */
+    public function tipoProceso(): BelongsTo
+    {
+        return $this->belongsTo(ProcesoTipo::class, 'tipo_proceso_id');
+    }
+
+    /**
      * Relación con procesos internos
      */
     public function procesosInternos(): HasMany
@@ -67,7 +74,7 @@ class ProcesoGeneral extends Model
     /**
      * Relación con documentos (a través de procesos internos)
      */
-    public function documentos(): HasMany
+    public function documentos(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
     {
         return $this->hasManyThrough(Documento::class, ProcesoInterno::class, 'proceso_general_id', 'proceso_interno_id');
     }
@@ -81,11 +88,21 @@ class ProcesoGeneral extends Model
     }
 
     /**
-     * Scope para ordenar por orden
+     * Scope para ordenar por nombre
      */
     public function scopeOrdenados(Builder $query): Builder
     {
-        return $query->orderBy('orden')->orderBy('nombre');
+        return $query->orderBy('nombre');
+    }
+
+    /**
+     * Scope para filtrar por tipo de proceso
+     */
+    public function scopePorTipo(Builder $query, string $tipo): Builder
+    {
+        return $query->whereHas('tipoProceso', function ($q) use ($tipo) {
+            $q->where('nombre', $tipo);
+        });
     }
 
     /**
@@ -109,22 +126,24 @@ class ProcesoGeneral extends Model
         return Cache::remember('procesos_generales_activos', 300, function () {
             return static::activos()
                 ->ordenados()
-                ->with(['procesosInternos' => function ($query) {
-                    $query->activos()->orderBy('nombre');
+                ->with(['tipoProceso', 'procesosInternos' => function ($query) {
+                    $query->activos()->ordenados();
                 }])
-                ->withCount(['procesosInternos' => function ($query) {
-                    $query->where('activo', true);
-                }])
-                ->withCount(['documentos'])
                 ->get();
         });
     }
 
     /**
-     * Buscar por código
+     * Obtener procesos generales por tipo
      */
-    public static function findByCodigo(string $codigo): ?self
+    public static function getPorTipo(string $tipo): \Illuminate\Database\Eloquent\Collection
     {
-        return static::where('codigo', $codigo)->where('activo', true)->first();
+        return static::activos()
+            ->porTipo($tipo)
+            ->ordenados()
+            ->with(['tipoProceso', 'procesosInternos' => function ($query) {
+                $query->activos()->ordenados();
+            }])
+            ->get();
     }
 }

@@ -14,46 +14,34 @@ class ProcesoTipoSeeder extends Seeder
     {
         $tipos = [
             [
-                'key' => 'estrategico',
-                'title' => 'Procesos Estratégicos mirando al futuro',
-                'subtitle' => 'Definen la dirección y objetivos de la organización',
-                'empty_text' => 'No hay procesos estratégicos registrados aún.',
-                'color' => '#1E40AF',
-                'icon' => 'building',
-                'orden' => 1
+                'nombre' => 'estrategico',
+                'titulo' => 'Procesos Estratégicos',
+                'descripcion' => 'Definen la dirección y objetivos de la organización mirando al futuro',
+                'icono' => 'building'
             ],
             [
-                'key' => 'misional',
-                'title' => 'Procesos Misionales',
-                'subtitle' => 'Ejecutan las funciones principales de la organización',
-                'empty_text' => 'No hay procesos misionales registrados aún.',
-                'color' => '#059669',
-                'icon' => 'target',
-                'orden' => 2
+                'nombre' => 'misional',
+                'titulo' => 'Procesos Misionales',
+                'descripcion' => 'Ejecutan las funciones principales de la organización',
+                'icono' => 'target'
             ],
             [
-                'key' => 'apoyo',
-                'title' => 'Procesos de Apoyo',
-                'subtitle' => 'Soportan y habilitan los procesos estratégicos y misionales',
-                'empty_text' => 'No hay procesos de apoyo registrados aún.',
-                'color' => '#7C3AED',
-                'icon' => 'support',
-                'orden' => 3
+                'nombre' => 'apoyo',
+                'titulo' => 'Procesos de Apoyo',
+                'descripcion' => 'Soportan y habilitan los procesos estratégicos y misionales',
+                'icono' => 'support'
             ],
             [
-                'key' => 'evaluacion',
-                'title' => 'Procesos de Evaluación',
-                'subtitle' => 'Evaluación y mejora continua de la organización',
-                'empty_text' => 'No hay procesos de evaluación registrados aún.',
-                'color' => '#DC2626',
-                'icon' => 'chart',
-                'orden' => 4
+                'nombre' => 'evaluacion',
+                'titulo' => 'Procesos de Evaluación',
+                'descripcion' => 'Evaluación y mejora continua de la organización',
+                'icono' => 'chart'
             ]
         ];
 
         foreach ($tipos as $tipo) {
             ProcesoTipo::updateOrCreate(
-                ['key' => $tipo['key']],
+                ['nombre' => $tipo['nombre']],
                 $tipo
             );
         }

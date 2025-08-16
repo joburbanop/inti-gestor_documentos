@@ -6,7 +6,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Documento;
-use App\Models\Proceso;
+use App\Models\ProcesoGeneral;
+use App\Models\ProcesoInterno;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -319,28 +320,73 @@ class DocumentoController extends Controller
         }
         
         try {
+            // Log de datos recibidos para debugging
+            \Log::info('📝 [DocumentoController] Datos recibidos:', [
+                'all_data' => $request->all(),
+                'files' => $request->allFiles(),
+                'has_archivo' => $request->hasFile('archivo'),
+                'archivo_size' => $request->file('archivo') ? $request->file('archivo')->getSize() : 'no file'
+            ]);
+
             $validator = Validator::make($request->all(), [
                 'titulo' => 'required|string|max:255',
                 'descripcion' => 'nullable|string',
                 'archivo' => 'required|file|max:8192', // 8MB máximo (temporalmente reducido)
-                'proceso_id' => 'required|exists:procesos,id',
-                'tipo' => 'nullable|string|max:50',
-                'etiquetas' => 'nullable|array',
-                'etiquetas.*' => 'string|max:50',
+                'tipo_proceso_id' => 'required|exists:tipos_procesos,id',
+                'proceso_general_id' => 'required|exists:procesos_generales,id',
+                'proceso_interno_id' => 'required|exists:procesos_internos,id',
                 'confidencialidad' => 'nullable|string|in:Publico,Interno'
-
             ], [
                 'titulo.required' => 'El título es obligatorio',
                 'archivo.required' => 'El archivo es obligatorio',
                 'archivo.max' => 'El archivo no puede ser mayor a 8MB (temporalmente)',
-                'proceso_id.required' => 'El proceso es obligatorio'
+                'tipo_proceso_id.required' => 'El tipo de proceso es obligatorio',
+                'proceso_general_id.required' => 'El proceso general es obligatorio',
+                'proceso_interno_id.required' => 'El proceso interno es obligatorio'
             ]);
 
             if ($validator->fails()) {
+                // Log de errores de validación
+                \Log::error('❌ [DocumentoController] Errores de validación:', [
+                    'errors' => $validator->errors()->toArray()
+                ]);
+                
                 return response()->json([
                     'success' => false,
                     'message' => 'Error de validación',
                     'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Verificar que el proceso interno pertenece al proceso general
+            $procesoInterno = ProcesoInterno::find($request->proceso_interno_id);
+            if (!$procesoInterno) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El proceso interno seleccionado no existe'
+                ], 422);
+            }
+
+            if ($procesoInterno->proceso_general_id != $request->proceso_general_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El proceso interno no pertenece al proceso general seleccionado'
+                ], 422);
+            }
+
+            // Verificar que el proceso general pertenece al tipo de proceso
+            $procesoGeneral = ProcesoGeneral::find($request->proceso_general_id);
+            if (!$procesoGeneral) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El proceso general seleccionado no existe'
+                ], 422);
+            }
+
+            if ($procesoGeneral->tipo_proceso_id != $request->tipo_proceso_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El proceso general no pertenece al tipo de proceso seleccionado'
                 ], 422);
             }
 
@@ -356,30 +402,26 @@ class DocumentoController extends Controller
                 'ruta_archivo' => $rutaArchivo,
                 'tipo_archivo' => $archivo->getClientMimeType(),
                 'tamaño_archivo' => $archivo->getSize(),
-                'proceso_id' => $request->proceso_id,
+                'tipo_proceso_id' => $request->tipo_proceso_id,
+                'proceso_general_id' => $request->proceso_general_id,
+                'proceso_interno_id' => $request->proceso_interno_id,
                 'subido_por' => auth()->id(),
-                'tipo' => $request->tipo,
-                'etiquetas' => $request->etiquetas,
                 'confidencialidad' => $request->confidencialidad ?: 'Publico',
-
             ]);
 
             // Limpiar cache relacionado
             Cache::forget('dashboard_estadisticas');
-            Cache::forget("direccion_estadisticas_{$request->direccion_id}");
-            Cache::forget("direccion_{$request->direccion_id}");
-            Cache::forget("proceso_apoyo_{$request->proceso_apoyo_id}");
-            Cache::forget("procesos_apoyo_direccion_{$request->direccion_id}");
-            Cache::increment('procesos_apoyo_cache_version');
+            Cache::forget("tipos_procesos_{$request->tipo_proceso_id}_procesos_generales");
+            Cache::forget("proceso_general_{$request->proceso_general_id}");
+            Cache::forget("proceso_interno_{$request->proceso_interno_id}");
 
             return response()->json([
                 'success' => true,
-                'data' => $documento,
+                'data' => $documento->load(['procesoGeneral:id,nombre', 'procesoInterno:id,nombre']),
                 'message' => 'Documento subido exitosamente'
             ], 201);
 
         } catch (\Exception $e) {
-            
             return response()->json([
                 'success' => false,
                 'message' => 'Error al subir el documento',
@@ -853,13 +895,13 @@ class DocumentoController extends Controller
             // $estadisticas = Cache::remember('dashboard_estadisticas', 120, function () {
                 // Consultas directas sin caché para datos actualizados
                 $totalDocumentos = Documento::count();
-                $totalDirecciones = Direccion::where('activo', true)->count();
-                $totalProcesos = ProcesoApoyo::where('activo', true)->count();
+                $totalProcesosGenerales = ProcesoGeneral::where('activo', true)->count();
+                $totalProcesosInternos = ProcesoInterno::where('activo', true)->count();
 
                 $estadisticas = [
                     'total_documentos' => $totalDocumentos,
-                    'total_direcciones' => $totalDirecciones,
-                    'total_procesos' => $totalProcesos
+                    'total_procesos_generales' => $totalProcesosGenerales,
+                    'total_procesos_internos' => $totalProcesosInternos
                 ];
             // });
 

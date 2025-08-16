@@ -18,8 +18,7 @@ class ProcesoInterno extends Model
     protected $fillable = [
         'nombre',
         'descripcion',
-        'codigo',
-        'color',
+        'icono',
         'proceso_general_id',
         'activo'
     ];
@@ -42,18 +41,15 @@ class ProcesoInterno extends Model
 
         // Limpiar cache cuando se crea, actualiza o elimina un proceso interno
         static::created(function ($procesoInterno) {
-            Cache::forget("procesos_internos_proceso_general_{$procesoInterno->proceso_general_id}");
-            Cache::forget('procesos_internos_todos');
+            Cache::forget('procesos_internos_activos');
         });
 
         static::updated(function ($procesoInterno) {
-            Cache::forget("procesos_internos_proceso_general_{$procesoInterno->proceso_general_id}");
-            Cache::forget('procesos_internos_todos');
+            Cache::forget('procesos_internos_activos');
         });
 
         static::deleted(function ($procesoInterno) {
-            Cache::forget("procesos_internos_proceso_general_{$procesoInterno->proceso_general_id}");
-            Cache::forget('procesos_internos_todos');
+            Cache::forget('procesos_internos_activos');
         });
     }
 
@@ -66,11 +62,21 @@ class ProcesoInterno extends Model
     }
 
     /**
-     * Relación con documentos
+     * Relación con categorías (carpetas)
      */
-    public function documentos(): HasMany
+    public function categorias(): HasMany
     {
-        return $this->hasMany(Documento::class, 'proceso_interno_id');
+        return $this->hasMany(Categoria::class, 'proceso_interno_id')
+                    ->where('activo', true)
+                    ->orderBy('nombre');
+    }
+
+    /**
+     * Relación con documentos (a través de categorías)
+     */
+    public function documentos(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    {
+        return $this->hasManyThrough(Documento::class, Categoria::class, 'proceso_interno_id', 'categoria_id');
     }
 
     /**
@@ -114,10 +120,10 @@ class ProcesoInterno extends Model
      */
     public static function getActivos(): \Illuminate\Database\Eloquent\Collection
     {
-        return Cache::remember('procesos_internos_todos', 300, function () {
+        return Cache::remember('procesos_internos_activos', 300, function () {
             return static::activos()
                 ->ordenados()
-                ->with('procesoGeneral')
+                ->with(['procesoGeneral.tipoProceso'])
                 ->get();
         });
     }
@@ -127,11 +133,10 @@ class ProcesoInterno extends Model
      */
     public static function getPorProcesoGeneral(int $procesoGeneralId): \Illuminate\Database\Eloquent\Collection
     {
-        return Cache::remember("procesos_internos_proceso_general_{$procesoGeneralId}", 300, function () use ($procesoGeneralId) {
-            return static::activos()
-                ->porProcesoGeneral($procesoGeneralId)
-                ->ordenados()
-                ->get();
-        });
+        return static::activos()
+            ->porProcesoGeneral($procesoGeneralId)
+            ->ordenados()
+            ->with(['procesoGeneral.tipoProceso'])
+            ->get();
     }
 }
