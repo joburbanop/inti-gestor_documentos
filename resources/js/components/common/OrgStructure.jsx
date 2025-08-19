@@ -13,7 +13,7 @@ import React, { useEffect, useState } from 'react'; import PropTypes from 'prop-
  try {
  setLoading(true);
  setError(null);
- const resProcesos = await apiRequest('/api/procesos-generales');
+ const resProcesos = await apiRequest('/procesos-generales');
  if (!resProcesos?.success) throw new Error(resProcesos?.message || 'Error al obtener procesos generales');
  const baseProcesos = Array.isArray(resProcesos.data) ? resProcesos.data : resProcesos.data?.data || [];
  // Traer procesos internos por proceso general en paralelo
@@ -21,7 +21,7 @@ import React, { useEffect, useState } from 'react'; import PropTypes from 'prop-
  const withProcesosInternos = await Promise.all(
  sortedProcesos.map(async (proceso) => {
  try {
- const resProcs = await apiRequest(`/api/procesos-generales/${proceso.id}/procesos-internos`);
+ const resProcs = await apiRequest(`/procesos-generales/${proceso.id}/procesos-internos`);
  const procesosInternos = resProcs?.success ? (resProcs.data || []) : [];
  return { ...proceso, procesos_internos: procesosInternos };
  } catch (_) {
@@ -55,8 +55,7 @@ import React, { useEffect, useState } from 'react'; import PropTypes from 'prop-
  );
  }
  // Preparar datos para la estructura jerárquica
- const sortedProcesosGeneralesForView = [...proce
- sosGenerales].sort((a, b) => (a.nombre || ').localeCompare(b.nombre || '));
+ const sortedProcesosGeneralesForView = [...procesosGenerales].sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
  const procesoIdToInfo = new Map();
  sortedProcesosGeneralesForView.forEach((proc) => {
  (proc.procesos_internos || []).forEach((p) => {
@@ -69,8 +68,7 @@ import React, { useEffect, useState } from 'react'; import PropTypes from 'prop-
  }
  });
  });
- const allProcesos = Array.from(procesoIdToInfo.v
- alues()).sort((a, b) => (a.nombre || ').localeCompare(b.nombre || '));
+ const allProcesos = Array.from(procesoIdToInfo.values()).sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
  return (
  <section className={styles.container}>
  <header className={styles.header}>

@@ -11,28 +11,37 @@ use App\Http\Controllers\Api\News\NoticiaController;
 use App\Http\Controllers\Api\Documents\DocumentController;
 use App\Http\Controllers\Api\DocumentoController;
 use App\Http\Controllers\Api\DashboardController;
-use App\Http\Controllers\Api\CategoriaController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| API Routes
+| API Routes - Version 1 (Unified English Routes)
 |--------------------------------------------------------------------------
 |
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
+| API versionada con rutas unificadas en inglés
+| Mantiene compatibilidad con rutas legacy
 |
 */
 
-// Rutas públicas de autenticación
-Route::post('/login', [AuthController::class, 'login']);
+// ========================================
+// RUTAS PÚBLICAS (Sin autenticación)
+// ========================================
+Route::prefix('v1')->group(function () {
+    // Autenticación pública
+    Route::post('/auth/login', [AuthController::class, 'login']);
+    
+    // Noticias públicas
+    Route::get('/news/latest', [NoticiaController::class, 'latest']);
+});
 
-// Rutas protegidas
-Route::middleware(['api.auth', \App\Http\Middleware\CheckUserActivity::class])->group(function () {
+// ========================================
+// RUTAS PROTEGIDAS V1 (Nuevas rutas en inglés)
+// ========================================
+Route::prefix('v1')->middleware(['api.auth', \App\Http\Middleware\CheckUserActivity::class])->group(function () {
+    
     // ========================================
-    // RUTAS DE AUTENTICACIÓN
+    // DOMINIO: AUTENTICACIÓN
     // ========================================
     Route::prefix('auth')->group(function () {
         Route::get('/user', [AuthController::class, 'user']);
@@ -41,12 +50,58 @@ Route::middleware(['api.auth', \App\Http\Middleware\CheckUserActivity::class])->
     });
 
     // ========================================
-    // RUTAS DE PROCESOS (Nueva estructura)
+    // DOMINIO: DOCUMENTOS (Nuevas rutas en inglés)
+    // ========================================
+    Route::prefix('documents')->middleware([\App\Http\Middleware\HandleLargeUploads::class])->group(function () {
+        // CRUD principal
+        Route::apiResource('/', DocumentController::class);
+        
+        // Operaciones específicas
+        Route::post('/{id}/download', [DocumentController::class, 'download']);
+        Route::get('/{id}/preview', [DocumentController::class, 'preview']);
+        
+        // Búsqueda y filtros
+        Route::get('/search', [DocumentController::class, 'search']);
+        Route::get('/recent', [DocumentController::class, 'recent']);
+        
+        // Estadísticas
+        Route::get('/stats', [DocumentController::class, 'stats']);
+        Route::get('/stats/extensions', [DocumentController::class, 'extensionStats']);
+        Route::get('/extensions/available', [DocumentController::class, 'availableExtensions']);
+        Route::get('/tags', [DocumentController::class, 'tags']);
+        Route::get('/types', [DocumentController::class, 'types']);
+        
+        // Sugerencias de etiquetas
+        Route::get('/tags/suggestions', function (Request $request) {
+            $q = trim($request->get('q', ''));
+            $limit = min((int) $request->get('limit', 10), 50);
+            $tags = \App\Models\Documento::query()
+                ->whereNotNull('etiquetas')
+                ->select('etiquetas')
+                ->limit(500)
+                ->get()
+                ->flatMap(function ($doc) { return collect($doc->etiquetas ?? []); })
+                ->filter()
+                ->map(fn($t) => (string) $t)
+                ->unique()
+                ->values();
+            if ($q !== '') {
+                $tags = $tags->filter(fn($t) => stripos($t, $q) !== false)->values();
+            }
+            return response()->json(['success' => true, 'data' => $tags->take($limit)]);
+        });
+    });
+
+    // ========================================
+    // DOMINIO: PROCESOS (Nuevas rutas en inglés)
     // ========================================
     Route::prefix('processes')->group(function () {
         // Tipos de procesos
         Route::apiResource('types', ProcesoTipoController::class);
-        Route::get('/types/{tipoId}/generals', [ProcesoTipoController::class, 'procesosGenerales']);
+        Route::get('/types/{typeId}/generals', [ProcesoTipoController::class, 'procesosGenerales']);
+        Route::get('/types/stats', [ProcesoTipoController::class, 'stats']);
+        Route::get('/types/config', [ProcesoTipoController::class, 'config']);
+        Route::get('/types/{type}/config', [ProcesoTipoController::class, 'typeConfig']);
         
         // Procesos generales
         Route::apiResource('generals', ProcesoGeneralController::class);
@@ -55,51 +110,58 @@ Route::middleware(['api.auth', \App\Http\Middleware\CheckUserActivity::class])->
         
         // Procesos internos
         Route::apiResource('internals', ProcesoInternoController::class);
-        Route::get('/generals/{procesoGeneralId}/internals', [ProcesoInternoController::class, 'porProcesoGeneral']);
+        Route::get('/generals/{processGeneralId}/internals', [ProcesoInternoController::class, 'porProcesoGeneral']);
     });
 
     // ========================================
-    // RUTAS DE DOCUMENTOS (Nueva estructura)
-    // ========================================
-    Route::prefix('documents')->group(function () {
-        Route::middleware(\App\Http\Middleware\HandleLargeUploads::class)->group(function () {
-            Route::apiResource('/', DocumentController::class);
-            Route::post('/{id}/download', [DocumentController::class, 'descargar'])->name('documents.download');
-        });
-    });
-
-    // ========================================
-    // RUTAS DE USUARIOS (Nueva estructura)
+    // DOMINIO: USUARIOS (Nuevas rutas en inglés)
     // ========================================
     Route::prefix('users')->group(function () {
+        // CRUD principal
         Route::apiResource('/', UserController::class);
-        Route::apiResource('admins', AdminController::class);
+        
+        // Operaciones específicas
+        Route::get('/stats', [UserController::class, 'stats']);
+        Route::patch('/{id}/toggle-status', [UserController::class, 'toggleStatus']);
+        
+        // Roles
+        Route::apiResource('roles', RoleController::class);
     });
 
     // ========================================
-    // RUTAS DE NOTICIAS (Nueva estructura)
+    // DOMINIO: NOTICIAS (Nuevas rutas en inglés)
     // ========================================
     Route::prefix('news')->group(function () {
         Route::apiResource('/', NoticiaController::class);
+        Route::get('/latest', [NoticiaController::class, 'latest']);
     });
 
     // ========================================
-    // RUTAS LEGACY (Compatibilidad)
+    // DOMINIO: ADMINISTRACIÓN (Nuevas rutas en inglés)
     // ========================================
-    
-    // Rutas legacy de procesos
-    Route::apiResource('procesos-generales', ProcesoGeneralController::class);
-    Route::get('/procesos-generales/{id}/documentos', [ProcesoGeneralController::class, 'documentos']);
-    Route::get('/procesos-generales/tipos/disponibles', [ProcesoGeneralController::class, 'tiposDisponibles']);
-    Route::apiResource('tipos-procesos', ProcesoTipoController::class);
-    Route::get('/tipos-procesos/{tipoId}/procesos-generales', [ProcesoTipoController::class, 'procesosGenerales']);
-    Route::apiResource('procesos-internos', ProcesoInternoController::class);
-    Route::get('/procesos-generales/{procesoGeneralId}/procesos-internos', 
-        [ProcesoInternoController::class, 'porProcesoGeneral']);
-    Route::get('/procesos', [ProcesoGeneralController::class, 'index']);
-    Route::post('/procesos-internos', [ProcesoInternoController::class, 'store']);
+    Route::prefix('admin')->group(function () {
+        Route::apiResource('users', AdminController::class);
+        Route::get('/stats', [AdminController::class, 'stats']);
+        Route::get('/activity/recent', [AdminController::class, 'recentActivity']);
+        Route::get('/reports/system', [AdminController::class, 'systemReport']);
+    });
 
-    // Rutas legacy de documentos
+    // ========================================
+    // DOMINIO: DASHBOARD (Nuevas rutas en inglés)
+    // ========================================
+    Route::prefix('dashboard')->group(function () {
+        Route::get('/stats', [DashboardController::class, 'estadisticas']);
+        Route::get('/recent-documents', [DashboardController::class, 'recentDocuments']);
+        Route::get('/quick-actions', [DashboardController::class, 'accionesRapidas']);
+    });
+});
+
+// ========================================
+// RUTAS LEGACY (Compatibilidad temporal)
+// ========================================
+Route::prefix('v1')->middleware(['api.auth', \App\Http\Middleware\CheckUserActivity::class])->group(function () {
+    
+    // Legacy: Documentos
     Route::get('/documentos/buscar', [DocumentoController::class, 'buscar']);
     Route::get('/documentos/recientes', [DocumentoController::class, 'recientes']);
     Route::get('/documentos/estadisticas', [DocumentoController::class, 'estadisticas']);
@@ -107,52 +169,49 @@ Route::middleware(['api.auth', \App\Http\Middleware\CheckUserActivity::class])->
     Route::get('/documentos/extensiones-disponibles', [DocumentoController::class, 'extensionesDisponibles']);
     Route::get('/documentos/etiquetas', [DocumentoController::class, 'etiquetas']);
     Route::get('/documentos/tipos', [DocumentoController::class, 'tipos']);
-    
-    // Sugerencias de etiquetas
-    Route::get('/documentos/etiquetas/sugerencias', function (Request $request) {
-        $q = trim($request->get('q', ''));
-        $limit = min((int) $request->get('limit', 10), 50);
-        $tags = \App\Models\Documento::query()
-            ->whereNotNull('etiquetas')
-            ->select('etiquetas')
-            ->limit(500)
-            ->get()
-            ->flatMap(function ($doc) { return collect($doc->etiquetas ?? []); })
-            ->filter()
-            ->map(fn($t) => (string) $t)
-            ->unique()
-            ->values();
-        if ($q !== '') {
-            $tags = $tags->filter(fn($t) => stripos($t, $q) !== false)->values();
-        }
-        return response()->json(['success' => true, 'data' => $tags->take($limit)]);
-    });
-    
-    // Rutas legacy de documentos (apiResource)
     Route::middleware(\App\Http\Middleware\HandleLargeUploads::class)->group(function () {
         Route::apiResource('documentos', DocumentoController::class);
-        Route::post('/documentos/{id}/descargar', 
-            [DocumentoController::class, 'descargar'])->name('documentos.descargar');
+        Route::post('/documentos/{id}/descargar', [DocumentoController::class, 'descargar']);
+        Route::get('/documentos/{id}/vista-previa', [DocumentoController::class, 'vistaPrevia']);
     });
 
-    // Rutas legacy de usuarios
-    Route::apiResource('users', UserController::class);
+    // Legacy: Procesos
+    Route::apiResource('procesos-generales', ProcesoGeneralController::class);
+    Route::get('/procesos-generales/{id}/documentos', [ProcesoGeneralController::class, 'documentos']);
+    Route::get('/procesos-generales/tipos/disponibles', [ProcesoGeneralController::class, 'tiposDisponibles']);
+    Route::apiResource('tipos-procesos', ProcesoTipoController::class);
+    Route::get('/tipos-procesos/{tipoId}/procesos-generales', [ProcesoTipoController::class, 'procesosGenerales']);
+    Route::apiResource('procesos-internos', ProcesoInternoController::class);
+    Route::get('/procesos-generales/{procesoGeneralId}/procesos-internos', [ProcesoInternoController::class, 'porProcesoGeneral']);
+    Route::get('/procesos', [ProcesoGeneralController::class, 'index']);
+    Route::post('/procesos-internos', [ProcesoInternoController::class, 'store']);
+
+    // Legacy: Usuarios
+    Route::patch('/usuarios/{id}/toggle-status', [UserController::class, 'toggleStatus']);
+    Route::get('/usuarios/stats', [UserController::class, 'stats']);    Route::apiResource('users', UserController::class);
+    Route::apiResource('usuarios', UserController::class);    Route::apiResource('admins', AdminController::class);
     Route::apiResource('roles', RoleController::class);
-    Route::apiResource('admins', AdminController::class);
+    // Legacy: Noticias
+    Route::middleware(\App\Http\Middleware\HandleLargeUploads::class)->group(function () {
+        Route::get('/noticias/latest', [NoticiaController::class, 'latest']);
+        Route::apiResource('noticias', NoticiaController::class);
+        Route::get('/admin/noticias', [NoticiaController::class, 'index']);
+    });
 
-    // Rutas legacy de noticias
-    Route::apiResource('noticias', NoticiaController::class);
+    // Legacy: Dashboard
+    Route::get('/dashboard/acciones-rapidas', [DashboardController::class, 'accionesRapidas']);
+});
 
-    // ========================================
-    // RUTAS DE DASHBOARD
-    // ========================================
-    Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
+// ========================================
+// RUTAS SIN VERSIONADO (Compatibilidad temporal)
+// ========================================
+Route::middleware(['api.auth', \App\Http\Middleware\CheckUserActivity::class])->group(function () {
+    // Mantener compatibilidad con rutas sin versionado temporalmente
+    Route::get('/dashboard/stats', [DashboardController::class, 'estadisticas']);
     Route::get('/dashboard/recent-documents', [DashboardController::class, 'recentDocuments']);
-    Route::get('/dashboard/quick-actions', [DashboardController::class, 'quickActions']);
-
-    // ========================================
-    // RUTAS DE CONFIGURACIÓN
-    // ========================================
+    Route::get('/dashboard/quick-actions', [DashboardController::class, 'accionesRapidas']);
+    Route::get('/dashboard/acciones-rapidas', [DashboardController::class, 'accionesRapidas']);
+    
     Route::get('/procesos/tipos/stats', function () {
         return response()->json(['success' => true, 'data' => []]);
     });
@@ -160,6 +219,17 @@ Route::middleware(['api.auth', \App\Http\Middleware\CheckUserActivity::class])->
         return response()->json(['success' => true, 'data' => []]);
     });
     Route::get('/procesos/tipos/{tipo}/config', function ($tipo) {
+        return response()->json(['success' => true, 'data' => []]);
+    });
+    
+    // Rutas adicionales para compatibilidad
+    Route::get('/v1/procesos/tipos/stats', function () {
+        return response()->json(['success' => true, 'data' => []]);
+    });
+    Route::get('/v1/procesos/tipos/config', function () {
+        return response()->json(['success' => true, 'data' => []]);
+    });
+    Route::get('/v1/procesos/tipos/{tipo}/config', function ($tipo) {
         return response()->json(['success' => true, 'data' => []]);
     });
 }); 

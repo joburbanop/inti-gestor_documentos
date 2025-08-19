@@ -130,6 +130,19 @@ class NoticiaController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        // Log de datos recibidos
+        \Log::info('📝 [NoticiaController] Datos recibidos en store:', [
+            'all_data' => $request->all(),
+            'files' => $request->allFiles(),
+            'has_document' => $request->hasFile('document'),
+            'document_size' => $request->file('document') ? $request->file('document')->getSize() : 'no file',
+            'content_type' => $request->header('Content-Type'),
+            'method' => $request->method(),
+            'url' => $request->url(),
+            'raw_input' => $request->getContent(),
+            'request_size' => $request->header('Content-Length')
+        ]);
+
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'subtitle' => 'nullable|string',
@@ -138,7 +151,11 @@ class NoticiaController extends Controller
             'document_url' => 'nullable|url',
             'is_active' => 'sometimes|boolean',
         ]);
+        
         if ($validator->fails()) {
+            \Log::info('❌ [NoticiaController] Validación falló:', [
+                'errors' => $validator->errors()->toArray()
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Error de validación',
@@ -265,6 +282,45 @@ class NoticiaController extends Controller
                 'is_active' => (bool) $noticia->is_active,
             ],
             'message' => 'Estado de la noticia actualizado',
+        ]);
+    }
+
+    /**
+     * Mostrar una noticia específica
+     */
+    public function show(string $id): JsonResponse
+    {
+        $noticia = Noticia::find((int) $id);
+        if (!$noticia) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Noticia no encontrada',
+            ], 404);
+        }
+
+        $documentUrl = null;
+        if ($noticia->document_path) {
+            if (str_starts_with($noticia->document_path, 'remote:')) {
+                $documentUrl = substr($noticia->document_path, 7);
+            } else {
+                $documentUrl = url('/storage/' . ltrim($noticia->document_path, '/'));
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $noticia->id,
+                'title' => $noticia->title,
+                'subtitle' => $noticia->subtitle,
+                'published_at' => optional($noticia->published_at)->toIso8601String(),
+                'document_url' => $documentUrl,
+                'document_original_name' => $noticia->document_original_name,
+                'document_mime' => $noticia->document_mime,
+                'is_active' => (bool) $noticia->is_active,
+                'created_at' => $noticia->created_at->toIso8601String(),
+                'updated_at' => $noticia->updated_at->toIso8601String(),
+            ],
         ]);
     }
 

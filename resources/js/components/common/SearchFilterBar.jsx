@@ -203,8 +203,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
  {/* Filter Toggle Button */}
  <button
  onClick={() => setShowFilters(!showFilters)}
- className={`${styles.filterTog
- gle} ${showFilters ? styles.active : '} ${activeFiltersCount > 0 ? styles.hasFilters : '}`}
+ className={`${styles.filterToggle} ${showFilters ? styles.active : ''} ${activeFiltersCount > 0 ? styles.hasFilters : ''}`}
  disabled={loading}
  aria-label={showFilters ? 'Ocultar filtros' : 'Mostrar filtros'}
  >
@@ -242,7 +241,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
  {filter.label}: {filter.value}
  </span>
  <button
- onClick={() => handleAdvancedFilterChange(filter.key', '')}
+ onClick={() => handleAdvancedFilterChange(filter.key, '')}
  className={styles.filterChipRemove}
  disabled={loading}
  >
@@ -296,9 +295,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
  <input
  type="number"
  value={(filter.value ?? '')}
- onChange={(e)
- => handleAdvancedFilterChange(filter.key, e.target
- .value === ' ? ' : Number(e.target.value))}
+ onChange={(e) => handleAdvancedFilterChange(filter.key, e.target.value === '' ? '' : Number(e.target.value))}
  className={styles.inlineFilterInput}
  placeholder={filter.placeholder || ''}
  disabled={loading}
@@ -323,10 +320,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
  {value}
  <button
  onClick={() => {
- const newValues = filter.value.filter(
- (_,
- i) => i !== index
- );
+ const newValues = filter.value.filter((_, i) => i !== index);
  handleMultiselectChange(filter.key, newValues);
  }}
  className={styles.multiselectTagRemove}

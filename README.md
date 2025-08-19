@@ -214,11 +214,8 @@ CREATE INDEX idx_procesos_apoyo_direccion ON procesos_apoyo(direccion_id, activo
 
 ### **Backend Optimizado**
 ```php
-// Búsqueda optimizada con índices
-$query->whereRaw("to_tsvector('spanish', titulo || ' ' || COALESCE(descripcion, '')) @@ plainto_tsquery('spanish', ?)", [$termino])
-      ->orWhere('titulo', 'ilike', "%{$termino}%")
-      ->orWhere('descripcion', 'ilike', "%{$termino}%")
-      ->orWhere('nombre_original', 'ilike', "%{$termino}%")
+// Búsqueda tolerante (MySQL)
+$query->buscar($termino)
       ->orWhereJsonContains('etiquetas', $termino);
 
 // Eager loading optimizado
@@ -376,23 +373,9 @@ Caché → Optimización → Entrega al Usuario
 
 ## 🧪 Testing
 
-### **Comandos de Debug**
-```bash
-# Ver todos los datos del sistema
-php artisan debug:documentos
-
-# Ver documentos de una dirección específica
-php artisan debug:documentos --direccion_id=4
-
-# Ver documentos de un proceso específico
-php artisan debug:documentos --proceso_id=11
-
-# Verificar límites de subida
-php artisan upload:check-limits
-
-# Verificar datos de documentos
-php artisan documentos:check
-```
+### **Notas de debug (desarrollo)**
+- Los comandos artisan de debug internos fueron removidos.
+- Usa herramientas estándar: tests, logs en `storage/logs/laravel.log` y clientes HTTP (Postman/cURL).
 
 ### **Testing de API**
 ```bash

@@ -209,8 +209,35 @@ class AuthController extends Controller
                 ], 401);
             }
 
+            // Verificar si el usuario está activo
+            if (!$user->is_active) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Usuario desactivado'
+                ], 403);
+            }
+
+            // Cargar relaciones necesarias
+            $user->load('role');
+
             return response()->json([
                 'success' => true,
+                'data' => [
+                    'user' => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'role' => $user->role ? [
+                            'id' => $user->role->id,
+                            'name' => $user->role->name,
+                            'display_name' => $user->role->display_name,
+                            'permissions' => $user->role->permissions ?? []
+                        ] : null,
+                        'is_admin' => $user->isAdmin(),
+                        'is_active' => $user->is_active,
+                        'last_login_at' => $user->last_login_at
+                    ]
+                ],
                 'message' => 'Token válido'
             ], 200);
 

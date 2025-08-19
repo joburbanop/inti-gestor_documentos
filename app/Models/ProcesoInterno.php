@@ -62,21 +62,11 @@ class ProcesoInterno extends Model
     }
 
     /**
-     * Relación con categorías (carpetas)
+     * Relación directa con documentos (sin categorías)
      */
-    public function categorias(): HasMany
+    public function documentos(): HasMany
     {
-        return $this->hasMany(Categoria::class, 'proceso_interno_id')
-                    ->where('activo', true)
-                    ->orderBy('nombre');
-    }
-
-    /**
-     * Relación con documentos (a través de categorías)
-     */
-    public function documentos(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
-    {
-        return $this->hasManyThrough(Documento::class, Categoria::class, 'proceso_interno_id', 'categoria_id');
+        return $this->hasMany(Documento::class, 'proceso_interno_id');
     }
 
     /**

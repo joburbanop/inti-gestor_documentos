@@ -1,65 +1,96 @@
-import axios from 'axios'; // Axios client centralizado para toda la app
- // - baseURL apunta al proxy/backend Laravel
- // - inyecta token desde localStorage en cada request
- // - normaliza rutas con o sin prefijo /api
- const api = axios.create({
- baseURL: '/api',
- headers: {
- 'X-Requested-With': 'XMLHttpRequest',
- Accept: 'application/json',
- },
- timeout: 20000,
- });
- // Interceptor de request: agrega Authorization si existe token
- api.interceptors.request.use((config) => {
- const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
- if (token) {
- config.headers = config.headers || {};
- config.headers.Authorization = `Bearer ${token}`;
- }
- // Normalizar URL: si llega '/api/...' quitar prefijo para evitar '/api/api/...'
- // También eliminar '/' inicial para que respete baseURL
- if (typeof config.url === 'string') {
- if (config.url.startsWith('/api/')) {
- config.url = config.url.replace(/^\/api\//', '');
- }
- if (config.url.startsWith('/')) {
- config.url = config.url.slice(1);
- }
- }
- // Si body es FormData dejar que axios maneje boundary
- if (config.data instanceof FormData) {
- console.log('📁 [apiClient] Detectado FormData:', config.data);
- console.log('📁 [apiClient] FormData entries:');
- for (let [key, value] of config.data.entries()) {
- if (value instanceof File) {
- console.log(`  - ${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
- } else {
- console.log(`  - ${key}: ${value}`);
- }
- }
- if (config.headers && 'Content-Type' in config.headers) {
- delete config.headers['Content-Type'];
- }
- console.log('📁 [apiClient] Headers después de FormData:', config.headers);
- } else {
- // Asegurar JSON por defecto
- config.headers = config.headers || {};
- if (!config.headers['Content-Type']) {
- config.headers['Content-Type'] = 'application/json';
- }
- console.log('📋 [apiClient] Enviando datos JSON:', config.data);
- }
- return config;
- });
- // Interceptor de respuesta: dejar manejo en capas superiores
- api.interceptors.response.use(
- (response) => response,
- (error) => Promise.reject(error)
- );
- export default api;
- export const apiGet = (url, config) => api.get(url, config).then(r => r.data);
- export const apiPost = (url, data, config) => api.post(url, data, config).then(r => r.data);
- export const apiPut = (url, data, config) => api.put(url, data, config).then(r => r.data);
- export const apiPatch = (url, data, config) => api.patch(url, data, config).then(r => r.data);
- export const apiDelete = (url, config) => api.delete(url, config).then(r => r.data);
+import axios from 'axios';
+
+// Configuración base del cliente API
+const apiClient = axios.create({
+    baseURL: '/api/v1', // Cambiar a rutas versionadas v1
+    timeout: 30000,
+    headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+    }
+});
+
+// Interceptor para agregar token de autenticación
+apiClient.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+
+        // Normalizar URLs para evitar duplicación de '/api/'
+        if (typeof config.url === 'string') {
+            if (config.url.startsWith('/api/')) {
+                config.url = config.url.slice(5); // Remover '/api/' completo
+            } else if (config.url.startsWith('/')) {
+                config.url = config.url.slice(1); // Remover solo '/' inicial
+            }
+        }
+
+        // Log para debugging - solo para datos JSON
+        if (config.data && !(config.data instanceof FormData)) {
+            console.log('📋 [apiClient] Enviando datos JSON:', config.data);
+        } else if (config.data instanceof FormData) {
+            console.log('📁 [apiClient] Enviando FormData con archivos');
+        }
+        
+        return config;
+    },
+    (error) => {
+        console.error('❌ [apiClient] Error en request:', error);
+        return Promise.reject(error);
+    }
+);
+
+// Interceptor para manejar respuestas
+apiClient.interceptors.response.use(
+    (response) => {
+        // Log para debugging
+        console.log('✅ [apiClient] Respuesta exitosa:', response.status, response.config.url);
+        return response;
+    },
+    (error) => {
+        console.error('❌ [apiClient] Error en respuesta:', error.response?.status, error.response?.data);
+        
+        // Manejar errores de autenticación
+        if (error.response?.status === 401) {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+        }
+        
+        return Promise.reject(error);
+    }
+);
+
+// Funciones helper para diferentes tipos de requests
+export const api = {
+    // GET request
+    get: (url, config = {}) => apiClient.get(url, config),
+    
+    // POST request
+    post: (url, data = {}, config = {}) => apiClient.post(url, data, config),
+    
+    // PUT request
+    put: (url, data = {}, config = {}) => apiClient.put(url, data, config),
+    
+    // PATCH request
+    patch: (url, data = {}, config = {}) => apiClient.patch(url, data, config),
+    
+    // DELETE request
+    delete: (url, config = {}) => apiClient.delete(url, config),
+    
+    // Upload de archivos
+    upload: (url, formData, config = {}) => {
+        return apiClient.post(url, formData, {
+            ...config,
+            headers: {
+                ...config.headers,
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+    }
+};
+
+export default apiClient;

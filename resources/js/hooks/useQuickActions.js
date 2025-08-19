@@ -4,13 +4,14 @@ import { useState, useEffect, useCallback } from 'react'; import { useAuth } fro
  const [accionesRapidas, setAccionesRapidas] = useState([]);
  const [loading, setLoading] = useState(true);
  const [error, setError] = useState(null);
- const cargarAccionesRapidas = useCallback(async () => {
+  const cargarAccionesRapidas = useCallback(async () => {
  try {
  setLoading(true);
  setError(null);
- const response = await apiRequest('/dashboard/acciones-rapidas');
- if (response.success) {
- setAccionesRapidas(response.data);
+    const response = await apiRequest('/dashboard/acciones-rapidas');
+    if (response?.success) {
+      const data = Array.isArray(response.data) ? response.data : [];
+      setAccionesRapidas(data);
  } else {
  setError('Error al cargar las acciones rápidas');
  }

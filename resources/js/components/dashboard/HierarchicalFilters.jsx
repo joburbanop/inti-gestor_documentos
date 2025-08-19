@@ -13,7 +13,7 @@ import React, { useState, useEffect } from 'react'; import { useAuth } from '../
  // Mantener localFilters sincronizado con props.filters para evitar estados "fantasma"
  useEffect(() => {
  // Evitar sets innecesarios comparando superficialmente
- const keys = ['direccionId'', 'procesoId', 'tipoArchivo'', 'sortBy'];
+ const keys = ['direccionId', 'procesoId', 'tipoArchivo', 'sortBy'];
  const isDifferent = keys.some((k) => (filters?.[k] || '') !== (localFilters?.[k] || ''));
  if (isDifferent) {
  setLocalFilters(prev => ({ ...prev, ...filters }));
@@ -97,7 +97,7 @@ import React, { useState, useEffect } from 'react'; import { useAuth } from '../
  const loadDirecciones = async () => {
  try {
  setLoading(true);
- const response = await apiRequest('/api/procesos-generales');
+ const response = await apiRequest('/procesos-generales');
  if (response.success) {
  // Filtrar solo procesos generales que tienen documentos o procesos internos
  const procesosConContenido = response.data.filter(proceso =>
@@ -113,7 +113,7 @@ import React, { useState, useEffect } from 'react'; import { useAuth } from '../
  if (hayCambios && localFilters.direccionId) {
  const procesoExiste = procesosConContenido.some(d => d.id === localFilters.direccionId);
  if (!procesoExiste) {
- handleFilterChange('direccionId'', '');
+ handleFilterChange('direccionId', '');
  }
  }
  }
@@ -126,7 +126,7 @@ import React, { useState, useEffect } from 'react'; import { useAuth } from '../
  const loadProcesos = async (procesoGeneralId) => {
  try {
  setLoading(true);
- const response = await apiRequest(`/api/procesos-generales/${procesoGeneralId}/procesos-internos`);
+ const response = await apiRequest(`/procesos-generales/${procesoGeneralId}/procesos-internos`);
  if (response.success) {
  setProcesos(response.data || []);
  }
@@ -148,7 +148,7 @@ import React, { useState, useEffect } from 'react'; import { useAuth } from '../
  if (procesoInternoId) {
  params.append('proceso_interno_id', procesoInternoId);
  }
- const response = await apiRequest(`/api/documentos?${params}`);
+ const response = await apiRequest(`/documentos?${params}`);
  if (response.success && onDocumentsLoad) {
  onDocumentsLoad(response.data?.documentos || []);
  } else {
@@ -190,10 +190,7 @@ import React, { useState, useEffect } from 'react'; import { useAuth } from '../
  <div className={styles.loadingSpinner}></div>
  ) : (
  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
- <path strokeLi
- necap="round strokeLinejoin="round strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9
- m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.3
- 57 2H15 />
+ <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
  </svg>
  )}
  </button>
@@ -201,8 +198,7 @@ import React, { useState, useEffect } from 'react'; import { useAuth } from '../
  <select
  id="direccion-select"
  value={localFilters.direccionId || ''}
- onChange={(e) => handleFil
- terChange('direccionId, e.target.value ? Number(e.target.value) : ')}
+ onChange={(e) => handleFilterChange('direccionId', e.target.value ? Number(e.target.value) : '')}
  className={`${styles.filterSelect} ${loading ? styles.updating : ''}`}
  disabled={loading}
  aria-label="Seleccionar dirección"
@@ -299,8 +295,7 @@ import React, { useState, useEffect } from 'react'; import { useAuth } from '../
  type="button"
  aria-label="Limpiar filtros"
  >
- <svg width="16 height="16 viewBox="0 0 24 24 fill="none stroke="currentColor
- strokeWidth="2>
+ <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
  <path d="M18 6L6 18M6 6l12 12"/>
  </svg>
  Limpiar filtros

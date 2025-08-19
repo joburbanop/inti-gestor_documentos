@@ -86,10 +86,26 @@ class DocumentController extends Controller
     {
         try {
             Log::info('🔄 [DocumentController] Iniciando creación de documento');
+            Log::info('📝 [DocumentController] Datos recibidos en store:', [
+                'all_data' => $request->all(),
+                'files' => $request->allFiles(),
+                'has_archivo' => $request->hasFile('archivo'),
+                'archivo_size' => $request->file('archivo') ? $request->file('archivo')->getSize() : 'no file',
+                'content_type' => $request->header('Content-Type'),
+                'method' => $request->method(),
+                'url' => $request->url(),
+                'raw_input' => $request->getContent(),
+                'request_size' => $request->header('Content-Length')
+            ]);
 
             // Obtener datos validados
             $data = $request->validated();
             $file = $request->file('archivo');
+            
+            Log::info('📝 [DocumentController] Datos validados:', [
+                'data' => $data,
+                'file' => $file ? $file->getClientOriginalName() : 'no file'
+            ]);
 
             // Crear documento usando el servicio
             $documento = $this->documentService->createDocument($data, $file);

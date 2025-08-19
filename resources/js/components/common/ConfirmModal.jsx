@@ -7,7 +7,7 @@ import React from 'react'; import PropTypes from 'prop-types';
  message,
  confirmText = 'Confirmar',
  cancelText = 'Cancelar',
- type = 'danger', // 'danger'', 'warning', 'info'
+ type = 'danger', // 'danger', 'warning', 'info'
  icon: Icon
  }) => {
  if (!isOpen) return null;
@@ -165,7 +165,7 @@ import React from 'react'; import PropTypes from 'prop-types';
  message: PropTypes.string.isRequired,
  confirmText: PropTypes.string,
  cancelText: PropTypes.string,
- type: PropTypes.oneOf(['danger'', 'warning', 'info']),
+ type: PropTypes.oneOf(['danger', 'warning', 'info']),
  icon: PropTypes.elementType
  };
  export default ConfirmModal;

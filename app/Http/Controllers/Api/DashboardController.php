@@ -7,7 +7,7 @@ use App\Models\ProcesoTipo;
 use App\Models\Documento;
 use App\Models\ProcesoGeneral;
 use App\Models\ProcesoInterno;
-use App\Models\Categoria;
+// Eliminado uso de Categoria
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 
@@ -82,7 +82,7 @@ class DashboardController extends Controller
                 'total_documentos' => Documento::count(),
                 'total_procesos_generales' => ProcesoGeneral::activos()->count(),
                 'total_procesos_internos' => ProcesoInterno::activos()->count(),
-                'total_categorias' => Categoria::activas()->count(),
+                // 'total_categorias' eliminado: ya no se usa categorías
                 'tipos_procesos' => ProcesoTipo::activos()->count()
             ];
         });
@@ -94,7 +94,7 @@ class DashboardController extends Controller
     private function getDocumentosRecientes(): array
     {
         return Cache::remember('documentos_recientes', 120, function () {
-            return Documento::with(['categoria.procesoInterno.procesoGeneral.tipoProceso', 'subidoPor'])
+            return Documento::with(['procesoInterno.procesoGeneral.tipoProceso', 'subidoPor'])
                 ->orderBy('created_at', 'desc')
                 ->limit(10)
                 ->get()
@@ -110,22 +110,18 @@ class DashboardController extends Controller
                             'id' => $documento->subidoPor->id,
                             'name' => $documento->subidoPor->name
                         ] : null,
-                        'categoria' => $documento->categoria ? [
-                            'id' => $documento->categoria->id,
-                            'nombre' => $documento->categoria->nombre,
-                            'proceso_interno' => [
-                                'id' => $documento->categoria->procesoInterno->id,
-                                'nombre' => $documento->categoria->procesoInterno->nombre,
-                                'proceso_general' => [
-                                    'id' => $documento->categoria->procesoInterno->procesoGeneral->id,
-                                    'nombre' => $documento->categoria->procesoInterno->procesoGeneral->nombre,
-                                                                            'tipo_proceso' => [
-                                            'id' => $documento->categoria->procesoInterno->procesoGeneral->tipoProceso->id,
-                                            'nombre' => $documento->categoria->procesoInterno->procesoGeneral->tipoProceso->nombre,
-                                            'titulo' => $documento->categoria->procesoInterno->procesoGeneral->tipoProceso->titulo,
-                                        ]
-                                ]
-                            ]
+                        'proceso_interno' => $documento->procesoInterno ? [
+                            'id' => $documento->procesoInterno->id,
+                            'nombre' => $documento->procesoInterno->nombre,
+                            'proceso_general' => $documento->procesoInterno->procesoGeneral ? [
+                                'id' => $documento->procesoInterno->procesoGeneral->id,
+                                'nombre' => $documento->procesoInterno->procesoGeneral->nombre,
+                                'tipo_proceso' => $documento->procesoInterno->procesoGeneral->tipoProceso ? [
+                                    'id' => $documento->procesoInterno->procesoGeneral->tipoProceso->id,
+                                    'nombre' => $documento->procesoInterno->procesoGeneral->tipoProceso->nombre,
+                                    'titulo' => $documento->procesoInterno->procesoGeneral->tipoProceso->titulo,
+                                ] : null
+                            ] : null
                         ] : null
                     ];
                 })
@@ -220,6 +216,29 @@ class DashboardController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al obtener las estadísticas',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtener documentos recientes (para componentes específicos)
+     */
+    public function recentDocuments(): JsonResponse
+    {
+        try {
+            $documentosRecientes = $this->getDocumentosRecientes();
+
+            return response()->json([
+                'success' => true,
+                'data' => $documentosRecientes,
+                'message' => 'Documentos recientes obtenidos exitosamente'
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener los documentos recientes',
                 'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }

@@ -78,16 +78,16 @@ import React, { useState, useEffect, useRef } from 'react'; import HierarchicalF
  params.append('extensiones[]', ext);
  });
  }
- params.append('sort_by'', 'created_at');
- params.append('sort_order'', 'desc');
+ params.append('sort_by', 'created_at');
+ params.append('sort_order', 'desc');
  params.append('per_page', pagination.perPage.toString());
  params.append('page', pageToUse.toString());
  let url = '/documentos';
  const hasText = Boolean(searchTerm && searchTerm.trim().length >= 3);
  if (hasText) {
- url = `/api/documentos/buscar?${params.toString()}`;
+ url = `/documentos/buscar?${params.toString()}`;
  } else {
- url = `/api/documentos?${params.toString()}`;
+ url = `/documentos?${params.toString()}`;
  }
  if (searchAbortRef.current) {
  try { searchAbortRef.current.abort(); } catch (e) {}

@@ -112,7 +112,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
  subtitle: n.subtitle,
  publishedAt: n.published_at,
  ctaText: n.document_url ? 'Ver documento' : undefined,
- onClick: n.document_url ? () => window.open(n.document_url', '_blank') : undefined,
+ onClick: n.document_url ? () => window.open(n.document_url, '_blank') : undefined,
  }));
  setNewsItems(items);
  } else {
@@ -130,18 +130,18 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
  const push = (title, desc, hash, icon, color) => items.push({ title, description: desc, hash, icon, colorClass: color });
  // Acciones para administradores y directores
  if (canManageProcesses) {
- if (tipoCounts.estrategico > 0) push('Procesos Estratégicos'', 'Explora procesos estratégicos.', 'procesos/estrategico', <BuildingIcon className="w-6 h-6" />', 'quickActionIconAzul');
- if (tipoCounts.misional > 0) push('Procesos Misionales'', 'Explora procesos misionales.', 'procesos/misional', <ProcessIcon className="w-6 h-6" />', 'quickActionIconVerde');
- if (tipoCounts.apoyo > 0) push('Procesos de Apoyo'', 'Procesos que soportan la operación.', 'procesos/apoyo', <ProcessIcon className="w-6 h-6" />', 'quickActionIconMorado');
- if (tipoCounts.evaluacion > 0) push('Procesos de Evaluación'', 'Evaluación y mejora continua.', 'procesos/evaluacion', <ProcessIcon className="w-6 h-6" />', 'quickActionIconMorado');
+ if (tipoCounts.estrategico > 0) push('Procesos Estratégicos', 'Explora procesos estratégicos.', 'procesos/estrategico', <BuildingIcon className="w-6 h-6" />, 'quickActionIconAzul');
+ if (tipoCounts.misional > 0) push('Procesos Misionales', 'Explora procesos misionales.', 'procesos/misional', <ProcessIcon className="w-6 h-6" />, 'quickActionIconVerde');
+ if (tipoCounts.apoyo > 0) push('Procesos de Apoyo', 'Procesos que soportan la operación.', 'procesos/apoyo', <ProcessIcon className="w-6 h-6" />, 'quickActionIconMorado');
+ if (tipoCounts.evaluacion > 0) push('Procesos de Evaluación', 'Evaluación y mejora continua.', 'procesos/evaluacion', <ProcessIcon className="w-6 h-6" />, 'quickActionIconMorado');
  }
  // Acciones para todos los usuarios con permisos de documentos
  if (canViewDocs || canManageDocs) {
- push('Formatos o Documentos'', 'Crea y consulta documentos.', 'documentos', <DocumentIcon className="w-6 h-6" />', 'quickActionIconNaranja');
+ push('Formatos o Documentos', 'Crea y consulta documentos.', 'documentos', <DocumentIcon className="w-6 h-6" />, 'quickActionIconNaranja');
  }
  // Acciones solo para administradores
  if (canManageUsers) {
- push('Administración'', 'Usuarios, roles y noticias/circulares.', 'administracion', <AdminIcon className="w-6 h-6" />', 'quickActionIconMorado');
+ push('Administración', 'Usuarios, roles y noticias/circulares.', 'administracion', <AdminIcon className="w-6 h-6" />, 'quickActionIconMorado');
  }
  return items;
  }, [tipoCounts, canManageProcesses, canViewDocs, canManageDocs, canManageUsers, userRole]);
@@ -182,16 +182,16 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
  params.append('extensiones[]', ext);
  });
  }
- params.append('sort_by'', 'created_at');
- params.append('sort_order'', 'desc');
+ params.append('sort_by', 'created_at');
+ params.append('sort_order', 'desc');
  params.append('per_page', pagination.perPage.toString());
  params.append('page', pageToUse.toString());
  let url = '/documentos';
  const hasText = Boolean(searchTerm && searchTerm.trim().length >= 3);
  if (hasText) {
- url = `/api/documentos/buscar?${params.toString()}`;
+ url = `/documentos/buscar?${params.toString()}`;
  } else {
- url = `/api/documentos?${params.toString()}`;
+ url = `/documentos?${params.toString()}`;
  }
  if (searchAbortRef.current) {
  try { searchAbortRef.current.abort(); } catch (e) {}
@@ -282,7 +282,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
  };
  const handleDocumentClick = (document) => {
  if (document.url) {
- window.open(document.url', '_blank');
+ window.open(document.url, '_blank');
  }
  };
  const handleViewDoc = async (documento) => {

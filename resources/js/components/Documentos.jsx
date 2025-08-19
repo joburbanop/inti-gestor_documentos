@@ -52,9 +52,9 @@ import { useLocation } from 'react-router-dom';
  archivo: null,
  titulo: '',
  descripcion: '',
- direccion_id: '',
- proceso_apoyo_id: '',
- tipo: '',
+ tipo_proceso_id: '',
+ proceso_general_id: '',
+  proceso_interno_id: '', tipo: '',
  etiquetas: [],
  etiquetas_texto: '',
  confidencialidad: '',
@@ -68,7 +68,7 @@ import { useLocation } from 'react-router-dom';
  etiqueta: [],
  extension: '',
  proceso_general_id: '',
- proceso_interno_id: '',
+  proceso_interno_id: '',
  descargasMin: ''
  });
  // Opciones dinámicas para selects en cascada
@@ -109,7 +109,7 @@ import { useLocation } from 'react-router-dom';
  // Solicitar más documentos por página (máximo 100)
    params.set('per_page', '100');
  const qs = params.toString();
- const url = `/api/documentos?${qs}`;
+ const url = `/documentos?${qs}`;
  const res = await apiRequest(url, { signal: controller.signal });
  if (res.success) {
  const docs = res.data.documentos || res.data || [];
@@ -163,7 +163,7 @@ import { useLocation } from 'react-router-dom';
  useEffect(() => {
  (async () => {
  try {
- const d = await apiRequest('/api/procesos-generales');
+ const d = await apiRequest('/procesos-generales');
  if (d.success) {
  const opts = [{ value: '', label: 'Todos los procesos generales' }].concat(
  (d.data || []).map(x => ({ value: x.id, label: x.nombre }))
@@ -184,7 +184,7 @@ import { useLocation } from 'react-router-dom';
  }
  (async () => {
  try {
- const p = await apiRequest(`/api/procesos-generales/${procesoGeneralId}/procesos-internos`);
+ const p = await apiRequest(`/procesos-generales/${procesoGeneralId}/procesos-internos`);
  if (p.success) {
  const opts = [{ value: '', label: 'Todos los procesos internos' }].concat(
  (p.data || []).map(x => ({ value: x.id, label: x.nombre }))
@@ -237,9 +237,9 @@ import { useLocation } from 'react-router-dom';
  tipo: '',
  etiqueta: [],
  extension: '',
- direccion_id: '',
- proceso_apoyo_id: '',
- descargasMin: ''
+ tipo_proceso_id: '',
+ proceso_general_id: '',
+  proceso_interno_id: '', descargasMin: ''
  });
  setSearchTerm('');
  };
@@ -364,7 +364,7 @@ import { useLocation } from 'react-router-dom';
  type: 'danger',
  onConfirm: async () => {
  try {
- await apiRequest(`/api/documentos/${documento.id}`, { method: 'DELETE' });
+ await apiRequest(`/documentos/${documento.id}`, { method: 'DELETE' });
  await fetchDocumentos();
  // Forzar recarga de estadísticas del dashboard para actualizar contadores
  // Esto asegura que los contadores de documentos se actualicen en direcciones y procesos
@@ -387,20 +387,45 @@ import { useLocation } from 'react-router-dom';
  setFormLoading(true);
  setErrors({});
  let res;
+ 
+ console.log('🔍 [Documentos.jsx] Datos recibidos en handleSubmit:', data);
+ 
  if (modalMode === 'create') {
- // Crear nuevo documento
- const fd = new FormData();
- if (data.archivo instanceof File) fd.append('archivo', data.archivo);
- fd.append('titulo', data.titulo || '');
- fd.append('descripcion', data.descripcion || '');
- fd.append('direccion_id', data.direccion_id || '');
- fd.append('proceso_apoyo_id', data.proceso_apoyo_id || '');
- if (data.tipo) fd.append('tipo', data.tipo);
- // Etiquetas: ahora vienen como array en data.etiquetas
- (Array.isArray(data.etiquetas) ? data.etiquetas : []).forEach((t, i) => fd.append(`etiquetas[${i}]`, t));
- if (data.confidencialidad) fd.append('confidencialidad', data.confidencialidad);
- res = await apiRequest('/documents', { method: 'POST', body: fd });
- } else {
+  // Crear nuevo documento
+  let fd;
+  
+  // Verificar si ya recibimos FormData del CreateForm
+  if (data instanceof FormData) {
+   console.log('📁 [Documentos.jsx] Recibido FormData del CreateForm');
+   fd = data;
+  } else {
+   console.log('📋 [Documentos.jsx] Recibidos datos normales, creando FormData');
+   // Crear FormData manualmente
+   fd = new FormData();
+   if (data.archivo instanceof File) fd.append('archivo', data.archivo);
+   fd.append('titulo', data.titulo || '');
+   fd.append('descripcion', data.descripcion || '');
+   // Campos estandarizados según jerarquía: tipo_proceso_id -> proceso_general_id -> proceso_interno_id
+   fd.append('tipo_proceso_id', data.tipo_proceso_id || '');
+   fd.append('proceso_general_id', data.proceso_general_id || '');
+   fd.append('proceso_interno_id', data.proceso_interno_id || '');
+   if (data.tipo) fd.append('tipo', data.tipo);
+   // Etiquetas: ahora vienen como array en data.etiquetas
+   (Array.isArray(data.etiquetas) ? data.etiquetas : []).forEach((t, i) => fd.append(`etiquetas[${i}]`, t));
+   if (data.confidencialidad) fd.append('confidencialidad', data.confidencialidad);
+  }
+  
+  console.log('📁 [Documentos.jsx] FormData final:', {
+    titulo: fd.get('titulo'),
+    descripcion: fd.get('descripcion'),
+    tipo_proceso_id: fd.get('tipo_proceso_id'),
+    proceso_general_id: fd.get('proceso_general_id'),
+    proceso_interno_id: fd.get('proceso_interno_id'),
+    archivo: fd.get('archivo') ? fd.get('archivo').name : 'no file'
+  });
+  
+  res = await apiRequest('/documents', { method: 'POST', body: fd });
+  } else {
  // Actualizar documento existente
  const updateData = {
  titulo: data.titulo || '',
@@ -411,7 +436,7 @@ import { useLocation } from 'react-router-dom';
  confidencialidad: data.confidencialidad || ''
  };
  updateData.etiquetas = Array.isArray(data.etiquetas) ? data.etiquetas : [];
- res = await apiRequest(`/api/documentos/${data.id}`, {
+ res = await apiRequest(`/documentos/${data.id}`, {
  method: 'PUT',
  body: JSON.stringify(updateData)
  });
@@ -443,9 +468,9 @@ import { useLocation } from 'react-router-dom';
  archivo: null,
  titulo: '',
  descripcion: '',
- direccion_id: '',
- proceso_apoyo_id: '',
- tipo: '',
+ tipo_proceso_id: '',
+ proceso_general_id: '',
+  proceso_interno_id: '', tipo: '',
  etiquetas: [],
  etiquetas_texto: '',
  confidencialidad: '',
@@ -459,9 +484,9 @@ import { useLocation } from 'react-router-dom';
  archivo: null,
  titulo: '',
  descripcion: '',
- direccion_id: '',
- proceso_apoyo_id: '',
- tipo: '',
+ tipo_proceso_id: '',
+ proceso_general_id: '',
+  proceso_interno_id: '', tipo: '',
  etiquetas: [],
  etiquetas_texto: '',
  confidencialidad: '',

@@ -158,46 +158,59 @@ import PropTypes from 'prop-types';
  };
  const handleSubmit = (e) => {
  e.preventDefault();
- console.log('🔍 [CreateForm] Verificando archivos en formulario...');
- console.log('📋 [CreateForm] formData actual:', formData);
+ console.log('📁 [CreateForm] handleSubmit llamado');
+ console.log('📁 [CreateForm] formData actual:', formData);
  console.log('📁 [CreateForm] fields:', fields);
- // Verificar si hay archivos en el formulario
- const hasFiles = fields.some(section => {
- const sectionHasFiles = section.fields.some(field => {
+ // Verificar si hay campos de archivo en el formulario
+ const hasFileFields = fields.some(section => {
+ const sectionHasFileFields = section.fields.some(field => {
  if (field.type === 'file') {
- const hasFile = formData[field.name];
- console.log(`🔍 [CreateForm] Campo ${field.name}:`, hasFile);
- return hasFile;
+ console.log(`🔍 [CreateForm] Campo de archivo encontrado: ${field.name}`);
+ return true;
  }
  return false;
  });
- console.log(`🔍 [CreateForm] Sección ${section.title} tiene archivos:`, sectionHasFiles);
- return sectionHasFiles;
+ console.log(`🔍 [CreateForm] Sección ${section.title} tiene campos de archivo:`, sectionHasFileFields);
+ return sectionHasFileFields;
  });
- console.log('📁 [CreateForm] ¿Tiene archivos?', hasFiles);
- if (hasFiles) {
+ console.log('📁 [CreateForm] ¿Tiene campos de archivo?', hasFileFields);
+ if (hasFileFields) {
  // Crear FormData para archivos
  const formDataToSend = new FormData();
  console.log('📁 [CreateForm] Creando FormData con archivos...');
  // Agregar todos los campos al FormData
  Object.keys(formData).forEach(key => {
- const value = formData[key];
- console.log(`📁 [CreateForm] Agregando campo ${key}:`, value);
- if (value !== null && value !== undefined && value !== '') {
- if (value instanceof File) {
- formDataToSend.append(key, value);
- console.log(`✅ [CreateForm] Archivo agregado: ${key} = ${value.name}`);
- } else if (Array.isArray(value)) {
- value.forEach(item => formDataToSend.append(key, item));
- console.log(`✅ [CreateForm] Array agregado: ${key} = ${value.length} items`);
- } else {
- formDataToSend.append(key, value);
- console.log(`✅ [CreateForm] Campo agregado: ${key} = ${value}`);
- }
- } else {
- console.log(`❌ [CreateForm] Campo vacío omitido: ${key}`);
- }
+   const value = formData[key];
+   console.log(`📁 [CreateForm] Agregando campo ${key}:`, value);
+   
+   // Buscar si el campo es requerido
+   const isRequired = fields.some(section => 
+     section.fields.some(field => field.name === key && field.required)
+   );
+   
+   // Agregar el campo si tiene valor O si es requerido (para validación)
+   if (value !== null && value !== undefined && (value !== '' || isRequired)) {
+     if (value instanceof File) {
+       formDataToSend.append(key, value);
+       console.log(`✅ [CreateForm] Archivo agregado: ${key} = ${value.name}`);
+     } else if (Array.isArray(value)) {
+       value.forEach(item => formDataToSend.append(key, item));
+       console.log(`✅ [CreateForm] Array agregado: ${key} = ${value.length} items`);
+     } else {
+       formDataToSend.append(key, value || ''); // Asegurar que nunca sea null/undefined
+       console.log(`✅ [CreateForm] Campo agregado: ${key} = ${value || ''}`);
+     }
+   } else {
+     console.log(`❌ [CreateForm] Campo omitido: ${key} (valor: ${value}, requerido: ${isRequired})`);
+   }
  });
+ 
+ // Log del FormData creado
+ console.log('📁 [CreateForm] FormData creado, verificando contenido:');
+ for (let [key, value] of formDataToSend.entries()) {
+ console.log(`📁 [CreateForm] FormData[${key}] =`, value);
+ }
+ 
  console.log('📁 [CreateForm] Enviando FormData con archivos:', formDataToSend);
  onSubmit && onSubmit(formDataToSend);
  } else {

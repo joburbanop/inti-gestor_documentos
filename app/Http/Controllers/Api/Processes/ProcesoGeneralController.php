@@ -27,9 +27,7 @@ class ProcesoGeneralController extends Controller
             }
 
             $procesosGenerales = $query->with(['tipoProceso', 'procesosInternos' => function ($query) {
-                $query->activos()->ordenados()->with(['categorias' => function ($q) {
-                    $q->activas()->ordenadas();
-                }]);
+                $query->activos()->ordenados();
             }])->get();
 
             return response()->json([
@@ -53,15 +51,7 @@ class ProcesoGeneralController extends Controller
                                 'nombre' => $procesoInterno->nombre,
                                 'descripcion' => $procesoInterno->descripcion,
                                 'icono' => $procesoInterno->icono,
-                                'categorias' => $procesoInterno->categorias->map(function ($categoria) {
-                                    return [
-                                        'id' => $categoria->id,
-                                        'nombre' => $categoria->nombre,
-                                        'descripcion' => $categoria->descripcion,
-                                        'icono' => $categoria->icono,
-                                        'total_documentos' => $categoria->documentos()->count()
-                                    ];
-                                })
+                                'total_documentos' => $procesoInterno->documentos()->count()
                             ];
                         })
                     ];

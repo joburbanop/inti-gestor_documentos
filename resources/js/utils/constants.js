@@ -17,13 +17,13 @@
  * Tipos de archivos permitidos
  */
  export const ALLOWED_FILE_TYPES = {
- DOCUMENTS: ['pdf'', 'doc', 'docx'', 'txt', 'rtf'', 'odt'],
- SPREADSHEETS: ['xls'', 'xlsx', 'csv'', 'ods'],
- PRESENTATIONS: ['ppt'', 'pptx', 'odp'],
- IMAGES: ['jpg'', 'jpeg', 'png'', 'gif', 'bmp'', 'svg', 'webp'],
- ARCHIVES: ['zip'', 'rar', '7z'', 'tar', 'gz'],
- VIDEOS: ['mp4'', 'avi', 'mov'', 'wmv', 'flv'', 'mkv'],
- AUDIO: ['mp3'', 'wav', 'aac'', 'ogg', 'flac']
+ DOCUMENTS: ['pdf', 'doc', 'docx', 'txt', 'rtf', 'odt'],
+ SPREADSHEETS: ['xls', 'xlsx', 'csv', 'ods'],
+ PRESENTATIONS: ['ppt', 'pptx', 'odp'],
+ IMAGES: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'],
+ ARCHIVES: ['zip', 'rar', '7z', 'tar', 'gz'],
+ VIDEOS: ['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv'],
+ AUDIO: ['mp3', 'wav', 'aac', 'ogg', 'flac']
  };
  /**
  * Estados de documentos
@@ -188,8 +188,8 @@
  export const FILE_CONFIG = {
  MAX_SIZE: 8 * 1024 * 1024, // 8MB
  ALLOWED_EXTENSIONS: [
- 'pdf'', 'doc', 'docx'', 'xls', 'xlsx'', 'ppt', 'pptx',
- 'jpg'', 'jpeg', 'png'', 'gif', 'txt'', 'zip', 'rar'
+ 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
+ 'jpg', 'jpeg', 'png', 'gif', 'txt', 'zip', 'rar'
  ],
  UPLOAD_PATH: '/storage/app/public/documentos'
  };

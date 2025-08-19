@@ -8,7 +8,7 @@ export const SESSION_CONFIG = { // Tiempo de inactividad antes de mostrar advert
  // Intervalo para verificar advertencia de expiración (en milisegundos)
  WARNING_CHECK_INTERVAL: 60000, // 1 minuto (reducido de 30 segundos)
  // Eventos que se consideran actividad del usuario (reducidos)
- ACTIVITY_EVENTS: ['click'', 'keypress', 'scroll']
+ ACTIVITY_EVENTS: ['click', 'keypress', 'scroll']
  };
  // Función para obtener el tiempo restante en minutos
  export const getTimeRemaining = (lastActivity) => {

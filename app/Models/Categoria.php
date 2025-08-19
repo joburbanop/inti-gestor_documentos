@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
 
+// Deprecated: Categorías ya no se utilizan
 class Categoria extends Model
 {
     use HasFactory;

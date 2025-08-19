@@ -25,12 +25,22 @@ class DocumentoController extends Controller
         try {
             $perPage = min(max((int) $request->get('per_page', 10), 1), 100); // Optimizado para 10 por defecto
             $page = (int) $request->get('page', 1);
-            $query = Documento::with(['proceso:id,nombre,codigo', 'subidoPor:id,name']); // Solo campos necesarios
+            $query = Documento::with(['procesoInterno.procesoGeneral.tipoProceso', 'subidoPor:id,name']);
 
             // Filtros con logging para debug
-            if ($request->has('proceso_id')) {
-                \Log::info('🔍 Aplicando filtro proceso_id:', ['proceso_id' => $request->proceso_id]);
-                $query->porProceso($request->proceso_id);
+            if ($request->has('proceso_interno_id')) {
+                \Log::info('🔍 Aplicando filtro proceso_interno_id:', ['proceso_interno_id' => $request->proceso_interno_id]);
+                $query->porProcesoInterno($request->proceso_interno_id);
+            }
+            
+            if ($request->has('proceso_general_id')) {
+                \Log::info('🔍 Aplicando filtro proceso_general_id:', ['proceso_general_id' => $request->proceso_general_id]);
+                $query->where('proceso_general_id', $request->proceso_general_id);
+            }
+            
+            if ($request->has('tipo_proceso_id')) {
+                \Log::info('🔍 Aplicando filtro tipo_proceso_id:', ['tipo_proceso_id' => $request->tipo_proceso_id]);
+                $query->where('tipo_proceso_id', $request->tipo_proceso_id);
             }
 
             // Filtro por extensión única
@@ -78,7 +88,7 @@ class DocumentoController extends Controller
                         }
                     }
                     if ($request->filled('etiqueta')) { $filters[] = 'etiquetas = "'.$request->etiqueta.'"'; }
-                     if ($request->filled('proceso_id')) { $filters[] = 'proceso.id = '.$request->proceso_id; }
+                     if ($request->filled('proceso_interno_id')) { $filters[] = 'proceso_interno_id = '.$request->proceso_interno_id; }
                     if ($request->filled('tipo_archivo')) { $filters[] = 'tipo_archivo = "'.$request->tipo_archivo.'"'; }
 
                     $builder = \App\Models\Documento::search($q);
@@ -113,11 +123,8 @@ class DocumentoController extends Controller
                     $query->buscar($q);
                 }
             } elseif ($q !== '' && mb_strlen($q) >= 2) {
-                // Búsqueda optimizada usando índices de texto completo
-                $query->whereRaw("to_tsvector('spanish', titulo || ' ' || COALESCE(descripcion, '')) @@ plainto_tsquery('spanish', ?)", [$q])
-                      ->orWhere('titulo', 'ilike', "%{$q}%")
-                      ->orWhere('descripcion', 'ilike', "%{$q}%")
-                      ->orWhere('nombre_original', 'ilike', "%{$q}%");
+                // MySQL: usar búsqueda tolerante basada en LIKE con scope del modelo
+                $query->buscar($q);
             }
 
             // Filtros por metadatos
@@ -193,10 +200,18 @@ class DocumentoController extends Controller
                     'contador_descargas' => $documento->contador_descargas,
 
                     'fecha_creacion' => $documento->created_at->format('Y-m-d H:i:s'),
-                    'proceso' => [
-                        'id' => optional($documento->proceso)->id,
-                        'nombre' => optional($documento->proceso)->nombre,
-                        'codigo' => optional($documento->proceso)->codigo,
+                    'proceso_interno' => [
+                        'id' => optional($documento->procesoInterno)->id,
+                        'nombre' => optional($documento->procesoInterno)->nombre,
+                        'codigo' => optional($documento->procesoInterno)->codigo,
+                    ],
+                    'proceso_general' => [
+                        'id' => optional($documento->procesoGeneral)->id,
+                        'nombre' => optional($documento->procesoGeneral)->nombre,
+                    ],
+                    'tipo_proceso' => [
+                        'id' => optional($documento->tipoProceso)->id,
+                        'nombre' => optional($documento->tipoProceso)->nombre,
                     ],
                     'subido_por' => [
                         'id' => $documento->subidoPor->id,
@@ -239,7 +254,7 @@ class DocumentoController extends Controller
     public function show(int $id): JsonResponse
     {
         try {
-            $documento = Documento::with(['proceso', 'subidoPor'])
+            $documento = Documento::with(['procesoInterno.procesoGeneral.tipoProceso', 'subidoPor'])
                 ->findOrFail($id);
 
             // Verificar permisos
@@ -260,10 +275,18 @@ class DocumentoController extends Controller
                 'contador_descargas' => $documento->contador_descargas,
 
                 'fecha_creacion' => $documento->created_at->format('Y-m-d H:i:s'),
-                'proceso' => [
-                    'id' => optional($documento->proceso)->id,
-                    'nombre' => optional($documento->proceso)->nombre,
-                    'codigo' => optional($documento->proceso)->codigo,
+                'proceso_interno' => [
+                    'id' => optional($documento->procesoInterno)->id,
+                    'nombre' => optional($documento->procesoInterno)->nombre,
+                ],
+                'proceso_general' => [
+                    'id' => optional(optional($documento->procesoInterno)->procesoGeneral)->id,
+                    'nombre' => optional(optional($documento->procesoInterno)->procesoGeneral)->nombre,
+                ],
+                'tipo_proceso' => [
+                    'id' => optional(optional(optional($documento->procesoInterno)->procesoGeneral)->tipoProceso)->id,
+                    'nombre' => optional(optional(optional($documento->procesoInterno)->procesoGeneral)->tipoProceso)->nombre,
+                    'titulo' => optional(optional(optional($documento->procesoInterno)->procesoGeneral)->tipoProceso)->titulo,
                 ],
                 'subido_por' => [
                     'id' => $documento->subidoPor->id,
@@ -740,20 +763,19 @@ class DocumentoController extends Controller
 
             // Búsqueda optimizada usando índices de texto completo
             $termino = $request->get('termino');
-            $query = Documento::where(function($q) use ($termino) {
-                $q->whereRaw("to_tsvector('spanish', titulo || ' ' || COALESCE(descripcion, '')) @@ plainto_tsquery('spanish', ?)", [$termino])
-                  ->orWhere('titulo', 'ilike', "%{$termino}%")
-                  ->orWhere('descripcion', 'ilike', "%{$termino}%")
-                  ->orWhere('nombre_original', 'ilike', "%{$termino}%")
-                  ->orWhereJsonContains('etiquetas', $termino);
-            })->with(['direccion:id,nombre,codigo', 'procesoApoyo:id,nombre,codigo', 'subidoPor:id,name']); // Solo campos necesarios
+            $query = Documento::with(['procesoInterno.procesoGeneral.tipoProceso', 'subidoPor:id,name']);
+            // MySQL: usar scopeBuscar basado en LIKE y JSON_CONTAINS
+            $query->buscar($termino);
 
             // Aplicar filtros opcionales también en búsqueda
-            if ($request->has('direccion_id')) {
-                $query->porDireccion($request->direccion_id);
+            if ($request->has('proceso_general_id')) {
+                $query->where('proceso_general_id', $request->proceso_general_id);
             }
-            if ($request->has('proceso_apoyo_id')) {
-                $query->porProceso($request->proceso_apoyo_id);
+            if ($request->has('proceso_interno_id')) {
+                $query->where('proceso_interno_id', $request->proceso_interno_id);
+            }
+            if ($request->has('tipo_proceso_id')) {
+                $query->where('tipo_proceso_id', $request->tipo_proceso_id);
             }
             if ($request->filled('tipo')) {
                 $query->where('tipo', $request->tipo);
@@ -797,15 +819,13 @@ class DocumentoController extends Controller
                     'contador_descargas' => $documento->contador_descargas,
 
                     'fecha_creacion' => $documento->created_at->format('Y-m-d H:i:s'),
-                    'direccion' => [
-                        'id' => $documento->direccion->id,
-                        'nombre' => $documento->direccion->nombre,
-                        'codigo' => $documento->direccion->codigo,
+                    'proceso_general' => [
+                        'id' => optional(optional($documento->procesoInterno)->procesoGeneral)->id,
+                        'nombre' => optional(optional($documento->procesoInterno)->procesoGeneral)->nombre,
                     ],
-                    'proceso_apoyo' => [
-                        'id' => $documento->procesoApoyo->id,
-                        'nombre' => $documento->procesoApoyo->nombre,
-                        'codigo' => $documento->procesoApoyo->codigo,
+                    'proceso_interno' => [
+                        'id' => optional($documento->procesoInterno)->id,
+                        'nombre' => optional($documento->procesoInterno)->nombre,
                     ],
                     'subido_por' => [
                         'id' => $documento->subidoPor->id,
@@ -849,7 +869,7 @@ class DocumentoController extends Controller
     public function recientes(): JsonResponse
     {
         try {
-            $query = Documento::with(['direccion', 'procesoApoyo', 'subidoPor'])
+            $query = Documento::with(['procesoInterno.procesoGeneral', 'subidoPor'])
                 ->orderBy('created_at', 'desc')
                 ->limit(10);
 
@@ -860,11 +880,13 @@ class DocumentoController extends Controller
                     'tipo_archivo' => $documento->tipo_archivo,
                     'tamaño_formateado' => $documento->tamaño_formateado,
                     'fecha_creacion' => $documento->created_at->format('Y-m-d H:i:s'),
-                    'direccion' => [
-                        'nombre' => $documento->direccion->nombre,
+                    'proceso_general' => [
+                        'id' => optional(optional($documento->procesoInterno)->procesoGeneral)->id,
+                        'nombre' => optional(optional($documento->procesoInterno)->procesoGeneral)->nombre,
                     ],
-                    'proceso_apoyo' => [
-                        'nombre' => $documento->procesoApoyo->nombre,
+                    'proceso_interno' => [
+                        'id' => optional($documento->procesoInterno)->id,
+                        'nombre' => optional($documento->procesoInterno)->nombre,
                     ]
                 ];
             });

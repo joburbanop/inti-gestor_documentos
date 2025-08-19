@@ -26,8 +26,8 @@ class HandleLargeUploads
             ini_set('memory_limit', '256M');
         }
 
-        // Verificar si la petición es para subir archivos
-        if ($request->is('api/documentos') && $request->isMethod('POST')) {
+        // Verificar si la petición es para subir archivos (tanto legacy como nuevas rutas)
+        if (($request->is('api/documentos') || $request->is('api/documents')) && $request->isMethod('POST')) {
             // Configurar headers para archivos grandes
             $response = $next($request);
             

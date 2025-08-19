@@ -106,14 +106,11 @@ class DocumentService
             $query->where('confidencialidad', $filters['confidencialidad']);
         }
 
-        if (!empty($filters['search'])) {
-            $search = $filters['search'];
-            $query->where(function($q) use ($search) {
-                $q->where('titulo', 'ilike', "%{$search}%")
-                  ->orWhere('descripcion', 'ilike', "%{$search}%")
-                  ->orWhere('nombre_original', 'ilike', "%{$search}%");
-            });
-        }
+            if (!empty($filters['search'])) {
+                $search = $filters['search'];
+                // MySQL-safe search usando scopeBuscar
+                $query->buscar($search);
+            }
 
         // Ordenamiento
         $sortBy = $filters['sort_by'] ?? 'created_at';

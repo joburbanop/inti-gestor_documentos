@@ -71,17 +71,8 @@ class SearchService
         $searchTerm = trim($request->get('q', $request->get('termino', '')));
         
         if ($searchTerm !== '' && mb_strlen($searchTerm) >= 2) {
-            $query->where(function($q) use ($searchTerm) {
-                // Búsqueda en título
-                $q->where('titulo', 'ilike', "%{$searchTerm}%")
-                  // Búsqueda en descripción
-                  ->orWhere('descripcion', 'ilike', "%{$searchTerm}%")
-                  // Búsqueda en nombre original del archivo
-                  ->orWhere('nombre_original', 'ilike', "%{$searchTerm}%")
-                  // Búsqueda de texto completo (si está disponible)
-                                    ->orWhereRaw("to_tsvector('spanish, titulo || '  || COALESCE(descripcion, ')) @@ plainto_tsquery(
-                  'spanish, ?)", [$searchTerm]);
-            });
+            // MySQL-safe search usando scopeBuscar del modelo
+            $query->buscar($searchTerm);
         }
     }
 
@@ -202,7 +193,7 @@ class SearchService
         }
 
         return Documento::select('titulo')
-            ->where('titulo', 'ilike', "%{$term}%")
+            ->where('titulo', 'like', "%{$term}%")
             ->distinct()
             ->limit($limit)
             ->pluck('titulo');

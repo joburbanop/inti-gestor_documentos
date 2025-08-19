@@ -1,3 +1,4 @@
+import { formatText } from '../../utils/formatters.js';
 import React, { useEffect, useState } from 'react';
 import CreateForm from '../common/CreateForm';
  import { useAuth } from '../../contexts/AuthContext';
@@ -29,31 +30,31 @@ import CreateForm from '../common/CreateForm';
  try {
  // Cargar tipos de procesos y categorías en paralelo
  const [tiposRes, categoriasRes] = await Promise.all([
- apiRequest('/api/tipos-procesos'),
- apiRequest('/api/procesos-internos')
+ apiRequest('/tipos-procesos'),
+ apiRequest('/procesos-internos')
  ]);
  // Procesar tipos de procesos
  if (tiposRes.success) {
- const tipos = tiposRes.data.map(x => ({ value: x.id, label: x.nombre }));
+ const tipos = tiposRes.data.map(x => ({ value: x.id, label: formatText(x.nombre, { case: 'capitalize' }) }));
  console.log('✅ [DocumentoModal.jsx] Tipos de procesos cargados:', tipos.length);
  setTiposProcesosOptions(tipos);
  } else {
  console.error('❌ [DocumentoModal.jsx] Error cargando tipos de procesos:', tiposRes);
  setTiposProcesosOptions([]);
  }
- // Procesar categorías (siempre disponibles)
- if (categoriasRes.success) {
- const categorias = categoriasRes.data.map(x => ({
- value: x.id,
- label: x.nombre,
- descripcion: x.descripcion
- }));
- console.log('✅ [DocumentoModal.jsx] Categorías cargadas:', categorias.length);
- setProcesosInternosOptions(categorias);
- } else {
- console.error('❌ [DocumentoModal.jsx] Error cargando categorías:', categoriasRes);
- setProcesosInternosOptions([]);
- }
+  // Procesar procesos internos (antes "categorías")
+  if (categoriasRes.success) {
+  const procesosInternos = categoriasRes.data.map(x => ({
+  value: x.id,
+  label: formatText(x.nombre, { case: 'capitalize' }),
+  descripcion: x.descripcion
+  }));
+  console.log('✅ [DocumentoModal.jsx] Procesos internos cargados:', procesosInternos.length);
+  setProcesosInternosOptions(procesosInternos);
+  } else {
+  console.error('❌ [DocumentoModal.jsx] Error cargando procesos internos:', categoriasRes);
+  setProcesosInternosOptions([]);
+  }
  } catch (error) {
  console.error('💥 [DocumentoModal.jsx] Error general cargando datos:', error);
  } finally {
@@ -65,11 +66,11 @@ import CreateForm from '../common/CreateForm';
  const cargarProcesosGenerales = async (tipoProcesoId) => {
  try {
  console.log('🔄 [DocumentoModal.jsx] Cargando procesos generales para tipo ID:', tipoProcesoId);
- const res = await apiRequest(`/api/tipos-procesos/${tipoProcesoId}/procesos-generales`);
+ const res = await apiRequest(`/tipos-procesos/${tipoProcesoId}/procesos-generales`);
  if (res.success) {
  const procesos = (res.data || []).map(x => ({
  value: x.id,
- label: x.nombre,
+ label: formatText(x.nombre, { case: 'capitalize' }),
  descripcion: x.descripcion
  }));
  console.log('✅ [DocumentoModal.jsx] Procesos generales cargados:', procesos.length);
@@ -81,6 +82,28 @@ import CreateForm from '../common/CreateForm';
  } catch (error) {
  console.error('💥 [DocumentoModal.jsx] Error cargando procesos generales:', error);
  setProcesosGeneralesOptions([]);
+ }
+ };
+
+ const cargarProcesosInternos = async (procesoGeneralId) => {
+ try {
+ console.log('🔄 [DocumentoModal.jsx] Cargando procesos internos para proceso general ID:', procesoGeneralId);
+ const res = await apiRequest(`/procesos-generales/${procesoGeneralId}/procesos-internos`);
+ if (res.success) {
+ const procesos = (res.data || []).map(x => ({
+ value: x.id,
+ label: formatText(x.nombre, { case: 'capitalize' }),
+ descripcion: x.descripcion
+ }));
+ console.log('✅ [DocumentoModal.jsx] Procesos internos cargados:', procesos.length);
+ setProcesosInternosOptions(procesos);
+ } else {
+ console.error('❌ [DocumentoModal.jsx] Error cargando procesos internos:', res);
+ setProcesosInternosOptions([]);
+ }
+ } catch (error) {
+ console.error('💥 [DocumentoModal.jsx] Error cargando procesos internos:', error);
+ setProcesosInternosOptions([]);
  }
  };
  // Cargar procesos generales cuando cambia el tipo de proceso seleccionado
@@ -99,6 +122,23 @@ import CreateForm from '../common/CreateForm';
  // Cargar procesos generales automáticamente
  cargarProcesosGenerales(tipoProcesoId);
  }, [localData?.tipo_proceso_id, show]);
+
+ // Cargar procesos internos cuando cambia el proceso general seleccionado
+ useEffect(() => {
+ if (!show) return;
+ const procesoGeneralId = localData?.proceso_general_id;
+ console.log('🔄 [DocumentoModal.jsx] Cambio en proceso_general_id:', procesoGeneralId);
+ if (!procesoGeneralId) {
+ setProcesosInternosOptions([]);
+ setLocalData(prev => ({
+ ...prev,
+ proceso_interno_id: ''
+ }));
+ return;
+ }
+ // Cargar procesos internos automáticamente
+ cargarProcesosInternos(procesoGeneralId);
+ }, [localData?.proceso_general_id, show]);
  if (!show) return null;
  const handleAddProcesoGeneral = async () => {
  const nombre = window.prompt('Escribe el nombre de la nueva área principal:');
@@ -106,7 +146,7 @@ import CreateForm from '../common/CreateForm';
  const descripcion = window.prompt('Escribe la descripción del área principal (opcional):');
  const tipo = window.prompt('Escribe el tipo de área (estrategico/misional/apoyo/evaluacion):');
  try {
- const res = await apiRequest('/api/procesos-generales', {
+ const res = await apiRequest('/procesos-generales', {
  method: 'POST',
  body: JSON.stringify({
  nombre: nombre.trim(),
@@ -140,7 +180,7 @@ import CreateForm from '../common/CreateForm';
  if (!nombre) return;
  const descripcion = window.prompt('Escribe la descripción de la carpeta (opcional):');
  try {
- const res = await apiRequest('/api/procesos-internos', {
+ const res = await apiRequest('/procesos-internos', {
  method: 'POST',
  body: JSON.stringify({
  nombre: nombre.trim(),
@@ -231,16 +271,16 @@ import CreateForm from '../common/CreateForm';
  },
  {
  name: 'proceso_interno_id',
- label: 'Categoría (Carpeta de Documentos)',
+  label: 'Proceso Interno',
  type: 'select',
  required: true,
  options: procesosInternosOptions,
  disabled: loadingData,
- placeholder: loadingData ? 'Cargando categorías...' : 'Selecciona la carpeta para organizar el documento',
+  placeholder: loadingData ? 'Cargando procesos internos...' : 'Selecciona el proceso interno',
  hasAddButton: true,
- addButtonText: 'Agregar carpeta',
+  addButtonText: 'Agregar proceso interno',
  onAddClick: handleAddProcesoInterno,
- helpText: 'Selecciona la carpeta específica donde se organizará el documento (Formatos, Procedimientos, etc.)'
+  helpText: 'Selecciona el proceso interno al que pertenece este documento'
  }
  ]
  },

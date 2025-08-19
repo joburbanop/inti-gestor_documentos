@@ -1021,7 +1021,7 @@ Para soporte técnico o reportar problemas:
 - **Email**: soporte@inti.com
 - **Documentación**: `/docs/`
 - **Logs**: `storage/logs/laravel.log`
-- **Comandos**: `php artisan upload:check-limits`, `php artisan documentos:check`
+Nota: Los comandos artisan internos de verificación fueron removidos. Utiliza las rutas de la API y logs para diagnóstico.
 
 ---
 

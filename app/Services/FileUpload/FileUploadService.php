@@ -31,8 +31,8 @@ class FileUploadService
                 'original_name' => $file->getClientOriginalName(),
                 'stored_name' => $fileName,
                 'path' => $path,
-                'size' => $fileInfo['size'],
-                'mime_type' => $fileInfo['mime_type']
+                'size' => $fileInfo['tamaño_archivo'],
+                'mime_type' => $fileInfo['tipo_archivo']
             ]);
 
             return $fileInfo;

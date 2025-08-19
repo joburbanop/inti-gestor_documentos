@@ -6,8 +6,7 @@ import React, { useEffect, useMemo, useState } from 'react'; import api from '..
  const DocumentoPreview = () => {
  const { id } = useParams();
  const { user } = useAuth();
- const [state, setState] = useState({ loading: tr
- ue, error: ', contentUrl: ', contentType: ', fileName: ', downloadUrl: ' });
+ const [state, setState] = useState({ loading: true, error: '', contentUrl: '', contentType: '', fileName: '', downloadUrl: '' });
  const isImage = useMemo(() => state.contentType.startsWith('image/'), [state.contentType]);
  const isPdf = useMemo(() => state.contentType === 'application/pdf', [state.contentType]);
  const isText = useMemo(() => state.contentType.startsWith('text/'), [state.contentType]);
@@ -48,11 +47,9 @@ import React, { useEffect, useMemo, useState } from 'react'; import api from '..
  } catch (e) {
  // si falla parseo JSON, caerá al catch general abajo
  }
- setState({ loading: false, error: 'No se pudo cargar la vista previa, contentUrl: ', contentType: ', fileName:
- ', downloadUrl: ' });
+ setState({ loading: false, error: 'No se pudo cargar la vista previa', contentUrl: '', contentType: '', fileName: '', downloadUrl: '' });
  } catch (e) {
- setState({ loading: false, error: e.messag
- e || 'Error al cargar vista previa, contentUrl: ', contentType: ', fileName: ', downloadUrl: ' });
+ setState({ loading: false, error: e.message || 'Error al cargar vista previa', contentUrl: '', contentType: '', fileName: '', downloadUrl: '' });
  }
  })();
  return () => {
@@ -95,19 +92,15 @@ import React, { useEffect, useMemo, useState } from 'react'; import api from '..
  </div>
  </div>
  {isPdf && (
- <iframe title="preview-pdf src={state.contentUrl} style={{ width: '100%, height: '80vh, border: '1px solid #e5e7eb
- , borderRadius: '0.5rem }} />
+ <iframe title="preview-pdf" src={state.contentUrl} style={{ width: '100%', height: '80vh', border: '1px solid #e5e7eb', borderRadius: '0.5rem' }} />
  )}
  {isImage && (
  <div style={{ display: 'flex', justifyContent: 'center' }}>
- <img src={state.contentUrl} alt={prettyN
- ame(state.fileName)} style={{ maxWidth: '100%, maxHeight: '80vh, borderRadius: '0.5rem, border: '1px solid #e5e7eb
- }} />
+ <img src={state.contentUrl} alt={prettyName(state.fileName)} style={{ maxWidth: '100%', maxHeight: '80vh', borderRadius: '0.5rem', border: '1px solid #e5e7eb' }} />
  </div>
  )}
  {isText && (
- <pre style={{ maxHeight: '80vh, overflow: 'auto, background: '#f9fafb, padding: '1rem, borderRadius: '0.5rem
- , border: '1px solid #e5e7eb }}>
+ <pre style={{ maxHeight: '80vh', overflow: 'auto', background: '#f9fafb', padding: '1rem', borderRadius: '0.5rem', border: '1px solid #e5e7eb' }}>
  {`// Vista previa de texto\n`}
  <code>
  {/* Mostrar como texto simple */}
@@ -119,7 +112,7 @@ import React, { useEffect, useMemo, useState } from 'react'; import api from '..
  <div className={styles.loadingContainer}>
  <p style={{ color: '#6b7280' }}>Este tipo de archivo no se puede previsualizar en el navegador.</p>
  {state.downloadUrl && (
- <a href={state.downloadUrl} target="_blank rel="noreferrer className={styles.createButton}>Abrir / Descargar
+ <a href={state.downloadUrl} target="_blank" rel="noreferrer" className={styles.createButton}>Abrir / Descargar
  </a>
  )}
  </div>

@@ -33,7 +33,7 @@ import React, { useState } from 'react'; const AdvancedSearchFilters = ({
  return value;
  };
  const removeFilter = (filterKey) => {
- handleFilterChange(filterKey', '');
+ handleFilterChange(filterKey, '');
  };
  const clearAllFilters = () => {
  setActiveFilters([]);

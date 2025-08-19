@@ -271,24 +271,60 @@ import React, { useEffect, useState } from 'react'; import { useAuth } from '../
  ];
  const handleNewsSubmit = async (formData) => {
  try {
- setLoading(true);
- const submitData = new FormData();
- submitData.append('title', formData.title?.trim() || '');
- if (formData.subtitle) submitData.append('subtitle', formData.subtitle);
- if (formData.document instanceof File) submitData.append('document', formData.document);
- // Automáticamente establecer fecha de publicación y estado activo
- if (!editingNews) {
- // Para nuevas noticias: fecha actual y estado activo
- submitData.append('published_at', new Date().toISOString().split('T')[0]);
- submitData.append('is_active'', '1');
- } else {
- // Para edición: mantener fecha original y estado actual
- submitData.append('published_at', editingNews.published_at || new Date().toISOString().split('T')[0]);
- submitData.append('is_active', editingNews.is_active ? '1' : '0');
- }
+   setLoading(true);
+ 
+   // Log de debugging
+   console.log('🔍 [Administracion.jsx] Datos recibidos en handleNewsSubmit:', formData);
+   console.log('🔍 [Administracion.jsx] formData es FormData?', formData instanceof FormData);
+   
+   let submitData;
+   let title, subtitle, document;
+   
+   if (formData instanceof FormData) {
+     // Si recibimos FormData del CreateForm
+     console.log('🔍 [Administracion.jsx] Recibido FormData del CreateForm');
+     submitData = formData;
+     
+     // Extraer valores del FormData para logging
+     title = formData.get('title');
+     subtitle = formData.get('subtitle');
+     document = formData.get('document');
+   } else {
+     // Si recibimos objeto normal (no debería pasar con campos de archivo)
+     console.log('🔍 [Administracion.jsx] Recibido objeto normal, creando FormData');
+     submitData = new FormData();
+     
+     title = formData.title?.trim() || '';
+     subtitle = formData.subtitle;
+     document = formData.document;
+     
+     submitData.append('title', title);
+     if (subtitle) submitData.append('subtitle', subtitle);
+     if (document instanceof File) submitData.append('document', document);
+   }
+   
+   console.log('🔍 [Administracion.jsx] Valores extraídos:', { title, subtitle, document });
+   console.log('🔍 [Administracion.jsx] title es válido?', title && title.trim() !== '');
+   
+   // Log de debugging del FormData final
+   console.log('🔍 [Administracion.jsx] FormData final:');
+   for (let [key, value] of submitData.entries()) {
+     console.log(`  ${key}:`, value);
+   }
+ 
+   // Automáticamente establecer fecha de publicación y estado activo
+   if (!editingNews) {
+     // Para nuevas noticias: fecha actual y estado activo
+     submitData.append('published_at', new Date().toISOString().split('T')[0]);
+     submitData.append('is_active', '1');
+   } else {
+     // Para edición: mantener fecha original y estado actual
+     submitData.append('published_at', editingNews.published_at || new Date().toISOString().split('T')[0]);
+     submitData.append('is_active', editingNews.is_active ? '1' : '0');
+   }
  let res;
  if (editingNews) {
- submitData.append('_method'', 'PUT');
+ submitData.append('_method', 'PUT');
  res = await apiRequest(`/noticias/${editingNews.id}`, { method: 'POST', body: submitData });
  } else {
  res = await apiRequest('/noticias', { method: 'POST', body: submitData });

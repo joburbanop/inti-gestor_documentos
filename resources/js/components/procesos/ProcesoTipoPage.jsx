@@ -41,10 +41,7 @@ import React, { useEffect, useState } from 'react'; import { useParams, useNavig
  <div className="flex items-center mb-6">
  <div className="p-3 rounded-full bg-indigo-100 text-indigo-600 mr-4">
  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
- <path strokeLinecap="round strokeLinejoin="round strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.1
- 72 9.172L5.636 5.636m3.536 9.192L5.636 18.364M21 1
- 2a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4
- 4 0 018 0z />
+ <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
  </svg>
  </div>
  <div>
@@ -65,8 +62,7 @@ import React, { useEffect, useState } from 'react'; import { useParams, useNavig
  ) : (
  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
  {items.map((p) => (
- <Link key={p.id} to={`/procesos/${
- config.key}/${p.id}`} className="rounded-lg p-6 border bg-white hover:shadow>
+ <Link key={p.id} to={`/procesos/${config.key}/${p.id}`} className="rounded-lg p-6 border bg-white hover:shadow-md transition-shadow">
  <h3 className="text-lg font-semibold">{p.nombre}</h3>
  {p.codigo && <div className="text-gray-500 text-sm">{p.codigo}</div>}
  {p.descripcion && <p className="text-gray-700 mt-2">{p.descripcion}</p>}

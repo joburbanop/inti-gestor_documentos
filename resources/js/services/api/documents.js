@@ -1,133 +1,168 @@
-import apiClient from '../../lib/apiClient'; /**
- * Servicio de API para gestión de documentos
- */
- class DocumentService {
- /**
- * Obtener lista de documentos con filtros
- */
- async getDocuments(filters = {}) {
- try {
- const params = new URLSearchParams();
- // Agregar filtros a los parámetros
- Object.keys(filters).forEach(key => {
- if (filters[key] !== null && filters[key] !== undefined && filters[key] !== '') {
- params.append(key, filters[key]);
- }
- });
- const response = await apiClient.get(`/documents?${params.toString()}`);
- return response.data;
- } catch (error) {
- console.error('❌ [DocumentService] Error al obtener documentos:', error);
- throw error;
- }
- }
- /**
- * Obtener documento por ID
- */
- async getDocument(id) {
- try {
- const response = await apiClient.get(`/documents/${id}`);
- return response.data;
- } catch (error) {
- console.error('❌ [DocumentService] Error al obtener documento:', error);
- throw error;
- }
- }
- /**
- * Crear nuevo documento
- */
- async createDocument(formData) {
- try {
- console.log('📝 [DocumentService] Creando documento con FormData');
- const response = await apiClient.post('/documents', formData, {
- headers: {
- 'Content-Type': 'multipart/form-data'
- }
- });
- console.log('✅ [DocumentService] Documento creado exitosamente');
- return response.data;
- } catch (error) {
- console.error('❌ [DocumentService] Error al crear documento:', error);
- throw error;
- }
- }
- /**
- * Actualizar documento
- */
- async updateDocument(id, data) {
- try {
- const response = await apiClient.put(`/documents/${id}`, data);
- return response.data;
- } catch (error) {
- console.error('❌ [DocumentService] Error al actualizar documento:', error);
- throw error;
- }
- }
- /**
- * Eliminar documento
- */
- async deleteDocument(id) {
- try {
- const response = await apiClient.delete(`/documents/${id}`);
- return response.data;
- } catch (error) {
- console.error('❌ [DocumentService] Error al eliminar documento:', error);
- throw error;
- }
- }
- /**
- * Descargar documento
- */
- async downloadDocument(id) {
- try {
- const response = await apiClient.post(`/documents/${id}/download`, {}, {
- responseType: 'blob'
- });
- return response.data;
- } catch (error) {
- console.error('❌ [DocumentService] Error al descargar documento:', error);
- throw error;
- }
- }
- /**
- * Buscar documentos
- */
- async searchDocuments(searchTerm, filters = {}) {
- try {
- const params = new URLSearchParams({
- q: searchTerm,
- ...filters
- });
- const response = await apiClient.get(`/documents/search?${params.toString()}`);
- return response.data;
- } catch (error) {
- console.error('❌ [DocumentService] Error al buscar documentos:', error);
- throw error;
- }
- }
- /**
- * Obtener documentos recientes
- */
- async getRecentDocuments(limit = 10) {
- try {
- const response = await apiClient.get(`/documents/recent?limit=${limit}`);
- return response.data;
- } catch (error) {
- console.error('❌ [DocumentService] Error al obtener documentos recientes:', error);
- throw error;
- }
- }
- /**
- * Obtener estadísticas de documentos
- */
- async getDocumentStats() {
- try {
- const response = await apiClient.get('/documents/stats');
- return response.data;
- } catch (error) {
- console.error('❌ [DocumentService] Error al obtener estadísticas:', error);
- throw error;
- }
- }
- }
- export default new DocumentService();
+import api from '../../lib/apiClient.js';
+
+export const documentsService = {
+    // Obtener todos los documentos
+    getAll: async (params = {}) => {
+        try {
+            const response = await api.get('/documents', { params });
+            return response.data;
+        } catch (error) {
+            console.error('Error obteniendo documentos:', error);
+            throw error;
+        }
+    },
+
+    // Obtener documento por ID
+    getById: async (id) => {
+        try {
+            const response = await api.get(`/documents/${id}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error obteniendo documento:', error);
+            throw error;
+        }
+    },
+
+    // Crear nuevo documento
+    create: async (documentData) => {
+        try {
+            const response = await api.post('/documents', documentData);
+            return response.data;
+        } catch (error) {
+            console.error('Error creando documento:', error);
+            throw error;
+        }
+    },
+
+    // Actualizar documento
+    update: async (id, documentData) => {
+        try {
+            const response = await api.put(`/documents/${id}`, documentData);
+            return response.data;
+        } catch (error) {
+            console.error('Error actualizando documento:', error);
+            throw error;
+        }
+    },
+
+    // Eliminar documento
+    delete: async (id) => {
+        try {
+            const response = await api.delete(`/documents/${id}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error eliminando documento:', error);
+            throw error;
+        }
+    },
+
+    // Buscar documentos
+    search: async (params = {}) => {
+        try {
+            const response = await api.get('/documents/search', { params });
+            return response.data;
+        } catch (error) {
+            console.error('Error buscando documentos:', error);
+            throw error;
+        }
+    },
+
+    // Obtener documentos recientes
+    getRecent: async (params = {}) => {
+        try {
+            const response = await api.get('/documents/recent', { params });
+            return response.data;
+        } catch (error) {
+            console.error('Error obteniendo documentos recientes:', error);
+            throw error;
+        }
+    },
+
+    // Descargar documento
+    download: async (id) => {
+        try {
+            const response = await api.post(`/documents/${id}/download`);
+            return response.data;
+        } catch (error) {
+            console.error('Error descargando documento:', error);
+            throw error;
+        }
+    },
+
+    // Vista previa de documento
+    preview: async (id) => {
+        try {
+            const response = await api.get(`/documents/${id}/preview`);
+            return response.data;
+        } catch (error) {
+            console.error('Error obteniendo vista previa:', error);
+            throw error;
+        }
+    },
+
+    // Obtener estadísticas
+    getStats: async () => {
+        try {
+            const response = await api.get('/documents/stats');
+            return response.data;
+        } catch (error) {
+            console.error('Error obteniendo estadísticas:', error);
+            throw error;
+        }
+    },
+
+    // Obtener estadísticas de extensiones
+    getExtensionStats: async () => {
+        try {
+            const response = await api.get('/documents/stats/extensions');
+            return response.data;
+        } catch (error) {
+            console.error('Error obteniendo estadísticas de extensiones:', error);
+            throw error;
+        }
+    },
+
+    // Obtener extensiones disponibles
+    getAvailableExtensions: async () => {
+        try {
+            const response = await api.get('/documents/extensions/available');
+            return response.data;
+        } catch (error) {
+            console.error('Error obteniendo extensiones disponibles:', error);
+            throw error;
+        }
+    },
+
+    // Obtener etiquetas
+    getTags: async () => {
+        try {
+            const response = await api.get('/documents/tags');
+            return response.data;
+        } catch (error) {
+            console.error('Error obteniendo etiquetas:', error);
+            throw error;
+        }
+    },
+
+    // Obtener sugerencias de etiquetas
+    getTagSuggestions: async (params = {}) => {
+        try {
+            const response = await api.get('/documents/tags/suggestions', { params });
+            return response.data;
+        } catch (error) {
+            console.error('Error obteniendo sugerencias de etiquetas:', error);
+            throw error;
+        }
+    },
+
+    // Obtener tipos de documentos
+    getTypes: async () => {
+        try {
+            const response = await api.get('/documents/types');
+            return response.data;
+        } catch (error) {
+            console.error('Error obteniendo tipos de documentos:', error);
+            throw error;
+        }
+    }
+};
