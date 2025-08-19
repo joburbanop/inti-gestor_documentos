@@ -21,16 +21,20 @@ import React, { useEffect, useState } from 'react'; import { useAuth } from '../
  role_id: '',
  is_active: true
  });
- // Estados para noticias
+ // Estado para noticias
  const [noticias, setNoticias] = useState([]);
  const [showNewsForm, setShowNewsForm] = useState(false);
  const [editingNews, setEditingNews] = useState(null);
  const [newsForm, setNewsForm] = useState({
- title: '',
- subtitle: '',
- published_at: '',
- document: null
+   title: '',
+   subtitle: '',
+   document: null
  });
+
+ // Log para monitorear cambios en noticias
+ useEffect(() => {
+   console.log('📰 [Administracion.jsx] Estado de noticias actualizado:', noticias);
+ }, [noticias]);
  // Debug temporal
  useEffect(() => {
  }, [user, token, isAuthenticated, isLoading]);
@@ -59,7 +63,12 @@ import React, { useEffect, useState } from 'react'; import { useAuth } from '../
  active: stats.active_users ?? stats.active ?? 0
  });
  }
- if (noticiasRes?.success) setNoticias(noticiasRes.data?.noticias || noticiasRes.data || []);
+ if (noticiasRes?.success) {
+   console.log('📰 [Administracion.jsx] Datos de noticias recibidos:', noticiasRes.data);
+   const noticiasData = noticiasRes.data?.noticias || noticiasRes.data || [];
+   console.log('📰 [Administracion.jsx] Noticias procesadas:', noticiasData);
+   setNoticias(noticiasData);
+ }
  } catch (e) {
  setError(e.message || 'Error cargando datos');
  } finally {
@@ -347,18 +356,31 @@ import React, { useEffect, useState } from 'react'; import { useAuth } from '../
  setShowNewsForm(true);
  };
  const toggleNewsStatus = async (newsId, currentStatus) => {
- try {
- setLoading(true);
- await apiRequest(`/noticias/${newsId}/toggle`, {
- method: 'PATCH',
- body: JSON.stringify({ is_active: !currentStatus })
- });
- await fetchData();
- } catch (e) {
- alert(e.message || 'Error al cambiar estado de la noticia');
- } finally {
- setLoading(false);
- }
+   try {
+     setLoading(true);
+     console.log('🔄 [Administracion.jsx] Iniciando toggle de noticia:', { newsId, currentStatus });
+     
+     const response = await apiRequest(`/noticias/${newsId}/toggle`, {
+       method: 'PATCH',
+       body: JSON.stringify({ is_active: !currentStatus }),
+       headers: {
+         'Content-Type': 'application/json'
+       }
+     });
+     
+     console.log('✅ [Administracion.jsx] Toggle exitoso:', response);
+     
+     // Recargar datos
+     console.log('🔄 [Administracion.jsx] Recargando datos...');
+     await fetchData();
+     console.log('✅ [Administracion.jsx] Datos recargados');
+     
+   } catch (e) {
+     console.error('❌ [Administracion.jsx] Error en toggle:', e);
+     alert(e.message || 'Error al cambiar estado de la noticia');
+   } finally {
+     setLoading(false);
+   }
  };
  const handleNewsDelete = async (newsId) => {
  if (!confirm('¿Eliminar esta noticia?')) return;

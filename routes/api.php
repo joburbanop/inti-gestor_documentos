@@ -195,7 +195,8 @@ Route::prefix('v1')->middleware(['api.auth', \App\Http\Middleware\CheckUserActiv
     Route::middleware(\App\Http\Middleware\HandleLargeUploads::class)->group(function () {
         Route::get('/noticias/latest', [NoticiaController::class, 'latest']);
         Route::apiResource('noticias', NoticiaController::class);
-        Route::get('/admin/noticias', [NoticiaController::class, 'index']);
+        Route::patch('/noticias/{id}/toggle', [NoticiaController::class, 'toggle']);
+        Route::get('/admin/noticias', [NoticiaController::class, 'indexAdmin']);
     });
 
     // Legacy: Dashboard
