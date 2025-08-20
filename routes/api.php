@@ -131,7 +131,7 @@ Route::prefix('v1')->middleware(['api.auth', \App\Http\Middleware\CheckUserActiv
     // ========================================
     // DOMINIO: NOTICIAS (Nuevas rutas en inglés)
     // ========================================
-    Route::prefix('news')->group(function () {
+    Route::prefix('news')->middleware(\App\Http\Middleware\HandleLargeUploads::class)->group(function () {
         Route::apiResource('/', NoticiaController::class)->parameters(['' => 'news']);
         Route::get('/latest', [NoticiaController::class, 'latest']);
     });
@@ -230,7 +230,6 @@ Route::middleware(['api.auth', \App\Http\Middleware\CheckUserActivity::class])->
     Route::get('/v1/procesos/tipos/config', function () {
         return response()->json(['success' => true, 'data' => []]);
     });
-    Route::get('/v1/procesos/tipos/{tipo}/config', function ($tipo) {
-        return response()->json(['success' => true, 'data' => []]);
-    });
-}); 
+});
+
+ 

@@ -25,7 +25,7 @@ class StoreDocumentRequest extends FormRequest
             'titulo' => 'required|string|max:255',
             'descripcion' => 'nullable|string|max:1000',
             // Alinear con límites de subida (hasta 50MB)
-            'archivo' => 'required|file|max:51200',
+            'archivo' => 'required|file|max:51200', // 50MB
             'tipo_proceso_id' => 'required|exists:tipos_procesos,id',
             'proceso_general_id' => 'required|exists:procesos_generales,id',
             'proceso_interno_id' => 'required|exists:procesos_internos,id',
@@ -44,7 +44,7 @@ class StoreDocumentRequest extends FormRequest
             'descripcion.max' => 'La descripción no puede tener más de 1000 caracteres',
             'archivo.required' => 'El archivo es obligatorio',
             'archivo.file' => 'El archivo debe ser un archivo válido',
-            'archivo.max' => 'El archivo no puede ser mayor a 8MB',
+            'archivo.max' => 'El archivo no puede ser mayor a 50MB',
             'tipo_proceso_id.required' => 'El tipo de proceso es obligatorio',
             'tipo_proceso_id.exists' => 'El tipo de proceso seleccionado no existe',
             'proceso_general_id.required' => 'El proceso general es obligatorio',

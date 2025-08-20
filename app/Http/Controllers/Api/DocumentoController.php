@@ -354,7 +354,7 @@ class DocumentoController extends Controller
             $validator = Validator::make($request->all(), [
                 'titulo' => 'required|string|max:255',
                 'descripcion' => 'nullable|string',
-                'archivo' => 'required|file|max:8192', // 8MB máximo (temporalmente reducido)
+                'archivo' => 'required|file|max:51200', // 50MB máximo
                 'tipo_proceso_id' => 'required|exists:tipos_procesos,id',
                 'proceso_general_id' => 'required|exists:procesos_generales,id',
                 'proceso_interno_id' => 'required|exists:procesos_internos,id',
@@ -362,7 +362,7 @@ class DocumentoController extends Controller
             ], [
                 'titulo.required' => 'El título es obligatorio',
                 'archivo.required' => 'El archivo es obligatorio',
-                'archivo.max' => 'El archivo no puede ser mayor a 8MB (temporalmente)',
+                'archivo.max' => 'El archivo no puede ser mayor a 50MB',
                 'tipo_proceso_id.required' => 'El tipo de proceso es obligatorio',
                 'proceso_general_id.required' => 'El proceso general es obligatorio',
                 'proceso_interno_id.required' => 'El proceso interno es obligatorio'

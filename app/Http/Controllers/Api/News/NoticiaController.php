@@ -147,7 +147,7 @@ class NoticiaController extends Controller
             'title' => 'required|string|max:255',
             'subtitle' => 'nullable|string',
             'published_at' => 'nullable|date',
-            'document' => 'nullable|file|max:10240',
+            'document' => 'nullable|file|max:51200', // 50MB
             'document_url' => 'nullable|url',
             'is_active' => 'sometimes|boolean',
         ]);
@@ -205,7 +205,7 @@ class NoticiaController extends Controller
             'title' => 'required|string|max:255',
             'subtitle' => 'nullable|string',
             'published_at' => 'nullable|date',
-            'document' => 'nullable|file|max:10240',
+            'document' => 'nullable|file|max:51200', // 50MB
             'document_url' => 'nullable|url',
             'is_active' => 'sometimes|boolean',
         ]);

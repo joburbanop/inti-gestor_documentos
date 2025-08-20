@@ -67,10 +67,10 @@ class FileUploadService
             throw new \Exception("Extensión de archivo no permitida: {$extension}");
         }
 
-        // Verificar tamaño máximo (8MB)
-        $maxSize = 8 * 1024 * 1024; // 8MB en bytes
+        // Verificar tamaño máximo (50MB)
+        $maxSize = 50 * 1024 * 1024; // 50MB en bytes
         if ($file->getSize() > $maxSize) {
-            throw new \Exception('El archivo excede el tamaño máximo permitido (8MB)');
+            throw new \Exception('El archivo excede el tamaño máximo permitido (50MB)');
         }
     }
 
