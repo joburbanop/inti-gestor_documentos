@@ -220,5 +220,137 @@ class DocumentController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Obtener estadísticas de documentos
+     */
+    public function stats(): JsonResponse
+    {
+        try {
+            $stats = $this->documentService->getStats();
+
+            return response()->json([
+                'success' => true,
+                'data' => $stats,
+                'message' => 'Estadísticas obtenidas exitosamente'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('❌ [DocumentController] Error al obtener estadísticas:', [
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener estadísticas: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtener etiquetas disponibles
+     */
+    public function tags(): JsonResponse
+    {
+        try {
+            $tags = $this->documentService->getTags();
+
+            return response()->json([
+                'success' => true,
+                'data' => $tags,
+                'message' => 'Etiquetas obtenidas exitosamente'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('❌ [DocumentController] Error al obtener etiquetas:', [
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener etiquetas: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtener tipos de documentos disponibles
+     */
+    public function types(): JsonResponse
+    {
+        try {
+            $types = $this->documentService->getTypes();
+
+            return response()->json([
+                'success' => true,
+                'data' => $types,
+                'message' => 'Tipos obtenidos exitosamente'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('❌ [DocumentController] Error al obtener tipos:', [
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener tipos: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Descargar documento
+     */
+    public function download($id): JsonResponse
+    {
+        try {
+            $downloadInfo = $this->documentService->downloadDocument($id);
+
+            return response()->json([
+                'success' => true,
+                'data' => $downloadInfo,
+                'message' => 'Información de descarga obtenida exitosamente'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('❌ [DocumentController] Error al obtener información de descarga:', [
+                'id' => $id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener información de descarga: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Vista previa de documento
+     */
+    public function preview($id): JsonResponse
+    {
+        try {
+            $previewInfo = $this->documentService->previewDocument($id);
+
+            return response()->json([
+                'success' => true,
+                'data' => $previewInfo,
+                'message' => 'Información de vista previa obtenida exitosamente'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('❌ [DocumentController] Error al obtener información de vista previa:', [
+                'id' => $id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener información de vista previa: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
 

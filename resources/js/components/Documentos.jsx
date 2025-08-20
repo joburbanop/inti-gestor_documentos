@@ -109,7 +109,7 @@ import { useLocation } from 'react-router-dom';
  // Solicitar más documentos por página (máximo 100)
    params.set('per_page', '100');
  const qs = params.toString();
- const url = `/documentos?${qs}`;
+     const url = `/documents?${qs}`;
  const res = await apiRequest(url, { signal: controller.signal });
  if (res.success) {
  const docs = res.data.documentos || res.data || [];
@@ -135,7 +135,7 @@ import { useLocation } from 'react-router-dom';
  useEffect(() => {
  (async () => {
  try {
- const response = await apiRequest('/documentos/etiquetas');
+     const response = await apiRequest('/documents/tags');
  if (response.success) {
  const etiquetas = response.data || [];
  setEtiquetasOptions(etiquetas);
@@ -149,7 +149,7 @@ import { useLocation } from 'react-router-dom';
  useEffect(() => {
  (async () => {
  try {
- const response = await apiRequest('/documentos/tipos');
+     const response = await apiRequest('/documents/types');
  if (response.success) {
  const tipos = response.data || [];
  setTiposDocumentoOptions(tipos);
@@ -166,7 +166,7 @@ import { useLocation } from 'react-router-dom';
  const d = await apiRequest('/procesos-generales');
  if (d.success) {
  const opts = [{ value: '', label: 'Todos los procesos generales' }].concat(
- (d.data || []).map(x => ({ value: x.id, label: x.nombre }))
+ (Array.isArray(d.data) ? d.data : []).map(x => ({ value: x.id, label: x.nombre }))
  );
  setProcesosGeneralesOptions(opts);
  }
@@ -187,7 +187,7 @@ import { useLocation } from 'react-router-dom';
  const p = await apiRequest(`/procesos-generales/${procesoGeneralId}/procesos-internos`);
  if (p.success) {
  const opts = [{ value: '', label: 'Todos los procesos internos' }].concat(
- (p.data || []).map(x => ({ value: x.id, label: x.nombre }))
+ (Array.isArray(p.data) ? p.data : []).map(x => ({ value: x.id, label: x.nombre }))
  );
  setProcesosInternosOptions(opts);
  setAdvancedFilterValues(prev => ({ ...prev, proceso_interno_id: '' }));
@@ -250,9 +250,9 @@ import { useLocation } from 'react-router-dom';
  type: 'select',
  options: [
  { value: '', label: 'Todos los tipos' },
- ...tiposDocumentoOptions.map(tipo => ({
- value: tipo,
- label: tipo
+  ...(Array.isArray(tiposDocumentoOptions) ? tiposDocumentoOptions : []).map(tipo => ({
+   value: tipo,
+   label: tipo
  }))
  ],
  value: advancedFilterValues.tipo
@@ -261,9 +261,9 @@ import { useLocation } from 'react-router-dom';
  key: 'etiqueta',
  label: 'Etiquetas',
  type: 'multiselect',
- options: etiquetasOptions.map(etiqueta => ({
- value: etiqueta,
- label: etiqueta
+  options: (Array.isArray(etiquetasOptions) ? etiquetasOptions : []).map(etiqueta => ({
+   value: etiqueta,
+   label: etiqueta
  })),
  value: advancedFilterValues.etiqueta || []
  },
@@ -298,7 +298,7 @@ import { useLocation } from 'react-router-dom';
  ], [procesosGeneralesOptions, procesosInternosOptions, etiquetasOptions, tiposDocumentoOptions, advancedFilterValues]);
  const handleView = async (documento) => {
  try {
- const res = await apiRequest(`/documentos/${documento.id}/vista-previa`, { method: 'GET' });
+     const res = await apiRequest(`/documents/${documento.id}/preview`, { method: 'GET' });
  if (res.success && res.data?.url) {
  // Construir URL completa con el token de autenticación
  const token = localStorage.getItem('auth_token');
@@ -327,7 +327,7 @@ import { useLocation } from 'react-router-dom';
  };
  const handleDownload = async (documento) => {
  try {
- const res = await apiRequest(`/documentos/${documento.id}/descargar`, { method: 'POST' });
+     const res = await apiRequest(`/documents/${documento.id}/download`, { method: 'POST' });
  if (res.success && res.data?.url) {
  // Si la URL es pública (storage local), forzar descarga con atributo download
  const a = document.createElement('a');
@@ -364,16 +364,16 @@ import { useLocation } from 'react-router-dom';
  type: 'danger',
  onConfirm: async () => {
  try {
- await apiRequest(`/documentos/${documento.id}`, { method: 'DELETE' });
+     await apiRequest(`/documents/${documento.id}`, { method: 'DELETE' });
  await fetchDocumentos();
  // Forzar recarga de estadísticas del dashboard para actualizar contadores
- // Esto asegura que los contadores de documentos se actualicen en direcciones y procesos
- try {
- await apiRequest('/documentos/estadisticas', {
- method: 'GET',
- ignoreAuthErrors: true
- });
- } catch (e) {
+     // Esto asegura que los contadores de documentos se actualicen en direcciones y procesos
+    try {
+      await apiRequest('/documents/stats', {
+        method: 'GET',
+        ignoreAuthErrors: true
+      });
+    } catch (e) {
  // Ignorar errores de estadísticas
  }
  } catch (e) {
@@ -494,7 +494,7 @@ import { useLocation } from 'react-router-dom';
  await fetchDocumentos();
  // Forzar recarga de estadísticas del dashboard para actualizar contadores
  try {
- await apiRequest('/documentos/estadisticas', {
+ await apiRequest('/documents/stats', {
  method: 'GET',
  ignoreAuthErrors: true
  });

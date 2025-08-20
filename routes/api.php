@@ -53,23 +53,23 @@ Route::prefix('v1')->middleware(['api.auth', \App\Http\Middleware\CheckUserActiv
     // DOMINIO: DOCUMENTOS (Nuevas rutas en inglés)
     // ========================================
     Route::prefix('documents')->middleware([\App\Http\Middleware\HandleLargeUploads::class])->group(function () {
+        // Estadísticas y metadatos (deben ir ANTES del apiResource)
+        Route::get('/stats', [DocumentController::class, 'stats']);
+        Route::get('/stats/extensions', [DocumentController::class, 'extensionStats']);
+        Route::get('/extensions/available', [DocumentController::class, 'availableExtensions']);
+        Route::get('/tags', [DocumentController::class, 'tags']);
+        Route::get('/types', [DocumentController::class, 'types']);
+        
+        // Búsqueda y filtros
+        Route::get('/search', [DocumentController::class, 'search']);
+        Route::get('/recent', [DocumentController::class, 'recent']);
+        
         // CRUD principal
         Route::apiResource('/', DocumentController::class)->parameters(['' => 'document']);
         
         // Operaciones específicas
         Route::post('/{id}/download', [DocumentController::class, 'download']);
         Route::get('/{id}/preview', [DocumentController::class, 'preview']);
-        
-        // Búsqueda y filtros
-        Route::get('/search', [DocumentController::class, 'search']);
-        Route::get('/recent', [DocumentController::class, 'recent']);
-        
-        // Estadísticas
-        Route::get('/stats', [DocumentController::class, 'stats']);
-        Route::get('/stats/extensions', [DocumentController::class, 'extensionStats']);
-        Route::get('/extensions/available', [DocumentController::class, 'availableExtensions']);
-        Route::get('/tags', [DocumentController::class, 'tags']);
-        Route::get('/types', [DocumentController::class, 'types']);
         
         // Sugerencias de etiquetas
         Route::get('/tags/suggestions', function (Request $request) {

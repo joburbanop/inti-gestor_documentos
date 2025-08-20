@@ -294,4 +294,109 @@ class DocumentService
         Cache::forget('document_stats');
         Cache::forget('recent_documents');
     }
+
+    /**
+     * Obtener estadísticas de documentos
+     */
+    public function getStats()
+    {
+        return Cache::remember('document_stats', 3600, function () {
+            return [
+                'total_documentos' => Documento::count(),
+                'por_confidencialidad' => Documento::selectRaw('confidencialidad, count(*) as total')
+                    ->groupBy('confidencialidad')
+                    ->get(),
+                'por_tipo_proceso' => Documento::join('tipos_procesos', 'documentos.tipo_proceso_id', '=', 'tipos_procesos.id')
+                    ->selectRaw('tipos_procesos.nombre, count(*) as total')
+                    ->groupBy('tipos_procesos.id', 'tipos_procesos.nombre')
+                    ->get(),
+                'por_extension' => Documento::selectRaw('extension, count(*) as total')
+                    ->groupBy('extension')
+                    ->orderBy('total', 'desc')
+                    ->limit(10)
+                    ->get()
+            ];
+        });
+    }
+
+    /**
+     * Obtener etiquetas disponibles
+     */
+    public function getTags()
+    {
+        return Cache::remember('document_tags', 3600, function () {
+            return Documento::query()
+                ->whereNotNull('etiquetas')
+                ->select('etiquetas')
+                ->limit(500)
+                ->get()
+                ->flatMap(function ($doc) { 
+                    return collect($doc->etiquetas ?? []); 
+                })
+                ->filter()
+                ->map(fn($t) => (string) $t)
+                ->unique()
+                ->values()
+                ->toArray();
+        });
+    }
+
+    /**
+     * Obtener tipos de documentos disponibles
+     */
+    public function getTypes()
+    {
+        return Cache::remember('document_types', 3600, function () {
+            return [
+                'pdf' => 'PDF',
+                'doc' => 'Documento Word',
+                'docx' => 'Documento Word',
+                'xls' => 'Hoja de Cálculo Excel',
+                'xlsx' => 'Hoja de Cálculo Excel',
+                'ppt' => 'Presentación PowerPoint',
+                'pptx' => 'Presentación PowerPoint',
+                'txt' => 'Archivo de Texto',
+                'jpg' => 'Imagen JPG',
+                'jpeg' => 'Imagen JPEG',
+                'png' => 'Imagen PNG',
+                'gif' => 'Imagen GIF',
+                'zip' => 'Archivo Comprimido ZIP',
+                'rar' => 'Archivo Comprimido RAR'
+            ];
+        });
+    }
+
+    /**
+     * Obtener información de descarga de documento
+     */
+    public function downloadDocument($id)
+    {
+        $documento = Documento::findOrFail($id);
+        
+        // Incrementar contador de descargas
+        $this->incrementDownloadCount($id);
+
+        return [
+            'url' => $documento->getUrlDescargaAttribute(),
+            'nombre_original' => $documento->nombre_original,
+            'tamaño_archivo' => $documento->tamaño_archivo,
+            'tamaño_formateado' => $documento->getTamañoFormateadoAttribute()
+        ];
+    }
+
+    /**
+     * Obtener información de vista previa de documento
+     */
+    public function previewDocument($id)
+    {
+        $documento = Documento::findOrFail($id);
+
+        return [
+            'url' => $documento->getUrlVistaPreviaAttribute(),
+            'nombre_original' => $documento->nombre_original,
+            'tamaño_archivo' => $documento->tamaño_archivo,
+            'tamaño_formateado' => $documento->getTamañoFormateadoAttribute(),
+            'tipo_archivo' => $documento->tipo_archivo
+        ];
+    }
 }

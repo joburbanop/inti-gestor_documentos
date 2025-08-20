@@ -1,7 +1,7 @@
 import { formatText } from '../../utils/formatters.js';
 import React, { useEffect, useState } from 'react';
 import CreateForm from '../common/CreateForm';
-import FileUploadInfo from '../common/FileUploadInfo';
+
 import { useAuth } from '../../contexts/AuthContext';
 import styles from '../../styles/components/Documentos.module.css';
 import {
@@ -403,7 +403,7 @@ import {
            isModal={true}
          />
          <div className="mt-4">
-           <FileUploadInfo />
+   
          </div>
  </div>
  </div>

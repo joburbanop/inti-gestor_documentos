@@ -82,20 +82,26 @@ import { EditIcon, DeleteIcon, EyeIcon, DownloadIcon } from '../icons/CrudIcons'
  </span>
  )}
  </div>
- <div className={styles.documentInfo}>
- <div className={styles.infoItem}>
- <span className={styles.infoLabel}>Dirección:</span>
- <span className={styles.infoValue}>
- {documento.direccion?.nombre || 'Sin dirección'}
- </span>
- </div>
- <div className={styles.infoItem}>
- <span className={styles.infoLabel}>Proceso Misional:</span>
- <span className={styles.infoValue}>
- {documento.proceso_apoyo?.nombre || 'Sin proceso misional'}
- </span>
- </div>
- </div>
+          <div className={styles.documentInfo}>
+           <div className={styles.infoItem}>
+             <span className={styles.infoLabel}>Tipo de Proceso:</span>
+             <span className={styles.infoValue}>
+               {documento.tipo_proceso?.titulo || 'Sin definir'}
+             </span>
+           </div>
+           <div className={styles.infoItem}>
+             <span className={styles.infoLabel}>Proceso General:</span>
+             <span className={styles.infoValue}>
+               {documento.proceso_general?.nombre || 'Sin definir'}
+             </span>
+           </div>
+           <div className={styles.infoItem}>
+             <span className={styles.infoLabel}>Proceso Interno:</span>
+             <span className={styles.infoValue}>
+               {documento.proceso_interno?.nombre || 'Sin definir'}
+             </span>
+           </div>
+         </div>
  </div>
  </div>
  );
