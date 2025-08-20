@@ -278,10 +278,19 @@ import React, { useEffect, useState } from 'react'; import { useAuth } from '../
  ]
  }
  ];
- const handleNewsSubmit = async (formData) => {
+  const handleNewsSubmit = async (formData) => {
  try {
    setLoading(true);
- 
+
+   // Función para validar tamaño de archivo
+   const validateFileSize = (file) => {
+     const maxSize = 50 * 1024 * 1024; // 50MB en bytes
+     if (file.size > maxSize) {
+       const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+       throw new Error(`El archivo "${file.name}" es demasiado grande (${sizeInMB}MB). El tamaño máximo permitido es 50MB.`);
+     }
+   };
+
    // Log de debugging
    console.log('🔍 [Administracion.jsx] Datos recibidos en handleNewsSubmit:', formData);
    console.log('🔍 [Administracion.jsx] formData es FormData?', formData instanceof FormData);
@@ -298,6 +307,11 @@ import React, { useEffect, useState } from 'react'; import { useAuth } from '../
      title = formData.get('title');
      subtitle = formData.get('subtitle');
      document = formData.get('document');
+     
+     // Validar tamaño del archivo si existe
+     if (document && document instanceof File) {
+       validateFileSize(document);
+     }
    } else {
      // Si recibimos objeto normal (no debería pasar con campos de archivo)
      console.log('🔍 [Administracion.jsx] Recibido objeto normal, creando FormData');
@@ -306,6 +320,11 @@ import React, { useEffect, useState } from 'react'; import { useAuth } from '../
      title = formData.title?.trim() || '';
      subtitle = formData.subtitle;
      document = formData.document;
+     
+     // Validar tamaño del archivo si existe
+     if (document && document instanceof File) {
+       validateFileSize(document);
+     }
      
      submitData.append('title', title);
      if (subtitle) submitData.append('subtitle', subtitle);

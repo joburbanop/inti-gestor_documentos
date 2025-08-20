@@ -1,9 +1,10 @@
 import { formatText } from '../../utils/formatters.js';
 import React, { useEffect, useState } from 'react';
 import CreateForm from '../common/CreateForm';
- import { useAuth } from '../../contexts/AuthContext';
- import styles from '../../styles/components/Documentos.module.css';
- import {
+import FileUploadInfo from '../common/FileUploadInfo';
+import { useAuth } from '../../contexts/AuthContext';
+import styles from '../../styles/components/Documentos.module.css';
+import {
  DocumentIcon,
  TagIcon,
  BuildingIcon,
@@ -304,6 +305,15 @@ import CreateForm from '../common/CreateForm';
      console.log('🔄 [DocumentoModal.jsx] Enviando datos:', data);
      console.log('🔄 [DocumentoModal.jsx] Modo:', mode);
      
+     // Función para validar tamaño de archivo
+     const validateFileSize = (file) => {
+       const maxSize = 50 * 1024 * 1024; // 50MB en bytes
+       if (file.size > maxSize) {
+         const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+         throw new Error(`El archivo "${file.name}" es demasiado grande (${sizeInMB}MB). El tamaño máximo permitido es 50MB.`);
+       }
+     };
+     
      // Verificar si es FormData o datos normales
      if (data instanceof FormData) {
        console.log('📁 [DocumentoModal.jsx] Recibido FormData con archivos');
@@ -316,8 +326,15 @@ import CreateForm from '../common/CreateForm';
            return;
          }
          console.log('✅ [DocumentoModal.jsx] Archivo encontrado para creación:', archivo.name);
+         // Validar tamaño del archivo
+         validateFileSize(archivo);
        } else {
          console.log('✅ [DocumentoModal.jsx] Modo edición - archivo opcional');
+         // Si hay un archivo nuevo en edición, validarlo
+         const archivo = data.get('archivo');
+         if (archivo && archivo instanceof File) {
+           validateFileSize(archivo);
+         }
        }
      } else {
        console.log('📋 [DocumentoModal.jsx] Recibidos datos normales');
@@ -329,8 +346,14 @@ import CreateForm from '../common/CreateForm';
        }
        if (mode === 'create') {
          console.log('✅ [DocumentoModal.jsx] Archivo encontrado para creación:', data.archivo.name);
+         // Validar tamaño del archivo
+         validateFileSize(data.archivo);
        } else {
          console.log('✅ [DocumentoModal.jsx] Modo edición - archivo opcional');
+         // Si hay un archivo nuevo en edición, validarlo
+         if (data.archivo && data.archivo instanceof File) {
+           validateFileSize(data.archivo);
+         }
        }
      }
      
@@ -368,17 +391,20 @@ import CreateForm from '../common/CreateForm';
  <p>Cargando datos de clasificación organizacional...</p>
  </div>
  )}
- <CreateForm
- entityType="documento"
- fields={fields}
- initialData={localData}
- onSubmit={onInternalSubmit}
- onCancel={onClose}
- onChange={setLocalData}
- loading={loading || loadingData}
- errors={errors}
- isModal={true}
- />
+          <CreateForm
+           entityType="documento"
+           fields={fields}
+           initialData={localData}
+           onSubmit={onInternalSubmit}
+           onCancel={onClose}
+           onChange={setLocalData}
+           loading={loading || loadingData}
+           errors={errors}
+           isModal={true}
+         />
+         <div className="mt-4">
+           <FileUploadInfo />
+         </div>
  </div>
  </div>
  </div>

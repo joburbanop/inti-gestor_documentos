@@ -232,4 +232,22 @@ Route::middleware(['api.auth', \App\Http\Middleware\CheckUserActivity::class])->
     });
 });
 
+// Endpoint para obtener información sobre límites de archivo
+Route::get('/file-limits', function () {
+    return response()->json([
+        'max_file_size' => '50MB',
+        'max_file_size_bytes' => 50 * 1024 * 1024,
+        'allowed_extensions' => [
+            'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
+            'jpg', 'jpeg', 'png', 'gif', 'txt', 'zip', 'rar'
+        ],
+        'upload_limits' => [
+            'upload_max_filesize' => ini_get('upload_max_filesize'),
+            'post_max_size' => ini_get('post_max_size'),
+            'max_execution_time' => ini_get('max_execution_time'),
+            'memory_limit' => ini_get('memory_limit')
+        ]
+    ]);
+});
+
  
