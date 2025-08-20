@@ -24,7 +24,20 @@ class DocumentController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $documentos = $this->documentService->getDocuments($request);
+            // Convertir parámetros del request a array de filtros
+            $filters = $request->only([
+                'tipo_proceso_id',
+                'proceso_general_id', 
+                'proceso_interno_id',
+                'tipo',
+                'confidencialidad',
+                'search',
+                'etiquetas'
+            ]);
+            
+            $perPage = $request->get('per_page', 15);
+            
+            $documentos = $this->documentService->getDocuments($filters, $perPage);
 
             return response()->json([
                 'success' => true,
@@ -143,10 +156,24 @@ class DocumentController extends Controller
     public function update(Request $request, $id): JsonResponse
     {
         try {
+            Log::info('🔄 [DocumentController] Iniciando actualización de documento', [
+                'id' => $id,
+                'method' => $request->method(),
+                'url' => $request->url(),
+                'all_data' => $request->all(),
+                'files' => $request->allFiles(),
+                'content_type' => $request->header('Content-Type')
+            ]);
+            
             $data = $request->all();
             $file = $request->file('archivo');
 
             $documento = $this->documentService->updateDocument($id, $data, $file);
+
+            Log::info('✅ [DocumentController] Documento actualizado exitosamente', [
+                'id' => $id,
+                'titulo' => $documento->titulo
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -157,7 +184,8 @@ class DocumentController extends Controller
         } catch (\Exception $e) {
             Log::error('❌ [DocumentController] Error al actualizar documento:', [
                 'id' => $id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
             return response()->json([

@@ -386,9 +386,10 @@ import { useLocation } from 'react-router-dom';
  try {
  setFormLoading(true);
  setErrors({});
- let res;
  
  console.log('🔍 [Documentos.jsx] Datos recibidos en handleSubmit:', data);
+ 
+ let res; // Declarar res al inicio
  
  if (modalMode === 'create') {
   // Crear nuevo documento
@@ -426,20 +427,67 @@ import { useLocation } from 'react-router-dom';
   
   res = await apiRequest('/documents', { method: 'POST', body: fd });
   } else {
- // Actualizar documento existente
- const updateData = {
- titulo: data.titulo || '',
- descripcion: data.descripcion || '',
- direccion_id: data.direccion_id || '',
- proceso_apoyo_id: data.proceso_apoyo_id || '',
- tipo: data.tipo || '',
- confidencialidad: data.confidencialidad || ''
- };
- updateData.etiquetas = Array.isArray(data.etiquetas) ? data.etiquetas : [];
- res = await apiRequest(`/documentos/${data.id}`, {
- method: 'PUT',
- body: JSON.stringify(updateData)
- });
+   // Actualizar documento existente
+   console.log('🔄 [Documentos.jsx] Actualizando documento existente');
+   
+   let updateData;
+   
+   if (data instanceof FormData) {
+     // Si recibimos FormData, extraer los datos
+     updateData = {
+       titulo: data.get('titulo') || '',
+       descripcion: data.get('descripcion') || '',
+       tipo_proceso_id: data.get('tipo_proceso_id') || '',
+       proceso_general_id: data.get('proceso_general_id') || '',
+       proceso_interno_id: data.get('proceso_interno_id') || '',
+       tipo: data.get('tipo') || '',
+       confidencialidad: data.get('confidencialidad') || ''
+     };
+     
+     // Manejar etiquetas si están en FormData
+     const etiquetas = [];
+     for (let [key, value] of data.entries()) {
+       if (key.startsWith('etiquetas[')) {
+         etiquetas.push(value);
+       }
+     }
+     updateData.etiquetas = etiquetas;
+     
+     // Si hay un archivo nuevo, incluirlo
+     const archivo = data.get('archivo');
+     if (archivo && archivo instanceof File) {
+       console.log('📁 [Documentos.jsx] Archivo nuevo detectado en edición:', archivo.name);
+       // Para edición con archivo, usar FormData
+       res = await apiRequest(`/documents/${data.get('id')}`, {
+         method: 'POST',
+         body: data
+       });
+     } else {
+       console.log('📋 [Documentos.jsx] Sin archivo nuevo, enviando JSON');
+       res = await apiRequest(`/documents/${data.get('id')}`, {
+         method: 'PUT',
+         body: JSON.stringify(updateData)
+       });
+     }
+   } else {
+     // Si recibimos objeto normal
+     updateData = {
+       titulo: data.titulo || '',
+       descripcion: data.descripcion || '',
+       tipo_proceso_id: data.tipo_proceso_id || '',
+       proceso_general_id: data.proceso_general_id || '',
+       proceso_interno_id: data.proceso_interno_id || '',
+       tipo: data.tipo || '',
+       confidencialidad: data.confidencialidad || ''
+     };
+     updateData.etiquetas = Array.isArray(data.etiquetas) ? data.etiquetas : [];
+     
+     console.log('📋 [Documentos.jsx] Enviando datos de actualización:', updateData);
+     res = await apiRequest(`/documents/${data.id}`, {
+       method: 'PUT',
+       body: JSON.stringify(updateData)
+     });
+   }
  }
  if (res.success) {
  setShowModal(false);

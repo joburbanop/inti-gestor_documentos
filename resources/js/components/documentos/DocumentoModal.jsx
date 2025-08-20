@@ -300,33 +300,45 @@ import CreateForm from '../common/CreateForm';
  }
  ];
  const onInternalSubmit = async (data) => {
- try {
- console.log('🔄 [DocumentoModal.jsx] Enviando datos:', data);
- // Verificar si es FormData o datos normales
- if (data instanceof FormData) {
- console.log('📁 [DocumentoModal.jsx] Recibido FormData con archivos');
- // Verificar que el archivo esté presente
- const archivo = data.get('archivo');
- if (!archivo) {
- console.error('❌ [DocumentoModal.jsx] No hay archivo en FormData');
- alert('Debes seleccionar un archivo');
- return;
- }
- console.log('✅ [DocumentoModal.jsx] Archivo encontrado:', archivo.name);
- } else {
- console.log('📋 [DocumentoModal.jsx] Recibidos datos normales');
- if (!data.archivo) {
- console.error('❌ [DocumentoModal.jsx] No hay archivo seleccionado');
- alert('Debes seleccionar un archivo');
- return;
- }
- console.log('✅ [DocumentoModal.jsx] Archivo encontrado:', data.archivo.name);
- }
- if (onSubmit) await onSubmit(data);
- } catch (error) {
- console.error('💥 [DocumentoModal.jsx] Error general:', error);
- alert('Error al crear el documento: ' + error.message);
- }
+   try {
+     console.log('🔄 [DocumentoModal.jsx] Enviando datos:', data);
+     console.log('🔄 [DocumentoModal.jsx] Modo:', mode);
+     
+     // Verificar si es FormData o datos normales
+     if (data instanceof FormData) {
+       console.log('📁 [DocumentoModal.jsx] Recibido FormData con archivos');
+       // Verificar que el archivo esté presente solo si es modo create
+       if (mode === 'create') {
+         const archivo = data.get('archivo');
+         if (!archivo) {
+           console.error('❌ [DocumentoModal.jsx] No hay archivo en FormData para creación');
+           alert('Debes seleccionar un archivo');
+           return;
+         }
+         console.log('✅ [DocumentoModal.jsx] Archivo encontrado para creación:', archivo.name);
+       } else {
+         console.log('✅ [DocumentoModal.jsx] Modo edición - archivo opcional');
+       }
+     } else {
+       console.log('📋 [DocumentoModal.jsx] Recibidos datos normales');
+       // Verificar archivo solo si es modo create
+       if (mode === 'create' && !data.archivo) {
+         console.error('❌ [DocumentoModal.jsx] No hay archivo seleccionado para creación');
+         alert('Debes seleccionar un archivo');
+         return;
+       }
+       if (mode === 'create') {
+         console.log('✅ [DocumentoModal.jsx] Archivo encontrado para creación:', data.archivo.name);
+       } else {
+         console.log('✅ [DocumentoModal.jsx] Modo edición - archivo opcional');
+       }
+     }
+     
+     if (onSubmit) await onSubmit(data);
+   } catch (error) {
+     console.error('💥 [DocumentoModal.jsx] Error general:', error);
+     alert('Error al procesar el documento: ' + error.message);
+   }
  };
  // Debug: Log del estado actual
  console.log('🔍 [DocumentoModal.jsx] Estado actual:', {

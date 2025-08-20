@@ -54,7 +54,7 @@ Route::prefix('v1')->middleware(['api.auth', \App\Http\Middleware\CheckUserActiv
     // ========================================
     Route::prefix('documents')->middleware([\App\Http\Middleware\HandleLargeUploads::class])->group(function () {
         // CRUD principal
-        Route::apiResource('/', DocumentController::class);
+        Route::apiResource('/', DocumentController::class)->parameters(['' => 'document']);
         
         // Operaciones específicas
         Route::post('/{id}/download', [DocumentController::class, 'download']);
@@ -132,7 +132,7 @@ Route::prefix('v1')->middleware(['api.auth', \App\Http\Middleware\CheckUserActiv
     // DOMINIO: NOTICIAS (Nuevas rutas en inglés)
     // ========================================
     Route::prefix('news')->group(function () {
-        Route::apiResource('/', NoticiaController::class);
+        Route::apiResource('/', NoticiaController::class)->parameters(['' => 'news']);
         Route::get('/latest', [NoticiaController::class, 'latest']);
     });
 
