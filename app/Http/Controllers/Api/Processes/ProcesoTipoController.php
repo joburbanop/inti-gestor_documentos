@@ -103,6 +103,8 @@ class ProcesoTipoController extends Controller
             
             // Limpiar cache
             Cache::forget('tipos_procesos');
+            Cache::forget('acciones_rapidas');
+            Cache::forget('dashboard_data');
 
             return response()->json([
                 'success' => true,
@@ -144,6 +146,8 @@ class ProcesoTipoController extends Controller
             // Limpiar cache
             Cache::forget('tipos_procesos');
             Cache::forget("tipos_procesos_{$id}_procesos_generales");
+            Cache::forget('acciones_rapidas');
+            Cache::forget('dashboard_data');
 
             return response()->json([
                 'success' => true,
@@ -180,6 +184,8 @@ class ProcesoTipoController extends Controller
             // Limpiar cache
             Cache::forget('tipos_procesos');
             Cache::forget("tipos_procesos_{$id}_procesos_generales");
+            Cache::forget('acciones_rapidas');
+            Cache::forget('dashboard_data');
 
             return response()->json([
                 'success' => true,

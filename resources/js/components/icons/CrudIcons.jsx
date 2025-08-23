@@ -1,12 +1,12 @@
 // Iconos SVG para componentes CRUD
 import React from 'react'; // Icono de edificio/empresa - Mejorado
- export const BuildingIcon = ({ className = "w-6 h-6" }) => (
- <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
- <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 21h18M3 7h18M3 3h18M7 21V11M17 21V11M7 3v4M17 3v4M7 7h10M7 11h10M7 15h10M7 19h10" />
- </svg>
- );
- // Icono de proceso/engranaje - Mejorado
- export const ProcessIcon = ({ className = "w-6 h-6" }) => (
+export const BuildingIcon = ({ className = "w-6 h-6" }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+  </svg>
+);
+// Icono de proceso/engranaje - Mejorado
+export const ProcessIcon = ({ className = "w-6 h-6" }) => (
  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
  </svg>

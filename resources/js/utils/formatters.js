@@ -7,7 +7,7 @@
  */
 export const formatText = (text, options = {}) => {
     const {
-        case: textCase = 'capitalize', // 'capitalize', 'uppercase', 'lowercase'
+        textCase = 'capitalize', // 'capitalize', 'uppercase', 'lowercase'
         maxLength = null,
         ellipsis = '...'
     } = options;

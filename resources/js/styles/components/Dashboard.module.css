@@ -760,6 +760,12 @@
     font-weight: 500;
 }
 
+.actionControls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .actionArrow {
     color: #9ca3af;
     font-size: 1.25rem;
@@ -1542,4 +1548,53 @@
         width: 100%;
         justify-content: flex-end;
     }
+}
+
+/* Botón de crear proceso en acciones rápidas */
+.createButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: #1F448B;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: 0.5rem;
+}
+
+.createButton:hover {
+    background: #1a3a7a;
+    transform: translateY(-1px);
+}
+
+.createButton:active {
+    transform: translateY(0);
+}
+
+.actionStats {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Header con botón para crear tipo de proceso */
+.headerContent {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.headerContent > div {
+    flex: 1;
+}
+
+.headerContent .createButton {
+    flex-shrink: 0;
+    white-space: nowrap;
 } 

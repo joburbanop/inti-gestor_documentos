@@ -23,39 +23,49 @@ import {
  const [procesosInternosOptions, setProcesosInternosOptions] = useState([]);
  const [localData, setLocalData] = useState(formData || {});
  const [loadingData, setLoadingData] = useState(false);
- // Cargar datos iniciales cuando se abre el modal
- useEffect(() => {
- if (!show) return;
- const cargarDatosIniciales = async () => {
- setLoadingData(true);
+ // Función para cargar tipos de procesos
+ const cargarTiposProcesos = async (isManual = false) => {
  try {
- // Cargar tipos de procesos y categorías en paralelo
- const [tiposRes, categoriasRes] = await Promise.all([
- apiRequest('/tipos-procesos'),
- apiRequest('/procesos-internos')
- ]);
- // Procesar tipos de procesos
+ console.log(`🔄 [DocumentoModal.jsx] ${isManual ? 'Actualización manual' : 'Actualización automática'} - Cargando tipos de procesos...`);
+         // Agregar timestamp para evitar cache del navegador
+        const tiposRes = await apiRequest('/procesos-tipos?_t=' + Date.now());
+ 
  if (tiposRes.success) {
- const tipos = tiposRes.data.map(x => ({ value: x.id, label: formatText(x.nombre, { case: 'capitalize' }) }));
- console.log('✅ [DocumentoModal.jsx] Tipos de procesos cargados:', tipos.length);
+ const tipos = tiposRes.data.map(x => ({ 
+   value: x.id, 
+   label: x.titulo || formatText(x.nombre, { textCase: 'capitalize' })
+ }));
+ console.log(`✅ [DocumentoModal.jsx] Tipos de procesos cargados: ${tipos.length} tipos`);
+ console.log('📋 [DocumentoModal.jsx] Tipos disponibles:', tipos.map(t => t.label).join(', '));
  setTiposProcesosOptions(tipos);
  } else {
  console.error('❌ [DocumentoModal.jsx] Error cargando tipos de procesos:', tiposRes);
  setTiposProcesosOptions([]);
  }
-  // Procesar procesos internos (antes "categorías")
-  if (categoriasRes.success) {
-  const procesosInternos = categoriasRes.data.map(x => ({
-  value: x.id,
-  label: formatText(x.nombre, { case: 'capitalize' }),
-  descripcion: x.descripcion
-  }));
-  console.log('✅ [DocumentoModal.jsx] Procesos internos cargados:', procesosInternos.length);
-  setProcesosInternosOptions(procesosInternos);
-  } else {
-  console.error('❌ [DocumentoModal.jsx] Error cargando procesos internos:', categoriasRes);
-  setProcesosInternosOptions([]);
-  }
+ } catch (error) {
+ console.error('💥 [DocumentoModal.jsx] Error cargando tipos de procesos:', error);
+ setTiposProcesosOptions([]);
+ }
+ };
+
+// Función para actualización manual
+ const actualizarTiposProcesos = () => {
+ console.log('🔄 [DocumentoModal.jsx] Usuario solicitó actualización manual');
+ cargarTiposProcesos(true);
+ };
+
+// Cargar datos iniciales cuando se abre el modal
+ useEffect(() => {
+ if (!show) return;
+ const cargarDatosIniciales = async () => {
+ setLoadingData(true);
+ try {
+ // Cargar tipos de procesos al abrir el modal
+ await cargarTiposProcesos();
+ 
+ // Los procesos internos se cargarán cuando se seleccione un proceso general
+ setProcesosInternosOptions([]);
+ 
  } catch (error) {
  console.error('💥 [DocumentoModal.jsx] Error general cargando datos:', error);
  } finally {
@@ -64,14 +74,43 @@ import {
  };
  cargarDatosIniciales();
  }, [show, apiRequest]);
+
+// Recargar tipos de procesos cada 2 segundos cuando el modal esté abierto
+ useEffect(() => {
+ if (!show) return;
+ 
+ console.log('🔄 [DocumentoModal.jsx] Iniciando actualización automática cada 2 segundos');
+ 
+ const interval = setInterval(() => {
+ console.log('🔄 [DocumentoModal.jsx] Actualización automática ejecutándose...');
+ cargarTiposProcesos();
+ }, 2000); // Recargar cada 2 segundos para actualización más rápida
+ 
+ // Listener para cambios en localStorage (cuando se elimina un tipo de proceso)
+ const handleStorageChange = (e) => {
+ if (e.key === 'process_types_updated' || e.key === 'process_types_deleted') {
+ console.log('🔄 [DocumentoModal.jsx] Detectado cambio en tipos de procesos, actualizando...');
+ cargarTiposProcesos();
+ }
+ };
+ 
+ window.addEventListener('storage', handleStorageChange);
+ 
+ return () => {
+ console.log('🔄 [DocumentoModal.jsx] Deteniendo actualización automática');
+ clearInterval(interval);
+ window.removeEventListener('storage', handleStorageChange);
+ };
+ }, [show, apiRequest]);
  const cargarProcesosGenerales = async (tipoProcesoId) => {
  try {
  console.log('🔄 [DocumentoModal.jsx] Cargando procesos generales para tipo ID:', tipoProcesoId);
- const res = await apiRequest(`/tipos-procesos/${tipoProcesoId}/procesos-generales`);
+         // Agregar timestamp para evitar cache del navegador
+        const res = await apiRequest(`/procesos-tipos/${tipoProcesoId}/procesos-generales?_t=` + Date.now());
  if (res.success) {
  const procesos = (res.data || []).map(x => ({
  value: x.id,
- label: formatText(x.nombre, { case: 'capitalize' }),
+ label: formatText(x.nombre, { textCase: 'capitalize' }),
  descripcion: x.descripcion
  }));
  console.log('✅ [DocumentoModal.jsx] Procesos generales cargados:', procesos.length);
@@ -89,11 +128,14 @@ import {
  const cargarProcesosInternos = async (procesoGeneralId) => {
  try {
  console.log('🔄 [DocumentoModal.jsx] Cargando procesos internos para proceso general ID:', procesoGeneralId);
+ 
+ // Cargar solo procesos internos jerárquicos del proceso general
  const res = await apiRequest(`/procesos-generales/${procesoGeneralId}/procesos-internos`);
+ 
  if (res.success) {
  const procesos = (res.data || []).map(x => ({
  value: x.id,
- label: formatText(x.nombre, { case: 'capitalize' }),
+ label: formatText(x.nombre, { textCase: 'capitalize' }),
  descripcion: x.descripcion
  }));
  console.log('✅ [DocumentoModal.jsx] Procesos internos cargados:', procesos.length);
@@ -102,11 +144,14 @@ import {
  console.error('❌ [DocumentoModal.jsx] Error cargando procesos internos:', res);
  setProcesosInternosOptions([]);
  }
+ 
  } catch (error) {
  console.error('💥 [DocumentoModal.jsx] Error cargando procesos internos:', error);
  setProcesosInternosOptions([]);
  }
  };
+
+ 
  // Cargar procesos generales cuando cambia el tipo de proceso seleccionado
  useEffect(() => {
  if (!show) return;
@@ -130,6 +175,7 @@ import {
  const procesoGeneralId = localData?.proceso_general_id;
  console.log('🔄 [DocumentoModal.jsx] Cambio en proceso_general_id:', procesoGeneralId);
  if (!procesoGeneralId) {
+ // Si no hay proceso general, limpiar procesos internos
  setProcesosInternosOptions([]);
  setLocalData(prev => ({
  ...prev,
@@ -137,7 +183,7 @@ import {
  }));
  return;
  }
- // Cargar procesos internos automáticamente
+ // Cargar procesos internos del proceso general seleccionado
  cargarProcesosInternos(procesoGeneralId);
  }, [localData?.proceso_general_id, show]);
  if (!show) return null;
@@ -177,36 +223,42 @@ import {
  }
  };
  const handleAddProcesoInterno = async () => {
- const nombre = window.prompt('Escribe el nombre de la nueva carpeta:');
+ const nombre = window.prompt('Escribe el nombre del nuevo proceso interno:');
  if (!nombre) return;
- const descripcion = window.prompt('Escribe la descripción de la carpeta (opcional):');
+ const titulo = window.prompt('Escribe el título del proceso interno:');
+ if (!titulo) return;
+ const descripcion = window.prompt('Escribe la descripción del proceso interno (opcional):');
  try {
- const res = await apiRequest('/procesos-internos', {
+ const res = await apiRequest('/processes/internals', {
  method: 'POST',
- body: JSON.stringify({
+ data: {
  nombre: nombre.trim(),
- descripcion: descripcion ? descripcion.trim() : null,
- proceso_general_id: null, // No depende de un proceso específico
- icono: 'folder'
- })
+ titulo: titulo.trim(),
+ descripcion: descripcion ? descripcion.trim() : '',
+ icono: 'document-text',
+ activo: true,
+ orden: 0
+ }
  });
  if (res.success) {
  const nuevoProceso = {
- value: res.data.id,
- label: res.data.nombre,
- descripcion: res.data.descripcion
+ value: `ind_${res.data.id}`,
+ label: res.data.titulo || res.data.nombre,
+ descripcion: res.data.descripcion,
+ tipo: 'independiente',
+ realId: res.data.id
  };
  setProcesosInternosOptions(prev => [...prev, nuevoProceso]);
  setLocalData(prev => ({
  ...prev,
- proceso_interno_id: res.data.id
+ proceso_interno_id: `ind_${res.data.id}`
  }));
- alert('Carpeta creada exitosamente');
+ alert('Proceso interno creado exitosamente');
  } else {
- alert(res.message || 'Error al crear la carpeta');
+ alert(res.message || 'Error al crear el proceso interno');
  }
  } catch (e) {
- alert('Error al crear la carpeta: ' + e.message);
+ alert('Error al crear el proceso interno: ' + e.message);
  }
  };
  const handleChange = (newData) => {
@@ -316,6 +368,9 @@ import {
      console.log('🔄 [DocumentoModal.jsx] Enviando datos:', data);
      console.log('🔄 [DocumentoModal.jsx] Modo:', mode);
      
+     // Los datos se procesan normalmente sin transformación especial
+     let processedData = data;
+     
      // Función para validar tamaño de archivo
      const validateFileSize = (file) => {
        const maxSize = 50 * 1024 * 1024; // 50MB en bytes
@@ -326,11 +381,11 @@ import {
      };
      
      // Verificar si es FormData o datos normales
-     if (data instanceof FormData) {
+     if (processedData instanceof FormData) {
        console.log('📁 [DocumentoModal.jsx] Recibido FormData con archivos');
        // Verificar que el archivo esté presente solo si es modo create
        if (mode === 'create') {
-         const archivo = data.get('archivo');
+         const archivo = processedData.get('archivo');
          if (!archivo) {
            console.error('❌ [DocumentoModal.jsx] No hay archivo en FormData para creación');
            alert('Debes seleccionar un archivo');
@@ -342,7 +397,7 @@ import {
        } else {
          console.log('✅ [DocumentoModal.jsx] Modo edición - archivo opcional');
          // Si hay un archivo nuevo en edición, validarlo
-         const archivo = data.get('archivo');
+         const archivo = processedData.get('archivo');
          if (archivo && archivo instanceof File) {
            validateFileSize(archivo);
          }
@@ -350,25 +405,25 @@ import {
      } else {
        console.log('📋 [DocumentoModal.jsx] Recibidos datos normales');
        // Verificar archivo solo si es modo create
-       if (mode === 'create' && !data.archivo) {
+       if (mode === 'create' && !processedData.archivo) {
          console.error('❌ [DocumentoModal.jsx] No hay archivo seleccionado para creación');
          alert('Debes seleccionar un archivo');
          return;
        }
        if (mode === 'create') {
-         console.log('✅ [DocumentoModal.jsx] Archivo encontrado para creación:', data.archivo.name);
+         console.log('✅ [DocumentoModal.jsx] Archivo encontrado para creación:', processedData.archivo.name);
          // Validar tamaño del archivo
-         validateFileSize(data.archivo);
+         validateFileSize(processedData.archivo);
        } else {
          console.log('✅ [DocumentoModal.jsx] Modo edición - archivo opcional');
          // Si hay un archivo nuevo en edición, validarlo
-         if (data.archivo && data.archivo instanceof File) {
-           validateFileSize(data.archivo);
+         if (processedData.archivo && processedData.archivo instanceof File) {
+           validateFileSize(processedData.archivo);
          }
        }
      }
      
-     if (onSubmit) await onSubmit(data);
+     if (onSubmit) await onSubmit(processedData);
    } catch (error) {
      console.error('💥 [DocumentoModal.jsx] Error general:', error);
      alert('Error al procesar el documento: ' + error.message);
@@ -402,6 +457,9 @@ import {
  <p>Cargando datos de clasificación organizacional...</p>
  </div>
  )}
+         
+
+         
           <CreateForm
            entityType="documento"
            fields={fields}

@@ -2,8 +2,9 @@ import React from 'react'; import { Routes, Route, Navigate } from 'react-router
  import { useAuth } from '../contexts/AuthContext';
  import Dashboard from './Dashboard';
  import ProcesosPage from './procesos/ProcesosPage';
- import ProcesoTipoPage from './procesos/ProcesoTipoPage';
- import ProcesoTipoDetail from './procesos/ProcesoTipoDetail';
+import ProcesoTipoPage from './procesos/ProcesoTipoPage';
+import ProcesoTipoDetail from './procesos/ProcesoTipoDetail';
+import ProcesosInternosPage from './procesos/ProcesosInternosPage';
  import Documentos from './Documentos';
  import DocumentoPreview from './documentos/DocumentoPreview';
  import Administracion from './Administracion';
@@ -307,11 +308,12 @@ import React from 'react'; import { Routes, Route, Navigate } from 'react-router
  <Routes>
  <Route path="/" element={<Home />} />
  {/* Rutas de Direcciones eliminadas en nueva estructura */}
- <Route path="/procesos" element={<ProcesosPage />} />
- <Route path="/procesos/:tipo" element={<ProcesoTipoPage />} />
- <Route path="/procesos/:tipo/:id" element={<ProcesoTipoDetail />} />
- <Route path="/apoyo" element={<ProcesosApoyoPage />} />
- <Route path="/evaluacion" element={<ProcesosEvaluacion />} />
+         <Route path="/procesos" element={<ProcesosPage />} />
+        <Route path="/procesos/:tipo" element={<ProcesoTipoPage />} />
+        <Route path="/procesos/:tipo/:id" element={<ProcesoTipoDetail />} />
+        <Route path="/procesos-internos" element={<ProcesosInternosPage />} />
+        <Route path="/apoyo" element={<ProcesosApoyoPage />} />
+        <Route path="/evaluacion" element={<ProcesosEvaluacion />} />
  <Route path="/identidad" element={<OrgStructure />} />
  <Route path="/documentos" element={<Documentos />} />
  <Route path="/documentos/:id/preview" element={<DocumentoPreview />} />

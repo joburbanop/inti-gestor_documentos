@@ -8,15 +8,20 @@ import { useState, useEffect, useCallback } from 'react'; import { useAuth } fro
  try {
  setLoading(true);
  setError(null);
-    const response = await apiRequest('/dashboard/acciones-rapidas');
+    console.log('🔄 [useQuickActions] Cargando acciones rápidas...');
+    // Agregar timestamp para evitar cache del navegador
+    const response = await apiRequest('/dashboard/acciones-rapidas?_t=' + Date.now());
+    console.log('📋 [useQuickActions] Respuesta:', response);
     if (response?.success) {
       const data = Array.isArray(response.data) ? response.data : [];
+      console.log('✅ [useQuickActions] Datos cargados:', data.length, 'acciones');
       setAccionesRapidas(data);
  } else {
+ console.error('❌ [useQuickActions] Error en respuesta:', response);
  setError('Error al cargar las acciones rápidas');
  }
  } catch (error) {
- console.error('Error cargando acciones rápidas:', error);
+ console.error('💥 [useQuickActions] Error cargando acciones rápidas:', error);
  setError('Error al cargar las acciones rápidas');
  } finally {
  setLoading(false);

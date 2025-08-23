@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'; import processService from '../services/api/processes';
+import { useState, useEffect, useCallback } from 'react';
+import processService from '../services/api/processes';
  /**
  * Hook personalizado para gestión de procesos
  */
@@ -15,7 +16,7 @@ import { useState, useEffect, useCallback } from 'react'; import processService 
  setLoading(true);
  setError(null);
  try {
- const response = await processService.getProcessTypes();
+ const response = await processService.getTypes();
  if (response.success) {
  setProcessTypes(response.data || []);
  } else {
@@ -39,7 +40,7 @@ import { useState, useEffect, useCallback } from 'react'; import processService 
  setLoading(true);
  setError(null);
  try {
- const response = await processService.getGeneralProcessesByType(tipoId);
+ const response = await processService.getGeneralsByType(tipoId);
  if (response.success) {
  setGeneralProcesses(response.data || []);
  } else {
@@ -65,7 +66,7 @@ import { useState, useEffect, useCallback } from 'react'; import processService 
  setLoading(true);
  setError(null);
  try {
- const response = await processService.getInternalProcessesByGeneral(generalId);
+ const response = await processService.getInternalsByGeneral(generalId);
  if (response.success) {
  setInternalProcesses(response.data || []);
  } else {
@@ -87,7 +88,7 @@ import { useState, useEffect, useCallback } from 'react'; import processService 
  setLoading(true);
  setError(null);
  try {
- const response = await processService.getUniqueInternalProcesses();
+ const response = await processService.getInternals();
  if (response.success) {
  setInternalProcesses(response.data || []);
  } else {
@@ -128,10 +129,18 @@ import { useState, useEffect, useCallback } from 'react'; import processService 
  setLoading(true);
  setError(null);
  try {
- const response = await processService.createProcessType(data);
+ const response = await processService.createType(data);
  if (response.success) {
  // Recargar tipos de procesos
  await loadProcessTypes();
+ 
+ // Emitir evento para notificar a otros componentes
+ localStorage.setItem('process_types_updated', Date.now().toString());
+ window.dispatchEvent(new StorageEvent('storage', {
+ key: 'process_types_updated',
+ newValue: Date.now().toString()
+ }));
+ 
  return response;
  } else {
  setError(response.message || 'Error al crear tipo de proceso');
@@ -152,7 +161,7 @@ import { useState, useEffect, useCallback } from 'react'; import processService 
  setLoading(true);
  setError(null);
  try {
- const response = await processService.createGeneralProcess(data);
+ const response = await processService.createGeneral(data);
  if (response.success) {
  // Recargar procesos generales del tipo correspondiente
  await loadGeneralProcesses(data.tipo_proceso_id);
@@ -176,7 +185,7 @@ import { useState, useEffect, useCallback } from 'react'; import processService 
  setLoading(true);
  setError(null);
  try {
- const response = await processService.createInternalProcess(data);
+ const response = await processService.createInternal(data);
  if (response.success) {
  // Recargar procesos internos del general correspondiente
  await loadInternalProcesses(data.proceso_general_id);
@@ -200,7 +209,7 @@ import { useState, useEffect, useCallback } from 'react'; import processService 
  setLoading(true);
  setError(null);
  try {
- const response = await processService.updateProcessType(id, data);
+ const response = await processService.updateType(id, data);
  if (response.success) {
  // Actualizar en la lista
  setProcessTypes(prev =>
@@ -228,7 +237,7 @@ import { useState, useEffect, useCallback } from 'react'; import processService 
  setLoading(true);
  setError(null);
  try {
- const response = await processService.updateGeneralProcess(id, data);
+ const response = await processService.updateGeneral(id, data);
  if (response.success) {
  // Actualizar en la lista
  setGeneralProcesses(prev =>
@@ -256,7 +265,7 @@ import { useState, useEffect, useCallback } from 'react'; import processService 
  setLoading(true);
  setError(null);
  try {
- const response = await processService.updateInternalProcess(id, data);
+ const response = await processService.updateInternal(id, data);
  if (response.success) {
  // Actualizar en la lista
  setInternalProcesses(prev =>
@@ -284,17 +293,32 @@ import { useState, useEffect, useCallback } from 'react'; import processService 
  setLoading(true);
  setError(null);
  try {
- const response = await processService.deleteProcessType(id);
+ const response = await processService.deleteType(id);
  if (response.success) {
  // Remover de la lista
  setProcessTypes(prev => prev.filter(type => type.id !== id));
+ 
+ // Emitir evento para notificar a otros componentes
+ localStorage.setItem('process_types_deleted', Date.now().toString());
+ window.dispatchEvent(new StorageEvent('storage', {
+ key: 'process_types_deleted',
+ newValue: Date.now().toString()
+ }));
+ 
  return response;
  } else {
  setError(response.message || 'Error al eliminar tipo de proceso');
  return response;
  }
  } catch (err) {
- setError(err.message || 'Error al eliminar tipo de proceso');
+ // Extraer el mensaje de error específico del backend
+ let errorMessage = 'Error al eliminar tipo de proceso';
+ if (err.response && err.response.data && err.response.data.message) {
+ errorMessage = err.response.data.message;
+ } else if (err.message) {
+ errorMessage = err.message;
+ }
+ setError(errorMessage);
  console.error('❌ [useProcesses] Error al eliminar tipo:', err);
  throw err;
  } finally {
@@ -308,7 +332,7 @@ import { useState, useEffect, useCallback } from 'react'; import processService 
  setLoading(true);
  setError(null);
  try {
- const response = await processService.deleteGeneralProcess(id);
+ const response = await processService.deleteGeneral(id);
  if (response.success) {
  // Remover de la lista
  setGeneralProcesses(prev => prev.filter(process => process.id !== id));
@@ -318,7 +342,14 @@ import { useState, useEffect, useCallback } from 'react'; import processService 
  return response;
  }
  } catch (err) {
- setError(err.message || 'Error al eliminar proceso general');
+ // Extraer el mensaje de error específico del backend
+ let errorMessage = 'Error al eliminar proceso general';
+ if (err.response && err.response.data && err.response.data.message) {
+ errorMessage = err.response.data.message;
+ } else if (err.message) {
+ errorMessage = err.message;
+ }
+ setError(errorMessage);
  console.error('❌ [useProcesses] Error al eliminar general:', err);
  throw err;
  } finally {
@@ -332,7 +363,7 @@ import { useState, useEffect, useCallback } from 'react'; import processService 
  setLoading(true);
  setError(null);
  try {
- const response = await processService.deleteInternalProcess(id);
+ const response = await processService.deleteInternal(id);
  if (response.success) {
  // Remover de la lista
  setInternalProcesses(prev => prev.filter(process => process.id !== id));
@@ -342,7 +373,14 @@ import { useState, useEffect, useCallback } from 'react'; import processService 
  return response;
  }
  } catch (err) {
- setError(err.message || 'Error al eliminar proceso interno');
+ // Extraer el mensaje de error específico del backend
+ let errorMessage = 'Error al eliminar proceso interno';
+ if (err.response && err.response.data && err.response.data.message) {
+ errorMessage = err.response.data.message;
+ } else if (err.message) {
+ errorMessage = err.message;
+ }
+ setError(errorMessage);
  console.error('❌ [useProcesses] Error al eliminar interno:', err);
  throw err;
  } finally {

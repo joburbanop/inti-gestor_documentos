@@ -8,7 +8,7 @@ export const processesService = {
     // Obtener todos los tipos de procesos
     getTypes: async (params = {}) => {
         try {
-            const response = await api.get('/processes/types', { params });
+            const response = await api.get('/procesos-tipos', { params });
             return response.data;
         } catch (error) {
             console.error('Error obteniendo tipos de procesos:', error);
@@ -19,7 +19,7 @@ export const processesService = {
     // Obtener tipo de proceso por ID
     getTypeById: async (id) => {
         try {
-            const response = await api.get(`/processes/types/${id}`);
+            const response = await api.get(`/procesos-tipos/${id}`);
             return response.data;
         } catch (error) {
             console.error('Error obteniendo tipo de proceso:', error);
@@ -30,7 +30,7 @@ export const processesService = {
     // Crear nuevo tipo de proceso
     createType: async (typeData) => {
         try {
-            const response = await api.post('/processes/types', typeData);
+            const response = await api.post('/procesos-tipos', typeData);
             return response.data;
         } catch (error) {
             console.error('Error creando tipo de proceso:', error);
@@ -41,7 +41,7 @@ export const processesService = {
     // Actualizar tipo de proceso
     updateType: async (id, typeData) => {
         try {
-            const response = await api.put(`/processes/types/${id}`, typeData);
+            const response = await api.put(`/procesos-tipos/${id}`, typeData);
             return response.data;
         } catch (error) {
             console.error('Error actualizando tipo de proceso:', error);
@@ -52,7 +52,7 @@ export const processesService = {
     // Eliminar tipo de proceso
     deleteType: async (id) => {
         try {
-            const response = await api.delete(`/processes/types/${id}`);
+            const response = await api.delete(`/procesos-tipos/${id}`);
             return response.data;
         } catch (error) {
             console.error('Error eliminando tipo de proceso:', error);
@@ -63,7 +63,7 @@ export const processesService = {
     // Obtener procesos generales por tipo
     getGeneralsByType: async (typeId) => {
         try {
-            const response = await api.get(`/processes/types/${typeId}/generals`);
+            const response = await api.get(`/procesos-tipos/${typeId}/procesos-generales`);
             return response.data;
         } catch (error) {
             console.error('Error obteniendo procesos generales por tipo:', error);
@@ -74,7 +74,7 @@ export const processesService = {
     // Obtener estadísticas de tipos
     getTypeStats: async () => {
         try {
-            const response = await api.get('/processes/types/stats');
+            const response = await api.get('/procesos/tipos/stats');
             return response.data;
         } catch (error) {
             console.error('Error obteniendo estadísticas de tipos:', error);
@@ -85,7 +85,7 @@ export const processesService = {
     // Obtener configuración de tipos
     getTypeConfig: async () => {
         try {
-            const response = await api.get('/processes/types/config');
+            const response = await api.get('/procesos/tipos/config');
             return response.data;
         } catch (error) {
             console.error('Error obteniendo configuración de tipos:', error);
@@ -96,7 +96,7 @@ export const processesService = {
     // Obtener configuración de tipo específico
     getTypeSpecificConfig: async (type) => {
         try {
-            const response = await api.get(`/processes/types/${type}/config`);
+            const response = await api.get(`/procesos/tipos/${type}/config`);
             return response.data;
         } catch (error) {
             console.error('Error obteniendo configuración específica de tipo:', error);
@@ -111,7 +111,7 @@ export const processesService = {
     // Obtener todos los procesos generales
     getGenerals: async (params = {}) => {
         try {
-            const response = await api.get('/processes/generals', { params });
+            const response = await api.get('/procesos-generales', { params });
             return response.data;
         } catch (error) {
             console.error('Error obteniendo procesos generales:', error);
@@ -122,7 +122,7 @@ export const processesService = {
     // Obtener proceso general por ID
     getGeneralById: async (id) => {
         try {
-            const response = await api.get(`/processes/generals/${id}`);
+            const response = await api.get(`/procesos-generales/${id}`);
             return response.data;
         } catch (error) {
             console.error('Error obteniendo proceso general:', error);
@@ -133,7 +133,8 @@ export const processesService = {
     // Crear nuevo proceso general
     createGeneral: async (generalData) => {
         try {
-            const response = await api.post('/processes/generals', generalData);
+            console.log('📋 [processes.js] Enviando datos para crear proceso general:', generalData);
+            const response = await api.post('/procesos-generales', generalData);
             return response.data;
         } catch (error) {
             console.error('Error creando proceso general:', error);
@@ -144,7 +145,7 @@ export const processesService = {
     // Actualizar proceso general
     updateGeneral: async (id, generalData) => {
         try {
-            const response = await api.put(`/processes/generals/${id}`, generalData);
+            const response = await api.put(`/procesos-generales/${id}`, generalData);
             return response.data;
         } catch (error) {
             console.error('Error actualizando proceso general:', error);
@@ -155,7 +156,7 @@ export const processesService = {
     // Eliminar proceso general
     deleteGeneral: async (id) => {
         try {
-            const response = await api.delete(`/processes/generals/${id}`);
+            const response = await api.delete(`/procesos-generales/${id}`);
             return response.data;
         } catch (error) {
             console.error('Error eliminando proceso general:', error);
@@ -166,7 +167,7 @@ export const processesService = {
     // Obtener documentos por proceso general
     getDocumentsByGeneral: async (id) => {
         try {
-            const response = await api.get(`/processes/generals/${id}/documents`);
+            const response = await api.get(`/procesos-generales/${id}/documentos`);
             return response.data;
         } catch (error) {
             console.error('Error obteniendo documentos por proceso general:', error);
@@ -177,7 +178,7 @@ export const processesService = {
     // Obtener tipos disponibles para procesos generales
     getAvailableTypes: async () => {
         try {
-            const response = await api.get('/processes/generals/types/available');
+            const response = await api.get('/procesos-generales/tipos/disponibles');
             return response.data;
         } catch (error) {
             console.error('Error obteniendo tipos disponibles:', error);
@@ -192,7 +193,7 @@ export const processesService = {
     // Obtener todos los procesos internos
     getInternals: async (params = {}) => {
         try {
-            const response = await api.get('/processes/internals', { params });
+            const response = await api.get('/procesos-internos', { params });
             return response.data;
         } catch (error) {
             console.error('Error obteniendo procesos internos:', error);
@@ -203,7 +204,7 @@ export const processesService = {
     // Obtener proceso interno por ID
     getInternalById: async (id) => {
         try {
-            const response = await api.get(`/processes/internals/${id}`);
+            const response = await api.get(`/procesos-internos/${id}`);
             return response.data;
         } catch (error) {
             console.error('Error obteniendo proceso interno:', error);
@@ -214,7 +215,7 @@ export const processesService = {
     // Crear nuevo proceso interno
     createInternal: async (internalData) => {
         try {
-            const response = await api.post('/processes/internals', internalData);
+            const response = await api.post('/procesos-internos', internalData);
             return response.data;
         } catch (error) {
             console.error('Error creando proceso interno:', error);
@@ -225,7 +226,7 @@ export const processesService = {
     // Actualizar proceso interno
     updateInternal: async (id, internalData) => {
         try {
-            const response = await api.put(`/processes/internals/${id}`, internalData);
+            const response = await api.put(`/procesos-internos/${id}`, internalData);
             return response.data;
         } catch (error) {
             console.error('Error actualizando proceso interno:', error);
@@ -236,7 +237,7 @@ export const processesService = {
     // Eliminar proceso interno
     deleteInternal: async (id) => {
         try {
-            const response = await api.delete(`/processes/internals/${id}`);
+            const response = await api.delete(`/procesos-internos/${id}`);
             return response.data;
         } catch (error) {
             console.error('Error eliminando proceso interno:', error);
@@ -247,7 +248,7 @@ export const processesService = {
     // Obtener procesos internos por proceso general
     getInternalsByGeneral: async (processGeneralId) => {
         try {
-            const response = await api.get(`/processes/generals/${processGeneralId}/internals`);
+            const response = await api.get(`/procesos-generales/${processGeneralId}/procesos-internos`);
             return response.data;
         } catch (error) {
             console.error('Error obteniendo procesos internos por proceso general:', error);
@@ -255,3 +256,5 @@ export const processesService = {
         }
     }
 };
+
+export default processesService;

@@ -98,6 +98,9 @@ Route::prefix('v1')->middleware(['api.auth', \App\Http\Middleware\CheckUserActiv
     Route::prefix('processes')->group(function () {
         // Tipos de procesos
         Route::apiResource('types', ProcesoTipoController::class);
+        
+        // Procesos internos (independientes)
+        Route::apiResource('internals', \App\Http\Controllers\Api\Processes\ProcesoInternoController::class);
         Route::get('/types/{typeId}/generals', [ProcesoTipoController::class, 'procesosGenerales']);
         Route::get('/types/stats', [ProcesoTipoController::class, 'stats']);
         Route::get('/types/config', [ProcesoTipoController::class, 'config']);
@@ -108,8 +111,7 @@ Route::prefix('v1')->middleware(['api.auth', \App\Http\Middleware\CheckUserActiv
         Route::get('/generals/{id}/documents', [ProcesoGeneralController::class, 'documentos']);
         Route::get('/generals/types/available', [ProcesoGeneralController::class, 'tiposDisponibles']);
         
-        // Procesos internos
-        Route::apiResource('internals', ProcesoInternoController::class);
+        // Procesos internos (jerárquicos por proceso general)
         Route::get('/generals/{processGeneralId}/internals', [ProcesoInternoController::class, 'porProcesoGeneral']);
     });
 
@@ -165,8 +167,8 @@ Route::prefix('v1')->middleware(['api.auth', \App\Http\Middleware\CheckUserActiv
         Route::apiResource('procesos-generales', ProcesoGeneralController::class);
     Route::get('/procesos-generales/{id}/documentos', [ProcesoGeneralController::class, 'documentos']);
     Route::get('/procesos-generales/tipos/disponibles', [ProcesoGeneralController::class, 'tiposDisponibles']);
-    Route::apiResource('tipos-procesos', ProcesoTipoController::class);
-    Route::get('/tipos-procesos/{tipoId}/procesos-generales', [ProcesoTipoController::class, 'procesosGenerales']);
+    Route::apiResource('procesos-tipos', ProcesoTipoController::class);
+    Route::get('/procesos-tipos/{tipoId}/procesos-generales', [ProcesoTipoController::class, 'procesosGenerales']);
     Route::apiResource('procesos-internos', ProcesoInternoController::class);
     Route::get('/procesos-generales/{procesoGeneralId}/procesos-internos', [ProcesoInternoController::class, 'porProcesoGeneral']);
     Route::post('/procesos-internos', [ProcesoInternoController::class, 'store']);
@@ -235,6 +237,7 @@ Route::prefix('v1')->middleware(['api.auth', \App\Http\Middleware\CheckUserActiv
     });
 
     // Legacy: Procesos (movidas al grupo principal)
+    Route::apiResource('procesos-tipos', \App\Http\Controllers\Api\Processes\ProcesoTipoController::class);
 
     // Legacy: Usuarios
     Route::patch('/usuarios/{id}/toggle-status', [UserController::class, 'toggleStatus']);
@@ -345,5 +348,7 @@ Route::prefix('test')->group(function () {
         ]);
     });
 });
+
+
 
  

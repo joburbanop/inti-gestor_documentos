@@ -2,7 +2,9 @@ import React, { useState } from 'react'; import { NavLink } from 'react-router-d
  import PropTypes from 'prop-types';
  import { useAuth } from '../contexts/AuthContext';
  import { useHasPermission } from '../hooks/useAuthorization';
- import { PERMISSIONS } from '../roles/permissions';
+import { useProcessTypes } from '../hooks/useProcessTypes';
+import { renderIcon } from '../utils/iconMapping';
+import { PERMISSIONS } from '../roles/permissions';
  import { INTILED_COLORS } from '../config/colors';
  import styles from '../styles/components/Navbar.module.css';
  import { QualityIcon, SafetyHealthIcon } from './icons/ManagementIcons';
@@ -66,8 +68,9 @@ import React, { useState } from 'react'; import { NavLink } from 'react-router-d
  </svg>
  );
  const Navbar = ({ title = "Intranet Inti" }) => {
- const { user, logout } = useAuth();
- const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { processTypes, loading: processTypesLoading } = useProcessTypes();
  // Debug: Log del usuario
  const handleLogout = () => {
  logout();
@@ -75,22 +78,24 @@ import React, { useState } from 'react'; import { NavLink } from 'react-router-d
  const closeMobileMenu = () => {
  setIsMobileMenuOpen(false);
  };
- const navItems = [
- { name: 'Dashboard', path: '/' , icon: DashboardIcon },
- {
- name: 'Procesos',
- path: null,
- icon: ProcessesIcon,
- hasDropdown: true,
- dropdownItems: [
- { name: 'Procesos Estratégicos', path: '/procesos?tipo=estrategico', icon: StrategicProcessIcon },
- { name: 'Procesos Misionales', path: '/procesos?tipo=misional', icon: MissionProcessIcon },
- { name: 'Procesos de Apoyo', path: '/procesos?tipo=apoyo', icon: SupportProcessIcon },
- { name: 'Procesos de Evaluación', path: '/procesos?tipo=evaluacion', icon: EvaluationProcessIcon }
- ]
- },
- { name: 'Documentos', path: '/documentos', icon: DocumentsIcon },
- ];
+   // Crear dropdownItems dinámicamente basado en los tipos de proceso
+  const processDropdownItems = processTypes.map(tipo => ({
+    name: tipo.titulo,
+    path: `/procesos?tipo=${tipo.nombre}`,
+    icon: () => renderIcon(tipo.icono, "w-5 h-5")
+  }));
+
+  const navItems = [
+    { name: 'Dashboard', path: '/' , icon: DashboardIcon },
+    {
+      name: 'Procesos',
+      path: null,
+      icon: ProcessesIcon,
+      hasDropdown: true,
+      dropdownItems: processDropdownItems
+    },
+    { name: 'Documentos', path: '/documentos', icon: DocumentsIcon },
+  ];
  const adminItems = [
  { name: 'Administración', path: '/administracion', icon: AdminIcon, permission: PERMISSIONS.MANAGE_USERS },
  ];
@@ -118,23 +123,30 @@ import React, { useState } from 'react'; import { NavLink } from 'react-router-d
  <IconComponent className={classNameIcon} />
  <span>{item.name}</span>
  </button>
- <div className={styles.dropdownMenu} role="menu" aria-label="Submenú procesos internos">
- {item.dropdownItems.map((dropdownItem) => {
- const DropdownIconComponent = dropdownItem.icon;
- return (
- <NavLink
- key={dropdownItem.path}
- to={dropdownItem.path}
- className={styles.dropdownItem}
- onClick={closeMobileMenu}
- role="menuitem"
- >
- <DropdownIconComponent className={styles.dropdownIcon} />
- <span>{dropdownItem.name}</span>
- </NavLink>
- );
- })}
- </div>
+         <div className={styles.dropdownMenu} role="menu" aria-label="Submenú procesos internos">
+          {item.dropdownItems.map((dropdownItem) => {
+            // Manejar iconos dinámicos (funciones) vs iconos estáticos (componentes)
+            const DropdownIconComponent = typeof dropdownItem.icon === 'function' ? dropdownItem.icon() : dropdownItem.icon;
+            return (
+              <NavLink
+                key={dropdownItem.path}
+                to={dropdownItem.path}
+                className={styles.dropdownItem}
+                onClick={closeMobileMenu}
+                role="menuitem"
+              >
+                {typeof dropdownItem.icon === 'function' ? (
+                  <div className={styles.dropdownIcon}>
+                    {dropdownItem.icon()}
+                  </div>
+                ) : (
+                  <DropdownIconComponent className={styles.dropdownIcon} />
+                )}
+                <span>{dropdownItem.name}</span>
+              </NavLink>
+            );
+          })}
+        </div>
  </div>
  );
  }

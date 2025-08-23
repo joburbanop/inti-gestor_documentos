@@ -1,3 +1,5 @@
+import { getFileTypeIcon } from './fileTypeIcons.js';
+
 /**
  * Utilidades para manejar la compatibilidad de archivos
  */
@@ -97,28 +99,14 @@ export const getCompatibilityMessage = (extension, mimeType = null) => {
 };
 
 /**
- * Obtiene el ícono apropiado para el tipo de archivo
+ * Obtiene el ícono SVG apropiado para el tipo de archivo
  * @param {string} extension - Extensión del archivo
  * @param {string} mimeType - Tipo MIME del archivo (opcional)
- * @returns {string}
+ * @param {string} className - Clases CSS para el icono
+ * @returns {ReactElement}
  */
-export const getFileIcon = (extension, mimeType = null) => {
-  const contentType = getContentType(extension, mimeType);
-  
-  switch (contentType) {
-    case 'imagen':
-      return '🖼️';
-    case 'pdf':
-      return '📄';
-    case 'texto':
-      return '📝';
-    case 'ofimatica':
-      return '📊';
-    case 'comprimido':
-      return '📦';
-    default:
-      return '📄';
-  }
+export const getFileIcon = (extension, mimeType = null, className = "w-6 h-6") => {
+  return getFileTypeIcon(extension, className);
 };
 
 /**

@@ -148,6 +148,9 @@ class ProcesoGeneralController extends Controller
     public function store(Request $request): JsonResponse
     {
         try {
+            // Log para debugging
+            \Log::info('🔍 [ProcesoGeneralController::store] Datos recibidos:', $request->all());
+            
             $validator = Validator::make($request->all(), [
                 'nombre' => 'required|string|max:255|unique:procesos_generales,nombre',
                 'descripcion' => 'nullable|string',
@@ -156,6 +159,7 @@ class ProcesoGeneralController extends Controller
             ]);
 
             if ($validator->fails()) {
+                \Log::error('❌ [ProcesoGeneralController::store] Error de validación:', $validator->errors()->toArray());
                 return response()->json([
                     'success' => false,
                     'message' => 'Datos de validación incorrectos',
@@ -273,12 +277,17 @@ class ProcesoGeneralController extends Controller
     public function destroy(int $id): JsonResponse
     {
         try {
+            // Log para debugging
+            \Log::info('🔍 [ProcesoGeneralController::destroy] Intentando eliminar proceso general ID:', ['id' => $id]);
+            
             $procesoGeneral = ProcesoGeneral::findOrFail($id);
             
             // Verificar si tiene procesos internos activos
             $procesosInternosActivos = $procesoGeneral->procesosInternos()->where('activo', true)->count();
+            \Log::info('🔍 [ProcesoGeneralController::destroy] Procesos internos activos:', ['count' => $procesosInternosActivos]);
             
             if ($procesosInternosActivos > 0) {
+                \Log::warning('❌ [ProcesoGeneralController::destroy] No se puede eliminar - tiene procesos internos activos');
                 return response()->json([
                     'success' => false,
                     'message' => 'No se puede eliminar el proceso general porque tiene procesos internos activos',
@@ -290,8 +299,10 @@ class ProcesoGeneralController extends Controller
 
             // Verificar si tiene documentos
             $documentosCount = $procesoGeneral->documentos()->count();
+            \Log::info('🔍 [ProcesoGeneralController::destroy] Documentos asociados:', ['count' => $documentosCount]);
             
             if ($documentosCount > 0) {
+                \Log::warning('❌ [ProcesoGeneralController::destroy] No se puede eliminar - tiene documentos asociados');
                 return response()->json([
                     'success' => false,
                     'message' => 'No se puede eliminar el proceso general porque tiene documentos asociados',

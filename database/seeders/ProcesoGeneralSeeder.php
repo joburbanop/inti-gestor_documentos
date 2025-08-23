@@ -68,7 +68,7 @@ class ProcesoGeneralSeeder extends Seeder
             [
                 'nombre' => 'Gestión Administrativa',
                 'descripcion' => 'Procesos administrativos y de soporte',
-                'icono' => 'document-text',
+                'icono' => 'office-building',
                 'tipo' => 'apoyo'
             ],
             [

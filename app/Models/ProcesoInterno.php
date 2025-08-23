@@ -20,7 +20,8 @@ class ProcesoInterno extends Model
         'descripcion',
         'icono',
         'proceso_general_id',
-        'activo'
+        'activo',
+        'orden'
     ];
 
     protected $casts = [
@@ -42,14 +43,20 @@ class ProcesoInterno extends Model
         // Limpiar cache cuando se crea, actualiza o elimina un proceso interno
         static::created(function ($procesoInterno) {
             Cache::forget('procesos_internos_activos');
+            Cache::forget('acciones_rapidas');
+            Cache::forget('dashboard_data');
         });
 
         static::updated(function ($procesoInterno) {
             Cache::forget('procesos_internos_activos');
+            Cache::forget('acciones_rapidas');
+            Cache::forget('dashboard_data');
         });
 
         static::deleted(function ($procesoInterno) {
             Cache::forget('procesos_internos_activos');
+            Cache::forget('acciones_rapidas');
+            Cache::forget('dashboard_data');
         });
     }
 

@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from 'react'; import PropTypes from 'prop-types';
- import { useAuth } from '../../contexts/AuthContext';
- import styles from '../../styles/components/OrgStructure.module.css';
- import { StructureIcon, DirectionIcon, ProcessNodeIcon } from '../icons/OrgIcons';
+import React, { useEffect, useState } from 'react'; 
+import PropTypes from 'prop-types';
+import { useAuth } from '../../contexts/AuthContext';
+import styles from '../../styles/components/OrgStructure.module.css';
+import { StructureIcon, DirectionIcon, ProcessNodeIcon } from '../icons/OrgIcons';
  const OrgStructure = () => {
  const { apiRequest } = useAuth();
+ const [tiposProcesos, setTiposProcesos] = useState([]);
  const [procesosGenerales, setProcesosGenerales] = useState([]);
  const [loading, setLoading] = useState(true);
  const [error, setError] = useState(null);
@@ -13,23 +15,21 @@ import React, { useEffect, useState } from 'react'; import PropTypes from 'prop-
  try {
  setLoading(true);
  setError(null);
+ 
+ // Cargar tipos de procesos
+ const resTipos = await apiRequest('/procesos-generales/tipos/disponibles');
+ if (!resTipos?.success) throw new Error(resTipos?.message || 'Error al obtener tipos de procesos');
+ const tipos = Array.isArray(resTipos.data) ? resTipos.data : [];
+ 
+ // Cargar procesos generales
  const resProcesos = await apiRequest('/procesos-generales');
  if (!resProcesos?.success) throw new Error(resProcesos?.message || 'Error al obtener procesos generales');
  const baseProcesos = Array.isArray(resProcesos.data) ? resProcesos.data : resProcesos.data?.data || [];
- // Traer procesos internos por proceso general en paralelo
- const sortedProcesos = [...baseProcesos].sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
- const withProcesosInternos = await Promise.all(
- sortedProcesos.map(async (proceso) => {
- try {
- const resProcs = await apiRequest(`/procesos-generales/${proceso.id}/procesos-internos`);
- const procesosInternos = resProcs?.success ? (resProcs.data || []) : [];
- return { ...proceso, procesos_internos: procesosInternos };
- } catch (_) {
- return { ...proceso, procesos_internos: [] };
+ 
+ if (mounted) {
+ setTiposProcesos(tipos);
+ setProcesosGenerales(baseProcesos);
  }
- })
- );
- if (mounted) setProcesosGenerales(withProcesosInternos);
  } catch (e) {
  if (mounted) setError(e.message || 'Error cargando estructura');
  } finally {
@@ -56,19 +56,14 @@ import React, { useEffect, useState } from 'react'; import PropTypes from 'prop-
  }
  // Preparar datos para la estructura jerárquica
  const sortedProcesosGeneralesForView = [...procesosGenerales].sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
- const procesoIdToInfo = new Map();
- sortedProcesosGeneralesForView.forEach((proc) => {
- (proc.procesos_internos || []).forEach((p) => {
- const key = p.id ?? `${p.nombre}`;
- if (!procesoIdToInfo.has(key)) {
- procesoIdToInfo.set(key, { ...p, procesos_generales: [proc.nombre].filter(Boolean) });
- } else {
- const entry = procesoIdToInfo.get(key);
- if (proc.nombre && !entry.procesos_generales.includes(proc.nombre)) entry.procesos_generales.push(proc.nombre);
- }
+ 
+ // Agrupar procesos generales por tipo
+ const procesosPorTipo = {};
+ tiposProcesos.forEach(tipo => {
+ procesosPorTipo[tipo.nombre] = sortedProcesosGeneralesForView.filter(proc => 
+ proc.tipo_proceso?.nombre === tipo.nombre
+ );
  });
- });
- const allProcesos = Array.from(procesoIdToInfo.values()).sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
  return (
  <section className={styles.container}>
  <header className={styles.header}>
@@ -78,13 +73,19 @@ import React, { useEffect, useState } from 'react'; import PropTypes from 'prop-
  </div>
  </header>
  <div className={styles.hierarchicalStructure}>
- {/* Nivel 1: Procesos Estratégicos (Direcciones) */}
+ {tiposProcesos.map((tipo, index) => {
+ const procesosDelTipo = procesosPorTipo[tipo.nombre] || [];
+ if (procesosDelTipo.length === 0) return null;
+ 
+ return (
+ <React.Fragment key={tipo.nombre}>
+ {/* Nivel de Tipo de Proceso */}
  <div className={styles.strategicLevel}>
  <div className={styles.levelHeader}>
- <h3 className={styles.levelTitle}>Procesos ESTRATÉGICOS</h3>
+ <h3 className={styles.levelTitle}>Procesos {tipo.titulo?.toUpperCase()}</h3>
  </div>
  <div className={styles.strategicNodes}>
- {sortedProcesosGeneralesForView.map((proc) => (
+ {procesosDelTipo.map((proc) => (
  <div key={proc.id} className={styles.strategicNode}>
  <div className={styles.nodeContent}>
  <DirectionIcon className={styles.nodeIcon} />
@@ -95,39 +96,18 @@ import React, { useEffect, useState } from 'react'; import PropTypes from 'prop-
  ))}
  </div>
  </div>
- {/* Conectores */}
+ 
+ {/* Conectores entre niveles */}
+ {index < tiposProcesos.length - 1 && (
  <div className={styles.connectors}>
  <div className={styles.verticalLine}></div>
- </div>
- {/* Nivel 2: Procesos Misionales (Procesos de Apoyo) */}
- <div className={styles.misionalLevel}>
- <div className={styles.levelHeader}>
- <h3 className={styles.levelTitle}>Procesos MISIONALES</h3>
- </div>
- <div className={styles.misionalNodes}>
- {allProcesos.map((proc) => (
- <div key={proc.id || proc.nombre} className={styles.misionalNode}>
- <div className={styles.nodeContent}>
- <ProcessNodeIcon className={styles.nodeIcon} />
- <h4>{proc.nombre}</h4>
- {proc.descripcion && <p>{proc.descripcion}</p>}
- {Array.isArray(proc.procesos_generales) && proc.procesos_generales.length > 0 && (
- <div className={styles.chips}>
- {proc.procesos_generales.map((dn, idx) => (
- <span key={idx} className={styles.chip}>{dn}</span>
- ))}
  </div>
  )}
- </div>
- </div>
- ))}
- </div>
- </div>
- {/* Conectores */}
- <div className={styles.connectors}>
- <div className={styles.verticalLine}></div>
- </div>
- {/* Eliminado nivel de "Procesos de Apoyo" para Calidad; los procesos de apoyo se muestran como misionales */}
+ </React.Fragment>
+ );
+ })}
+ 
+
  </div>
  </section>
  );

@@ -19,7 +19,8 @@ class ProcesoTipo extends Model
         'titulo',
         'descripcion',
         'icono',
-        'activo'
+        'activo',
+        'orden'
     ];
 
     protected $casts = [
@@ -41,14 +42,20 @@ class ProcesoTipo extends Model
         // Limpiar cache cuando se crea, actualiza o elimina un tipo de proceso
         static::created(function ($procesoTipo) {
             Cache::forget('tipos_procesos_activos');
+            Cache::forget('acciones_rapidas');
+            Cache::forget('dashboard_data');
         });
 
         static::updated(function ($procesoTipo) {
             Cache::forget('tipos_procesos_activos');
+            Cache::forget('acciones_rapidas');
+            Cache::forget('dashboard_data');
         });
 
         static::deleted(function ($procesoTipo) {
             Cache::forget('tipos_procesos_activos');
+            Cache::forget('acciones_rapidas');
+            Cache::forget('dashboard_data');
         });
     }
 

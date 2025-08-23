@@ -8,6 +8,8 @@ import Layout from './components/Layout';
 import './bootstrap';
 import '../css/app.css';
 
+// Build timestamp: 2025-08-23 05:35:00 - Fixed processService export - Force cache refresh v2
+
 const App = () => {
     return (
         <AuthProvider>

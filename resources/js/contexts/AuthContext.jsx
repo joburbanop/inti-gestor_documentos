@@ -1,7 +1,17 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authService } from '../services/api/auth.js';
-import { api } from '../lib/apiClient.js';
-import axios from 'axios'; // Added axios import
+import { authService } from '../services/api/auth';
+import { api } from '../lib/apiClient';
+import axios from 'axios';
+
+// Crear instancia de axios con baseURL para FormData
+const axiosInstance = axios.create({
+    baseURL: '/api/v1',
+    timeout: 30000,
+    headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+    }
+});
 
 const AuthContext = createContext();
 
@@ -100,25 +110,32 @@ export const AuthProvider = ({ children }) => {
 
     // Cliente API unificado para el frontend
     const apiRequest = async (url, options = {}) => {
-        const { method = 'GET', body = undefined, headers = {}, signal, ignoreAuthErrors = false } = options;
+        const { method = 'GET', body = undefined, headers = {}, signal, ignoreAuthErrors = false, validateStatus = null } = options;
         try {
             const upper = (method || 'GET').toUpperCase();
             let response;
+            
+            // Configuración para permitir códigos de estado específicos (como 422)
+            const config = { signal, headers };
+            if (validateStatus) {
+                config.validateStatus = validateStatus;
+            }
+            
             if (upper === 'GET') {
-                response = await api.get(url, { signal, headers });
+                response = await api.get(url, config);
             } else if (upper === 'POST') {
                 if (body instanceof FormData) {
-                    response = await api.upload(url, body, { signal, headers });
+                    response = await api.upload(url, body, config);
                 } else {
-                    response = await api.post(url, body ?? {}, { signal, headers });
+                    response = await api.post(url, body ?? {}, config);
                 }
             } else if (upper === 'PUT') {
                 if (body instanceof FormData) {
                     // Para PUT con FormData, usar axios directamente con método PUT
                     const token = localStorage.getItem('auth_token');
-                    const config = {
+                    const axiosConfig = {
                         method: 'PUT',
-                        url: `/api/v1${url}`,
+                        url: url,
                         data: body,
                         headers: {
                             ...headers,
@@ -126,19 +143,20 @@ export const AuthProvider = ({ children }) => {
                             'Accept': 'application/json',
                             'X-Requested-With': 'XMLHttpRequest'
                         },
-                        signal
+                        signal,
+                        validateStatus: validateStatus || ((status) => status < 500) // Permitir 422, 400, etc.
                     };
-                    response = await axios(config);
+                    response = await axiosInstance(axiosConfig);
                 } else {
-                    response = await api.put(url, body ?? {}, { signal, headers });
+                    response = await api.put(url, body ?? {}, config);
                 }
             } else if (upper === 'PATCH') {
                 if (body instanceof FormData) {
                     // Para PATCH con FormData, usar axios directamente con método PATCH
                     const token = localStorage.getItem('auth_token');
-                    const config = {
+                    const axiosConfig = {
                         method: 'PATCH',
-                        url: `/api/v1${url}`,
+                        url: url,
                         data: body,
                         headers: {
                             ...headers,
@@ -146,17 +164,24 @@ export const AuthProvider = ({ children }) => {
                             'Accept': 'application/json',
                             'X-Requested-With': 'XMLHttpRequest'
                         },
-                        signal
+                        signal,
+                        validateStatus: validateStatus || ((status) => status < 500) // Permitir 422, 400, etc.
                     };
-                    response = await axios(config);
+                    response = await axiosInstance(axiosConfig);
                 } else {
-                    response = await api.patch(url, body ?? {}, { signal, headers });
+                    response = await api.patch(url, body ?? {}, config);
                 }
             } else if (upper === 'DELETE') {
-                response = await api.delete(url, { signal, headers, data: body });
+                // Para DELETE, permitir códigos de estado específicos como 422
+                const deleteConfig = { 
+                    ...config, 
+                    data: body,
+                    validateStatus: validateStatus || ((status) => status < 500) // Permitir 422, 400, etc.
+                };
+                response = await api.delete(url, deleteConfig);
             } else {
                 // Fallback a POST si llega un método no soportado
-                response = await api.post(url, body ?? {}, { signal, headers });
+                response = await api.post(url, body ?? {}, config);
             }
             return response.data;
         } catch (error) {
