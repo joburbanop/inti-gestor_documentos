@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class DocumentoController extends Controller
 {
@@ -459,6 +460,15 @@ class DocumentoController extends Controller
     public function update(Request $request, int $id): JsonResponse
     {
         try {
+            Log::info('🔄 [DocumentoController] Iniciando actualización de documento', [
+                'id' => $id,
+                'method' => $request->method(),
+                'url' => $request->url(),
+                'all_data' => $request->all(),
+                'files' => $request->allFiles(),
+                'content_type' => $request->header('Content-Type')
+            ]);
+
             $documento = Documento::findOrFail($id);
 
             // Verificar permisos
@@ -469,15 +479,22 @@ class DocumentoController extends Controller
                 ], 403);
             }
 
-            $validator = Validator::make($request->all(), [
+            // Obtener datos del request
+            $data = $request->all();
+            $file = $request->file('archivo');
+
+            // Validar datos básicos
+            $validator = Validator::make($data, [
                 'titulo' => 'required|string|max:255',
                 'descripcion' => 'nullable|string',
-                'proceso_id' => 'required|exists:procesos,id',
+                'tipo_proceso_id' => 'nullable|exists:tipos_procesos,id',
+                'proceso_general_id' => 'nullable|exists:procesos_generales,id',
+                'proceso_interno_id' => 'nullable|exists:procesos_internos,id',
                 'tipo' => 'nullable|string|max:50',
                 'etiquetas' => 'nullable|array',
                 'etiquetas.*' => 'string|max:50',
                 'confidencialidad' => 'nullable|string|in:Publico,Interno',
-
+                'archivo' => 'nullable|file|max:51200' // 50MB
             ]);
 
             if ($validator->fails()) {
@@ -488,20 +505,43 @@ class DocumentoController extends Controller
                 ], 422);
             }
 
-            // Guardar IDs originales antes de actualizar
-            $oldProcesoId = $documento->proceso_id;
-            
-            $documento->update($request->only([
-                'titulo', 'descripcion', 'proceso_id', 'tipo', 'etiquetas', 'confidencialidad'
-            ]));
+            // Si hay un nuevo archivo, manejarlo
+            if ($file) {
+                // Eliminar archivo anterior
+                if ($documento->ruta_archivo && Storage::disk('public')->exists($documento->ruta_archivo)) {
+                    Storage::disk('public')->delete($documento->ruta_archivo);
+                }
+
+                // Subir nuevo archivo
+                $fileName = time() . '_' . $file->getClientOriginalName();
+                $filePath = 'documentos/' . $fileName;
+                
+                Storage::disk('public')->put($filePath, file_get_contents($file));
+                
+                // Actualizar datos del archivo
+                $data['nombre_archivo'] = $fileName;
+                $data['nombre_original'] = $file->getClientOriginalName();
+                $data['ruta_archivo'] = $filePath;
+                $data['tipo_archivo'] = $file->getMimeType();
+                $data['tamaño_archivo'] = $file->getSize();
+                $data['extension'] = strtolower($file->getClientOriginalExtension());
+            }
+
+            // Actualizar documento
+            $documento->update($data);
 
             // Limpiar cache relacionado
             Cache::forget('dashboard_estadisticas');
             Cache::forget('procesos_tipos_stats');
 
+            Log::info('✅ [DocumentoController] Documento actualizado exitosamente', [
+                'id' => $id,
+                'titulo' => $documento->titulo
+            ]);
+
             return response()->json([
                 'success' => true,
-                'data' => $documento,
+                'data' => $documento->load(['tipoProceso', 'procesoGeneral', 'procesoInterno', 'subidoPor']),
                 'message' => 'Documento actualizado exitosamente'
             ], 200);
 
@@ -512,6 +552,11 @@ class DocumentoController extends Controller
             ], 404);
 
         } catch (\Exception $e) {
+            Log::error('❌ [DocumentoController] Error al actualizar documento:', [
+                'id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             
             return response()->json([
                 'success' => false,

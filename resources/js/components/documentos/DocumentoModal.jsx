@@ -209,6 +209,17 @@ import {
  alert('Error al crear la carpeta: ' + e.message);
  }
  };
+ const handleChange = (newData) => {
+    console.log('📁 [DocumentoModal.jsx] handleChange llamado:', newData);
+    
+    // Preservar el archivo si existe en el estado actual
+    if (localData.archivo && !newData.archivo) {
+      console.log('📁 [DocumentoModal.jsx] Preservando archivo existente');
+      newData.archivo = localData.archivo;
+    }
+    
+    setLocalData(newData);
+  };
  const fields = [
  {
  title: 'Archivo y Título',
@@ -397,13 +408,27 @@ import {
            initialData={localData}
            onSubmit={onInternalSubmit}
            onCancel={onClose}
-           onChange={setLocalData}
+           onChange={handleChange}
            loading={loading || loadingData}
            errors={errors}
            isModal={true}
          />
          <div className="mt-4">
-   
+           {/* Botón de debug temporal */}
+           <button
+             type="button"
+             onClick={() => {
+               console.log('🔍 [DocumentoModal.jsx] Estado actual del archivo:', {
+                 localData: localData,
+                 archivo: localData.archivo,
+                 isFile: localData.archivo instanceof File,
+                 fileName: localData.archivo?.name
+               });
+             }}
+             className="px-4 py-2 bg-gray-500 text-white rounded text-sm"
+           >
+             Debug Archivo
+           </button>
          </div>
  </div>
  </div>

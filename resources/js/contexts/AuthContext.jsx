@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authService } from '../services/api/auth.js';
 import { api } from '../lib/apiClient.js';
+import axios from 'axios'; // Added axios import
 
 const AuthContext = createContext();
 
@@ -112,9 +113,45 @@ export const AuthProvider = ({ children }) => {
                     response = await api.post(url, body ?? {}, { signal, headers });
                 }
             } else if (upper === 'PUT') {
-                response = await api.put(url, body ?? {}, { signal, headers });
+                if (body instanceof FormData) {
+                    // Para PUT con FormData, usar axios directamente con método PUT
+                    const token = localStorage.getItem('auth_token');
+                    const config = {
+                        method: 'PUT',
+                        url: `/api/v1${url}`,
+                        data: body,
+                        headers: {
+                            ...headers,
+                            'Authorization': token ? `Bearer ${token}` : '',
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        signal
+                    };
+                    response = await axios(config);
+                } else {
+                    response = await api.put(url, body ?? {}, { signal, headers });
+                }
             } else if (upper === 'PATCH') {
-                response = await api.patch(url, body ?? {}, { signal, headers });
+                if (body instanceof FormData) {
+                    // Para PATCH con FormData, usar axios directamente con método PATCH
+                    const token = localStorage.getItem('auth_token');
+                    const config = {
+                        method: 'PATCH',
+                        url: `/api/v1${url}`,
+                        data: body,
+                        headers: {
+                            ...headers,
+                            'Authorization': token ? `Bearer ${token}` : '',
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        signal
+                    };
+                    response = await axios(config);
+                } else {
+                    response = await api.patch(url, body ?? {}, { signal, headers });
+                }
             } else if (upper === 'DELETE') {
                 response = await api.delete(url, { signal, headers, data: body });
             } else {

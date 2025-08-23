@@ -114,6 +114,65 @@ Route::prefix('v1')->middleware(['api.auth', \App\Http\Middleware\CheckUserActiv
     });
 
     // ========================================
+    // DOMINIO: PROCESOS (Rutas legacy para compatibilidad)
+    // ========================================
+    Route::prefix('procesos')->middleware(['api.auth', \App\Http\Middleware\CheckUserActivity::class])->group(function () {
+        // Ruta principal para obtener procesos por tipo
+        Route::get('/', [ProcesoGeneralController::class, 'index']);
+        
+        // Configuración de tipos
+        Route::get('/tipos/config', function () {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'estrategico' => [
+                        'key' => 'estrategico',
+                        'title' => 'Procesos Estratégicos',
+                        'subtitle' => 'Procesos que definen la dirección estratégica de la organización',
+                        'emptyText' => 'No hay procesos estratégicos registrados.'
+                    ],
+                    'misional' => [
+                        'key' => 'misional',
+                        'title' => 'Procesos Misionales',
+                        'subtitle' => 'Procesos que ejecutan las funciones principales de la organización',
+                        'emptyText' => 'No hay procesos misionales registrados.'
+                    ],
+                    'apoyo' => [
+                        'key' => 'apoyo',
+                        'title' => 'Procesos de Apoyo',
+                        'subtitle' => 'Procesos que soportan las operaciones principales',
+                        'emptyText' => 'No hay procesos de apoyo registrados.'
+                    ],
+                    'evaluacion' => [
+                        'key' => 'evaluacion',
+                        'title' => 'Procesos de Evaluación',
+                        'subtitle' => 'Procesos de evaluación y mejora continua',
+                        'emptyText' => 'No hay procesos de evaluación registrados.'
+                    ]
+                ]
+            ]);
+        });
+        
+        Route::get('/tipos/stats', function () {
+            return response()->json(['success' => true, 'data' => []]);
+        });
+    });
+
+    // ========================================
+    // DOMINIO: PROCESOS GENERALES E INTERNOS (Compatibilidad)
+    // ========================================
+    Route::middleware(['api.auth', \App\Http\Middleware\CheckUserActivity::class])->group(function () {
+        Route::apiResource('procesos-generales', ProcesoGeneralController::class);
+    Route::get('/procesos-generales/{id}/documentos', [ProcesoGeneralController::class, 'documentos']);
+    Route::get('/procesos-generales/tipos/disponibles', [ProcesoGeneralController::class, 'tiposDisponibles']);
+    Route::apiResource('tipos-procesos', ProcesoTipoController::class);
+    Route::get('/tipos-procesos/{tipoId}/procesos-generales', [ProcesoTipoController::class, 'procesosGenerales']);
+    Route::apiResource('procesos-internos', ProcesoInternoController::class);
+    Route::get('/procesos-generales/{procesoGeneralId}/procesos-internos', [ProcesoInternoController::class, 'porProcesoGeneral']);
+    Route::post('/procesos-internos', [ProcesoInternoController::class, 'store']);
+    });
+
+    // ========================================
     // DOMINIO: USUARIOS (Nuevas rutas en inglés)
     // ========================================
     Route::prefix('users')->group(function () {
@@ -175,16 +234,7 @@ Route::prefix('v1')->middleware(['api.auth', \App\Http\Middleware\CheckUserActiv
         Route::get('/documentos/{id}/vista-previa', [DocumentoController::class, 'vistaPrevia']);
     });
 
-    // Legacy: Procesos
-    Route::apiResource('procesos-generales', ProcesoGeneralController::class);
-    Route::get('/procesos-generales/{id}/documentos', [ProcesoGeneralController::class, 'documentos']);
-    Route::get('/procesos-generales/tipos/disponibles', [ProcesoGeneralController::class, 'tiposDisponibles']);
-    Route::apiResource('tipos-procesos', ProcesoTipoController::class);
-    Route::get('/tipos-procesos/{tipoId}/procesos-generales', [ProcesoTipoController::class, 'procesosGenerales']);
-    Route::apiResource('procesos-internos', ProcesoInternoController::class);
-    Route::get('/procesos-generales/{procesoGeneralId}/procesos-internos', [ProcesoInternoController::class, 'porProcesoGeneral']);
-    Route::get('/procesos', [ProcesoGeneralController::class, 'index']);
-    Route::post('/procesos-internos', [ProcesoInternoController::class, 'store']);
+    // Legacy: Procesos (movidas al grupo principal)
 
     // Legacy: Usuarios
     Route::patch('/usuarios/{id}/toggle-status', [UserController::class, 'toggleStatus']);
@@ -248,6 +298,52 @@ Route::get('/file-limits', function () {
             'memory_limit' => ini_get('memory_limit')
         ]
     ]);
+});
+
+// Ruta de prueba para verificar métodos HTTP
+Route::prefix('test')->group(function () {
+    Route::get('/methods', function () {
+        return response()->json([
+            'success' => true,
+            'message' => 'GET method works',
+            'method' => request()->method()
+        ]);
+    });
+    
+    Route::post('/methods', function () {
+        return response()->json([
+            'success' => true,
+            'message' => 'POST method works',
+            'method' => request()->method(),
+            'data' => request()->all()
+        ]);
+    });
+    
+    Route::put('/methods', function () {
+        return response()->json([
+            'success' => true,
+            'message' => 'PUT method works',
+            'method' => request()->method(),
+            'data' => request()->all()
+        ]);
+    });
+    
+    Route::patch('/methods', function () {
+        return response()->json([
+            'success' => true,
+            'message' => 'PATCH method works',
+            'method' => request()->method(),
+            'data' => request()->all()
+        ]);
+    });
+    
+    Route::delete('/methods', function () {
+        return response()->json([
+            'success' => true,
+            'message' => 'DELETE method works',
+            'method' => request()->method()
+        ]);
+    });
 });
 
  

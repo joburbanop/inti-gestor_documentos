@@ -16,7 +16,7 @@ import React, { useEffect, useState } from 'react'; import { useParams, Link } f
  try {
  setLoading(true);
  setError(null);
- const res = await apiRequest(`/procesos/${id}`);
+          const res = await apiRequest(`/v1/procesos-generales/${id}`);
  if (!res?.success) throw new Error(res?.message || 'Error al cargar proceso');
  if (mounted) {
  setItem(res.data);

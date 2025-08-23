@@ -371,9 +371,16 @@
 
 .modalBody {
     padding: 1.5rem;
-    max-height: calc(90vh - 120px);
+    max-height: 70vh;
     overflow-y: auto;
-    position: relative;
+}
+
+.modalFooter {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
 }
 
 /* Loading overlay para el modal */
@@ -565,5 +572,134 @@
   .filterStatsActions {
     width: 100%;
     justify-content: flex-end;
+  }
+}
+
+/* Estilos para compatibilidad de archivos */
+.compatibilityInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.75rem 0;
+  padding: 0.5rem;
+  background: #f8f9fa;
+  border-radius: 0.5rem;
+  border: 1px solid #e9ecef;
+}
+
+.compatibilityBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.compatibilityBadge.viewable {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.compatibilityBadge.notViewable {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.contentTypeLabel {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: capitalize;
+  background: #f3f4f6;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  border: 1px solid #e5e7eb;
+}
+
+.compatibilityMessage {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-style: italic;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #f9fafb;
+  border-radius: 0.375rem;
+  border-left: 3px solid #d1d5db;
+}
+
+.disabledButton {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+}
+
+.disabledButton:hover {
+  opacity: 0.5 !important;
+  transform: none !important;
+}
+
+/* Mejoras en las tarjetas de documentos */
+.documentCard .cardActions button {
+  transition: all 0.2s ease;
+}
+
+.documentCard .cardActions button:hover:not(.disabledButton) {
+  transform: scale(1.1);
+}
+
+.documentCard .cardActions button.disabledButton {
+  background: #f3f4f6 !important;
+  color: #9ca3af !important;
+  border-color: #e5e7eb !important;
+}
+
+/* Tooltip para botones deshabilitados */
+.documentCard .cardActions button.disabledButton:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2937;
+  color: white;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  z-index: 1000;
+  margin-bottom: 0.5rem;
+}
+
+.documentCard .cardActions button.disabledButton:hover::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1f2937;
+  margin-bottom: -0.25rem;
+  z-index: 1000;
+}
+
+/* Responsive para compatibilidad */
+@media (max-width: 640px) {
+  .compatibilityInfo {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .compatibilityBadge {
+    font-size: 0.7rem;
+  }
+  
+  .contentTypeLabel {
+    font-size: 0.7rem;
   }
 }

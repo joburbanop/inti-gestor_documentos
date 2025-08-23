@@ -297,55 +297,66 @@ import { useLocation } from 'react-router-dom';
  }
  ], [procesosGeneralesOptions, procesosInternosOptions, etiquetasOptions, tiposDocumentoOptions, advancedFilterValues]);
  const handleView = async (documento) => {
- try {
-     const res = await apiRequest(`/documents/${documento.id}/preview`, { method: 'GET' });
- if (res.success && res.data?.url) {
- // Construir URL completa con el token de autenticación
- const token = localStorage.getItem('auth_token');
- const fullUrl = `${window.location.origin}${res.data.url}`;
- // Para archivos visualizables, abrir en nueva pestaña
- if (res.data.viewable) {
- const newWin = window.open(fullUrl, '_blank', 'noopener,noreferrer');
- if (!newWin) {
- alert('Permite las ventanas emergentes para ver el documento.');
- }
- } else {
- // Para archivos no visualizables, mostrar mensaje
- alert('Este tipo de archivo no se puede previsualizar. Se abrirá para descarga.');
- const newWin = window.open(fullUrl, '_blank', 'noopener,noreferrer');
- if (!newWin) {
- alert('Permite las ventanas emergentes para descargar el documento.');
- }
- }
- } else {
- alert(res.message || 'No se pudo abrir la vista previa');
- }
- } catch (e) {
- console.error('Error en vista previa:', e);
- alert('Error al abrir vista previa: ' + (e.message || 'Error desconocido'));
- }
- };
- const handleDownload = async (documento) => {
- try {
-     const res = await apiRequest(`/documents/${documento.id}/download`, { method: 'POST' });
- if (res.success && res.data?.url) {
- // Si la URL es pública (storage local), forzar descarga con atributo download
- const a = document.createElement('a');
- a.href = res.data.url;
- a.download = documento.nombre_original || documento.titulo || 'documento';
- document.body.appendChild(a);
- a.click();
- document.body.removeChild(a);
- // Refrescar documentos para actualizar contador de descargas
- try { await fetchDocumentos(); } catch (_) {}
- } else {
- alert(res.message || 'No se pudo generar la descarga');
- }
- } catch (e) {
- // Silenciado en producción
- alert(e.message || 'Error al descargar documento');
- }
- };
+    try {
+      const res = await apiRequest(`/documents/${documento.id}/preview`, { method: 'GET' });
+      
+      if (res.success && res.data) {
+        const data = res.data;
+        
+        // Si el archivo es visualizable, abrir en nueva pestaña
+        if (data.viewable) {
+          const fullUrl = data.url.startsWith('http') ? data.url : `${window.location.origin}${data.url}`;
+          const newWin = window.open(fullUrl, '_blank', 'noopener,noreferrer');
+          if (!newWin) {
+            alert('Permite las ventanas emergentes para ver el documento.');
+          }
+        } else {
+          // Para archivos no visualizables, mostrar mensaje informativo
+          const message = data.message || 'Este tipo de archivo no se puede previsualizar en el navegador.';
+          const shouldDownload = confirm(`${message}\n\n¿Deseas descargar el archivo?`);
+          
+          if (shouldDownload) {
+            await handleDownload(documento);
+          }
+        }
+      } else {
+        alert(res.message || 'No se pudo abrir la vista previa');
+      }
+    } catch (e) {
+      console.error('Error en vista previa:', e);
+      alert('Error al abrir vista previa: ' + (e.message || 'Error desconocido'));
+    }
+  };
+
+  const handleDownload = async (documento) => {
+    try {
+      const res = await apiRequest(`/documents/${documento.id}/download`, { method: 'POST' });
+      
+      if (res.success && res.data?.url) {
+        // Crear elemento de descarga
+        const a = document.createElement('a');
+        a.href = res.data.url.startsWith('http') ? res.data.url : `${window.location.origin}${res.data.url}`;
+        a.download = res.data.nombre_original || documento.nombre_original || documento.titulo || 'documento';
+        a.style.display = 'none';
+        
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        // Refrescar documentos para actualizar contador de descargas
+        try { 
+          await fetchDocumentos(); 
+        } catch (refreshError) {
+          console.warn('No se pudo actualizar la lista de documentos:', refreshError);
+        }
+      } else {
+        alert(res.message || 'No se pudo generar la descarga');
+      }
+    } catch (e) {
+      console.error('Error al descargar documento:', e);
+      alert('Error al descargar documento: ' + (e.message || 'Error desconocido'));
+    }
+  };
  const handleEdit = (documento) => {
  setModalMode('edit');
  setFormData({
@@ -455,11 +466,23 @@ import { useLocation } from 'react-router-dom';
      
      // Si hay un archivo nuevo, incluirlo
      const archivo = data.get('archivo');
+     console.log('🔍 [Documentos.jsx] Verificando archivo en FormData:', {
+       archivo: archivo,
+       isFile: archivo instanceof File,
+       dataEntries: Array.from(data.entries()),
+       dataKeys: Array.from(data.keys()),
+       formDataSize: data.entries().length
+     });
+     
      if (archivo && archivo instanceof File) {
-       console.log('📁 [Documentos.jsx] Archivo nuevo detectado en edición:', archivo.name);
-       // Para edición con archivo, usar FormData
+       console.log('📁 [Documentos.jsx] Archivo nuevo detectado en edición:', archivo.name, {
+         size: archivo.size,
+         type: archivo.type,
+         lastModified: archivo.lastModified
+       });
+       // Para edición con archivo, usar FormData con método PUT
        res = await apiRequest(`/documents/${data.get('id')}`, {
-         method: 'POST',
+         method: 'PUT',
          body: data
        });
      } else {
@@ -490,18 +513,21 @@ import { useLocation } from 'react-router-dom';
    }
  }
  if (res.success) {
- setShowModal(false);
- await fetchDocumentos();
- // Forzar recarga de estadísticas del dashboard para actualizar contadores
- try {
- await apiRequest('/documents/stats', {
- method: 'GET',
- ignoreAuthErrors: true
- });
- } catch (e) {
- }
+   console.log('✅ [Documentos.jsx] Actualización exitosa:', res.data);
+   setShowModal(false);
+   await fetchDocumentos();
+   // Forzar recarga de estadísticas del dashboard para actualizar contadores
+   try {
+     await apiRequest('/documents/stats', {
+       method: 'GET',
+       ignoreAuthErrors: true
+     });
+   } catch (e) {
+     console.warn('No se pudo actualizar estadísticas:', e);
+   }
  } else {
- setErrors({ general: res.message || `Error al ${modalMode === 'create' ? 'crear' : 'actualizar'} documento` });
+   console.error('❌ [Documentos.jsx] Error en actualización:', res);
+   setErrors({ general: res.message || `Error al ${modalMode === 'create' ? 'crear' : 'actualizar'} documento` });
  }
  } catch (e) {
  if (e.errors) setErrors(e.errors);

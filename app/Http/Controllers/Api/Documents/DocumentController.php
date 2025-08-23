@@ -8,6 +8,8 @@ use App\Services\Document\DocumentService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use App\Models\Documento;
 
 class DocumentController extends Controller
 {
@@ -305,23 +307,80 @@ class DocumentController extends Controller
     public function download($id): JsonResponse
     {
         try {
-            $downloadInfo = $this->documentService->downloadDocument($id);
+            $documento = Documento::findOrFail($id);
+
+            // Verificar permisos
+            if (!$documento->esDescargablePor(auth()->user())) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No tienes permisos para descargar este documento'
+                ], 403);
+            }
+
+            // Verificar que el archivo existe
+            if (!Storage::disk('public')->exists($documento->ruta_archivo)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El archivo no existe en el servidor'
+                ], 404);
+            }
+
+            // Incrementar contador de descargas
+            $documento->incrementarDescargas();
+
+            // Generar URL de descarga
+            $disk = Storage::disk('public');
+            $url = null;
+            
+            try {
+                // Algunos drivers (S3) soportan temporaryUrl
+                if (method_exists($disk, 'temporaryUrl')) {
+                    $url = $disk->temporaryUrl(
+                        $documento->ruta_archivo,
+                        now()->addMinutes(5),
+                        [
+                            'ResponseContentDisposition' => 'attachment; filename="' . $documento->nombre_original . '"'
+                        ]
+                    );
+                }
+            } catch (\Throwable $e) {
+                // Ignorar y continuar con fallback
+            }
+
+            if (!$url) {
+                // Fallback para disco local: devolver ruta relativa
+                $url = '/storage/' . ltrim($documento->ruta_archivo, '/');
+            }
 
             return response()->json([
                 'success' => true,
-                'data' => $downloadInfo,
-                'message' => 'Información de descarga obtenida exitosamente'
+                'data' => [
+                    'url' => $url,
+                    'nombre_original' => $documento->nombre_original,
+                    'tamaño_archivo' => $documento->tamaño_archivo,
+                    'tamaño_formateado' => $documento->getTamañoFormateadoAttribute(),
+                    'extension' => $documento->extension,
+                    'tipo_archivo' => $documento->tipo_archivo
+                ],
+                'message' => 'URL de descarga generada exitosamente'
             ]);
 
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Documento no encontrado'
+            ], 404);
+
         } catch (\Exception $e) {
-            Log::error('❌ [DocumentController] Error al obtener información de descarga:', [
+            Log::error('❌ [DocumentController] Error al generar descarga:', [
                 'id' => $id,
                 'error' => $e->getMessage()
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error al obtener información de descarga: ' . $e->getMessage()
+                'message' => 'Error al generar la descarga',
+                'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
     }
@@ -332,23 +391,113 @@ class DocumentController extends Controller
     public function preview($id): JsonResponse
     {
         try {
-            $previewInfo = $this->documentService->previewDocument($id);
+            $documento = Documento::findOrFail($id);
+
+            // Verificar permisos
+            if (!$documento->esDescargablePor(auth()->user())) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No tienes permisos para ver este documento'
+                ], 403);
+            }
+
+            // Verificar que el archivo existe
+            if (!Storage::disk('public')->exists($documento->ruta_archivo)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El archivo no existe en el servidor'
+                ], 404);
+            }
+
+            // Obtener el tipo MIME del archivo
+            $disk = Storage::disk('public');
+            $mimeType = $disk->mimeType($documento->ruta_archivo);
+
+            // Definir tipos de archivo visualizables en el navegador
+            $viewableTypes = [
+                'application/pdf',
+                'image/jpeg',
+                'image/png',
+                'image/gif',
+                'image/webp',
+                'image/bmp',
+                'image/svg+xml',
+                'text/plain',
+                'text/html',
+                'text/csv',
+                'text/css',
+                'text/javascript',
+                'application/json',
+                'application/xml'
+            ];
+
+            // Generar URL
+            $url = null;
+            try {
+                if (method_exists($disk, 'temporaryUrl')) {
+                    $url = $disk->temporaryUrl($documento->ruta_archivo, now()->addMinutes(5), [
+                        'ResponseContentDisposition' => 'inline; filename="' . $documento->nombre_original . '"'
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                // Ignorar y continuar con fallback
+            }
+
+            if (!$url) {
+                $url = '/storage/' . ltrim($documento->ruta_archivo, '/');
+            }
+
+            $isViewable = in_array($mimeType, $viewableTypes);
+            
+            // Determinar el tipo de contenido para mejor UX
+            $contentType = 'documento';
+            if (str_starts_with($mimeType, 'image/')) {
+                $contentType = 'imagen';
+            } elseif ($mimeType === 'application/pdf') {
+                $contentType = 'pdf';
+            } elseif (str_starts_with($mimeType, 'text/')) {
+                $contentType = 'texto';
+            } elseif (in_array($documento->extension, ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'])) {
+                $contentType = 'ofimatica';
+            } elseif (in_array($documento->extension, ['zip', 'rar', '7z', 'tar', 'gz'])) {
+                $contentType = 'comprimido';
+            }
 
             return response()->json([
                 'success' => true,
-                'data' => $previewInfo,
-                'message' => 'Información de vista previa obtenida exitosamente'
+                'data' => [
+                    'url' => $url,
+                    'nombre_original' => $documento->nombre_original,
+                    'tamaño_archivo' => $documento->tamaño_archivo,
+                    'tamaño_formateado' => $documento->getTamañoFormateadoAttribute(),
+                    'tipo_archivo' => $documento->tipo_archivo,
+                    'extension' => $documento->extension,
+                    'mime_type' => $mimeType,
+                    'content_type' => $contentType,
+                    'viewable' => $isViewable,
+                    'message' => $isViewable 
+                        ? 'Este archivo se puede visualizar en el navegador' 
+                        : 'Este tipo de archivo no es compatible con la visualización en el navegador. Se recomienda descargarlo.'
+                ],
+                'message' => $isViewable ? 'Vista previa disponible' : 'Archivo no visualizable'
             ]);
 
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Documento no encontrado'
+            ], 404);
+
         } catch (\Exception $e) {
-            Log::error('❌ [DocumentController] Error al obtener información de vista previa:', [
+            Log::error('❌ [DocumentController] Error al generar vista previa:', [
                 'id' => $id,
                 'error' => $e->getMessage()
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error al obtener información de vista previa: ' . $e->getMessage()
+                'message' => 'Error al generar la vista previa',
+                'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
     }
