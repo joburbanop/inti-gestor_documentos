@@ -56,23 +56,67 @@ const ProcesoTipoDetail = () => {
     });
   };
 
-  const handleViewDocument = (documento) => {
-    window.open(`/documentos/${documento.id}/preview`, '_blank', 'noopener,noreferrer');
+  const handleViewDocument = async (documento) => {
+    try {
+      console.log('🔄 [ProcesoTipoDetail] Intentando abrir vista previa del documento:', documento.id);
+      
+      const res = await apiRequest(`/documents/${documento.id}/preview`, { method: 'GET' });
+      
+      if (res.success && res.data) {
+        const data = res.data;
+        
+        // Si el archivo es visualizable, abrir en nueva pestaña
+        if (data.viewable) {
+          const fullUrl = data.url.startsWith('http') ? data.url : `${window.location.origin}${data.url}`;
+          console.log('✅ [ProcesoTipoDetail] Abriendo archivo visualizable en nueva pestaña:', fullUrl);
+          const newWin = window.open(fullUrl, '_blank', 'noopener,noreferrer');
+          if (!newWin) {
+            alert('Permite las ventanas emergentes para ver el documento.');
+          }
+        } else {
+          // Para archivos no visualizables, mostrar mensaje informativo
+          const message = data.message || 'Este tipo de archivo no se puede previsualizar en el navegador.';
+          console.log('⚠️ [ProcesoTipoDetail] Archivo no visualizable:', message);
+          const shouldDownload = confirm(`${message}\n\n¿Deseas descargar el archivo?`);
+          
+          if (shouldDownload) {
+            await handleDownloadDocument(documento);
+          }
+        }
+      } else {
+        console.error('❌ [ProcesoTipoDetail] Error en respuesta de vista previa:', res.message);
+        alert(res.message || 'No se pudo abrir la vista previa');
+      }
+    } catch (e) {
+      console.error('❌ [ProcesoTipoDetail] Error al abrir vista previa:', e);
+      alert('Error al abrir vista previa: ' + (e.message || 'Error desconocido'));
+    }
   };
 
   const handleDownloadDocument = async (documento) => {
     try {
-      const response = await apiRequest(`/documents/${documento.id}/download`);
+      console.log('🔄 [ProcesoTipoDetail] Intentando descargar documento:', documento.id);
+      
+      const response = await apiRequest(`/documents/${documento.id}/download`, {
+        method: 'POST'
+      });
+      
       if (response.success) {
+        console.log('✅ [ProcesoTipoDetail] Descarga exitosa, creando enlace de descarga');
         const link = document.createElement('a');
         link.href = response.data.url;
-        link.download = documento.nombre_archivo;
+        link.download = documento.nombre_archivo || documento.nombre_original || 'documento';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        console.log('✅ [ProcesoTipoDetail] Descarga iniciada');
+      } else {
+        console.error('❌ [ProcesoTipoDetail] Error en respuesta de descarga:', response.message);
+        alert('Error al descargar el documento: ' + (response.message || 'Error desconocido'));
       }
     } catch (error) {
-      console.error('Error al descargar documento:', error);
+      console.error('❌ [ProcesoTipoDetail] Error al descargar documento:', error);
+      alert('Error al descargar el documento: ' + (error.message || 'Error desconocido'));
     }
   };
 
