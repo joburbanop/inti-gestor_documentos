@@ -24,8 +24,12 @@ class StoreDocumentRequest extends FormRequest
         return [
             'titulo' => 'required|string|max:255',
             'descripcion' => 'nullable|string|max:1000',
-            // Alinear con límites de subida (hasta 50MB)
-            'archivo' => 'required|file|max:51200', // 50MB
+            'archivo' => [
+                'required',
+                'file',
+                'max:51200', // 50MB
+                'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif,txt,zip,rar'
+            ],
             'tipo_proceso_id' => 'required|exists:tipos_procesos,id',
             'proceso_general_id' => 'required|exists:procesos_generales,id',
             'proceso_interno_id' => 'required|exists:procesos_internos,id',
@@ -45,13 +49,14 @@ class StoreDocumentRequest extends FormRequest
             'archivo.required' => 'El archivo es obligatorio',
             'archivo.file' => 'El archivo debe ser un archivo válido',
             'archivo.max' => 'El archivo no puede ser mayor a 50MB',
+            'archivo.mimes' => 'El archivo debe ser de tipo: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, JPEG, PNG, GIF, TXT, ZIP, RAR',
             'tipo_proceso_id.required' => 'El tipo de proceso es obligatorio',
             'tipo_proceso_id.exists' => 'El tipo de proceso seleccionado no existe',
             'proceso_general_id.required' => 'El proceso general es obligatorio',
             'proceso_general_id.exists' => 'El proceso general seleccionado no existe',
             'proceso_interno_id.required' => 'El proceso interno es obligatorio',
             'proceso_interno_id.exists' => 'El proceso interno seleccionado no existe',
-            'confidencialidad.in' => 'La confidencialidad debe ser Público o Interno'
+            'confidencialidad.in' => 'El nivel de confidencialidad debe ser Público o Interno'
         ];
     }
 
@@ -70,71 +75,63 @@ class StoreDocumentRequest extends FormRequest
     }
 
     /**
-     * Prepare the data for validation.
+     * Configure the validator instance.
      */
-    protected function prepareForValidation()
+    public function withValidator($validator)
     {
-        // Log de datos originales recibidos
-        \Log::info('📝 [StoreDocumentRequest] Datos originales recibidos:', [
-            'all_data' => $this->all(),
-            'files' => $this->allFiles(),
-            'has_archivo' => $this->hasFile('archivo'),
-            'archivo_size' => $this->file('archivo') ? $this->file('archivo')->getSize() : 'no file',
-            'content_type' => $this->header('Content-Type'),
-            'method' => $this->method(),
-            'url' => $this->url(),
-            'raw_input' => $this->getContent(),
-            'request_size' => $this->header('Content-Length'),
-            'request_headers' => $this->headers->all(),
-            'request_body' => $this->getContent(),
-            'request_method' => $this->method(),
-            'request_url' => $this->url(),
-            'request_path' => $this->path(),
-            'request_query' => $this->query(),
-            'request_post' => $this->post(),
-            'request_input' => $this->input(),
-            'request_all' => $this->all(),
-            'request_files' => $this->allFiles(),
-            'request_has_file' => $this->hasFile('archivo'),
-            'request_file' => $this->file('archivo'),
-            'request_file_size' => $this->file('archivo') ? $this->file('archivo')->getSize() : 'no file',
-            'request_file_name' => $this->file('archivo') ? $this->file('archivo')->getClientOriginalName() : 'no file',
-            'request_file_mime' => $this->file('archivo') ? $this->file('archivo')->getMimeType() : 'no file'
-        ]);
-
-        // Normalizar campos legacy a la jerarquía actual
-        $input = $this->all();
-        
-        // Solo normalizar campos específicos si es necesario
-        if (!$this->filled('proceso_general_id') && $this->filled('direccion_id')) {
-            $input['proceso_general_id'] = $this->get('direccion_id');
-        }
-        if (!$this->filled('proceso_interno_id') && $this->filled('proceso_apoyo_id')) {
-            $input['proceso_interno_id'] = $this->get('proceso_apoyo_id');
-        }
-        
-        // Inferir tipo_proceso_id a partir de proceso_general_id si falta
-        if (empty($input['tipo_proceso_id']) && !empty($input['proceso_general_id'])) {
-            try {
-                $procesoGeneral = \App\Models\ProcesoGeneral::find($input['proceso_general_id']);
-                if ($procesoGeneral) {
-                    $input['tipo_proceso_id'] = $procesoGeneral->tipo_proceso_id;
+        $validator->after(function ($validator) {
+            // Validación de jerarquía tipo proceso -> proceso general
+            if ($this->has('proceso_general_id') && $this->has('tipo_proceso_id')) {
+                $procesoGeneral = \App\Models\ProcesoGeneral::find($this->proceso_general_id);
+                if ($procesoGeneral && $procesoGeneral->tipo_proceso_id != $this->tipo_proceso_id) {
+                    $validator->errors()->add('proceso_general_id', 'El proceso general no pertenece al tipo de proceso seleccionado');
                 }
-            } catch (\Exception $e) {
-                \Log::warning('No se pudo inferir tipo_proceso_id:', ['error' => $e->getMessage()]);
             }
-        }
-        
-        // Log de datos normalizados
-        \Log::info('📝 [StoreDocumentRequest] Datos normalizados:', [
-            'all_data' => $input,
-            'files' => $this->allFiles(),
-            'has_archivo' => $this->hasFile('archivo'),
-            'archivo_size' => $this->file('archivo') ? $this->file('archivo')->getSize() : 'no file'
-        ]);
-        
-        // Reemplazar los datos con los normalizados
-        $this->replace($input);
+            
+            // Validación de que el proceso interno sea estándar (no específico a un proceso general)
+            if ($this->has('proceso_interno_id')) {
+                $procesoInterno = \App\Models\ProcesoInterno::find($this->proceso_interno_id);
+                if ($procesoInterno && $procesoInterno->proceso_general_id !== null) {
+                    $validator->errors()->add('proceso_interno_id', 'El proceso interno debe ser una carpeta estándar');
+                }
+            }
+
+            // Validación adicional del archivo
+            if ($this->hasFile('archivo')) {
+                $archivo = $this->file('archivo');
+                
+                if (!$archivo->isValid()) {
+                    $validator->errors()->add('archivo', 'El archivo subido no es válido: ' . $archivo->getErrorMessage());
+                }
+
+                // Validación de tamaño adicional
+                if ($archivo->getSize() > 50 * 1024 * 1024) {
+                    $validator->errors()->add('archivo', 'El archivo es demasiado grande. Máximo 50MB.');
+                }
+
+                // Validación de tipos MIME adicional
+                $allowedMimes = [
+                    'application/pdf',
+                    'application/msword',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    'application/vnd.ms-excel',
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    'application/vnd.ms-powerpoint',
+                    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                    'image/jpeg',
+                    'image/jpg',
+                    'image/png',
+                    'image/gif',
+                    'text/plain',
+                    'application/zip',
+                    'application/x-rar-compressed'
+                ];
+
+                if (!in_array($archivo->getMimeType(), $allowedMimes)) {
+                    $validator->errors()->add('archivo', 'Tipo de archivo no permitido. Tipos permitidos: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, PNG, GIF, TXT, ZIP, RAR');
+                }
+            }
+        });
     }
 }
 

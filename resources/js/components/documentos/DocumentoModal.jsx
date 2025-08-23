@@ -54,26 +54,47 @@ import {
  cargarTiposProcesos(true);
  };
 
+// Función para cargar procesos internos estándar
+const cargarProcesosInternosEstandar = async () => {
+try {
+console.log('🔄 [DocumentoModal.jsx] Cargando procesos internos estándar...');
+const res = await apiRequest('/procesos-internos');
+if (res.success) {
+const procesos = (res.data || []).map(x => ({
+value: x.id,
+label: formatText(x.nombre, { textCase: 'capitalize' }),
+descripcion: x.descripcion
+}));
+console.log('✅ [DocumentoModal.jsx] Procesos internos estándar cargados:', procesos.length);
+setProcesosInternosOptions(procesos);
+} else {
+console.error('❌ [DocumentoModal.jsx] Error cargando procesos internos estándar:', res);
+setProcesosInternosOptions([]);
+}
+} catch (error) {
+console.error('💥 [DocumentoModal.jsx] Error cargando procesos internos estándar:', error);
+setProcesosInternosOptions([]);
+}
+};
+
 // Cargar datos iniciales cuando se abre el modal
- useEffect(() => {
- if (!show) return;
- const cargarDatosIniciales = async () => {
- setLoadingData(true);
- try {
- // Cargar tipos de procesos al abrir el modal
- await cargarTiposProcesos();
- 
- // Los procesos internos se cargarán cuando se seleccione un proceso general
- setProcesosInternosOptions([]);
- 
- } catch (error) {
- console.error('💥 [DocumentoModal.jsx] Error general cargando datos:', error);
- } finally {
- setLoadingData(false);
- }
- };
- cargarDatosIniciales();
- }, [show, apiRequest]);
+useEffect(() => {
+if (!show) return;
+const cargarDatosIniciales = async () => {
+setLoadingData(true);
+try {
+// Cargar tipos de procesos y procesos internos estándar al abrir el modal
+await cargarTiposProcesos();
+await cargarProcesosInternosEstandar();
+
+} catch (error) {
+console.error('💥 [DocumentoModal.jsx] Error general cargando datos:', error);
+} finally {
+setLoadingData(false);
+}
+};
+cargarDatosIniciales();
+}, [show, apiRequest]);
 
 // Recargar tipos de procesos cada 2 segundos cuando el modal esté abierto
  useEffect(() => {
@@ -125,31 +146,7 @@ import {
  }
  };
 
- const cargarProcesosInternos = async (procesoGeneralId) => {
- try {
- console.log('🔄 [DocumentoModal.jsx] Cargando procesos internos para proceso general ID:', procesoGeneralId);
- 
- // Cargar solo procesos internos jerárquicos del proceso general
- const res = await apiRequest(`/procesos-generales/${procesoGeneralId}/procesos-internos`);
- 
- if (res.success) {
- const procesos = (res.data || []).map(x => ({
- value: x.id,
- label: formatText(x.nombre, { textCase: 'capitalize' }),
- descripcion: x.descripcion
- }));
- console.log('✅ [DocumentoModal.jsx] Procesos internos cargados:', procesos.length);
- setProcesosInternosOptions(procesos);
- } else {
- console.error('❌ [DocumentoModal.jsx] Error cargando procesos internos:', res);
- setProcesosInternosOptions([]);
- }
- 
- } catch (error) {
- console.error('💥 [DocumentoModal.jsx] Error cargando procesos internos:', error);
- setProcesosInternosOptions([]);
- }
- };
+ // Función cargarProcesosInternos eliminada - ahora usamos procesos internos estándar
 
  
  // Cargar procesos generales cuando cambia el tipo de proceso seleccionado
@@ -169,23 +166,8 @@ import {
  cargarProcesosGenerales(tipoProcesoId);
  }, [localData?.tipo_proceso_id, show]);
 
- // Cargar procesos internos cuando cambia el proceso general seleccionado
- useEffect(() => {
- if (!show) return;
- const procesoGeneralId = localData?.proceso_general_id;
- console.log('🔄 [DocumentoModal.jsx] Cambio en proceso_general_id:', procesoGeneralId);
- if (!procesoGeneralId) {
- // Si no hay proceso general, limpiar procesos internos
- setProcesosInternosOptions([]);
- setLocalData(prev => ({
- ...prev,
- proceso_interno_id: ''
- }));
- return;
- }
- // Cargar procesos internos del proceso general seleccionado
- cargarProcesosInternos(procesoGeneralId);
- }, [localData?.proceso_general_id, show]);
+ // Ya no necesitamos cargar procesos internos cuando cambia el proceso general
+// porque ahora son carpetas estándar que se cargan una sola vez al abrir el modal
  if (!show) return null;
  const handleAddProcesoGeneral = async () => {
  const nombre = window.prompt('Escribe el nombre de la nueva área principal:');
@@ -363,62 +345,87 @@ import {
  ]
  }
  ];
- const onInternalSubmit = async (data) => {
+ const onInternalSubmit = async (processedData) => {
    try {
-     console.log('🔄 [DocumentoModal.jsx] Enviando datos:', data);
-     console.log('🔄 [DocumentoModal.jsx] Modo:', mode);
+     console.log('📁 [DocumentoModal.jsx] onInternalSubmit llamado con:', processedData);
      
-     // Los datos se procesan normalmente sin transformación especial
-     let processedData = data;
-     
-     // Función para validar tamaño de archivo
+     // Función para validar tamaño del archivo
      const validateFileSize = (file) => {
-       const maxSize = 50 * 1024 * 1024; // 50MB en bytes
+       const maxSize = 50 * 1024 * 1024; // 50MB
        if (file.size > maxSize) {
-         const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
-         throw new Error(`El archivo "${file.name}" es demasiado grande (${sizeInMB}MB). El tamaño máximo permitido es 50MB.`);
+         throw new Error(`El archivo es demasiado grande. Máximo 50MB.`);
        }
      };
      
-     // Verificar si es FormData o datos normales
+     // Función para validar tipo de archivo
+     const validateFileType = (file) => {
+       const allowedTypes = [
+         'application/pdf',
+         'application/msword',
+         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+         'application/vnd.ms-excel',
+         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+         'application/vnd.ms-powerpoint',
+         'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+         'image/jpeg',
+         'image/jpg',
+         'image/png',
+         'image/gif',
+         'text/plain',
+         'application/zip',
+         'application/x-rar-compressed'
+       ];
+       
+       if (!allowedTypes.includes(file.type)) {
+         throw new Error(`Tipo de archivo no permitido. Tipos permitidos: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, PNG, GIF, TXT, ZIP, RAR`);
+       }
+     };
+     
+     // Validación mejorada del archivo
      if (processedData instanceof FormData) {
-       console.log('📁 [DocumentoModal.jsx] Recibido FormData con archivos');
-       // Verificar que el archivo esté presente solo si es modo create
+       console.log('📁 [DocumentoModal.jsx] Recibido FormData');
+       
+       // Verificar si hay archivo en FormData
+       const archivo = processedData.get('archivo');
        if (mode === 'create') {
-         const archivo = processedData.get('archivo');
-         if (!archivo) {
-           console.error('❌ [DocumentoModal.jsx] No hay archivo en FormData para creación');
-           alert('Debes seleccionar un archivo');
+         if (!archivo || !(archivo instanceof File)) {
+           console.error('❌ [DocumentoModal.jsx] No hay archivo válido para creación');
+           alert('Debes seleccionar un archivo válido');
            return;
          }
+         
          console.log('✅ [DocumentoModal.jsx] Archivo encontrado para creación:', archivo.name);
-         // Validar tamaño del archivo
+         // Validar archivo
          validateFileSize(archivo);
+         validateFileType(archivo);
        } else {
          console.log('✅ [DocumentoModal.jsx] Modo edición - archivo opcional');
          // Si hay un archivo nuevo en edición, validarlo
-         const archivo = processedData.get('archivo');
          if (archivo && archivo instanceof File) {
            validateFileSize(archivo);
+           validateFileType(archivo);
          }
        }
      } else {
        console.log('📋 [DocumentoModal.jsx] Recibidos datos normales');
        // Verificar archivo solo si es modo create
-       if (mode === 'create' && !processedData.archivo) {
-         console.error('❌ [DocumentoModal.jsx] No hay archivo seleccionado para creación');
-         alert('Debes seleccionar un archivo');
-         return;
-       }
        if (mode === 'create') {
+         if (!processedData.archivo || !(processedData.archivo instanceof File)) {
+           console.error('❌ [DocumentoModal.jsx] No hay archivo seleccionado para creación');
+           alert('Debes seleccionar un archivo válido');
+           return;
+         }
+         
          console.log('✅ [DocumentoModal.jsx] Archivo encontrado para creación:', processedData.archivo.name);
-         // Validar tamaño del archivo
+         // Validar archivo
          validateFileSize(processedData.archivo);
+         validateFileType(processedData.archivo);
        } else {
          console.log('✅ [DocumentoModal.jsx] Modo edición - archivo opcional');
          // Si hay un archivo nuevo en edición, validarlo
          if (processedData.archivo && processedData.archivo instanceof File) {
            validateFileSize(processedData.archivo);
+           validateFileType(processedData.archivo);
          }
        }
      }

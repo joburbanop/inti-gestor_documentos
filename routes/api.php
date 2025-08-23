@@ -113,6 +113,9 @@ Route::prefix('v1')->middleware(['api.auth', \App\Http\Middleware\CheckUserActiv
         
         // Procesos internos (jerárquicos por proceso general)
         Route::get('/generals/{processGeneralId}/internals', [ProcesoInternoController::class, 'porProcesoGeneral']);
+        
+        // Documentos de procesos internos estándar
+        Route::get('/internals/{id}/documents', [ProcesoInternoController::class, 'documentos']);
     });
 
     // ========================================
@@ -171,6 +174,7 @@ Route::prefix('v1')->middleware(['api.auth', \App\Http\Middleware\CheckUserActiv
     Route::get('/procesos-tipos/{tipoId}/procesos-generales', [ProcesoTipoController::class, 'procesosGenerales']);
     Route::apiResource('procesos-internos', ProcesoInternoController::class);
     Route::get('/procesos-generales/{procesoGeneralId}/procesos-internos', [ProcesoInternoController::class, 'porProcesoGeneral']);
+    Route::get('/procesos-internos/{id}/documentos', [ProcesoInternoController::class, 'documentos']);
     Route::post('/procesos-internos', [ProcesoInternoController::class, 'store']);
     });
 

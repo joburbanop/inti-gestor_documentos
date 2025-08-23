@@ -573,7 +573,7 @@ class BugbotAnalyzer {
         }
     }
 
-    // Analizar DocumentoController.php
+    // Analizar DocumentoController
     analyzeDocumentoController() {
         const filePath = 'app/Http/Controllers/Api/DocumentoController.php';
         
@@ -585,9 +585,9 @@ class BugbotAnalyzer {
         try {
             const content = fs.readFileSync(filePath, 'utf8');
             
-            // Verificar validación de archivo
-            if (content.includes('archivo\': \'required|file')) {
-                this.suggestions.push('✅ DocumentoController valida archivo requerido');
+            // Verificar validación de archivo (ahora usando Form Request)
+            if (content.includes('StoreDocumentRequest') || content.includes('archivo\': \'required|file')) {
+                this.suggestions.push('✅ DocumentoController valida archivo requerido (usando Form Request)');
             } else {
                 this.issues.push('❌ CRÍTICO: DocumentoController no valida archivo requerido');
             }

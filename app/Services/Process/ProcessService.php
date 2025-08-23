@@ -124,10 +124,15 @@ class ProcessService
      */
     public function validateHierarchy($tipoId, $generalId, $internalId)
     {
-        // Verificar que el proceso interno pertenece al proceso general
+        // Verificar que el proceso interno existe y es estándar (proceso_general_id = null)
         $procesoInterno = ProcesoInterno::find($internalId);
-        if (!$procesoInterno || $procesoInterno->proceso_general_id != $generalId) {
-            throw new \Exception('El proceso interno no pertenece al proceso general seleccionado');
+        if (!$procesoInterno) {
+            throw new \Exception('El proceso interno seleccionado no existe');
+        }
+        
+        // Los procesos internos ahora son estándar (proceso_general_id = null)
+        if ($procesoInterno->proceso_general_id !== null) {
+            throw new \Exception('El proceso interno debe ser una carpeta estándar');
         }
 
         // Verificar que el proceso general pertenece al tipo de proceso

@@ -22,11 +22,10 @@ export const useProcessTypes = () => {
         const data = Array.isArray(response.data) ? response.data : [];
         console.log('✅ [useProcessTypes] Tipos cargados:', data.length, 'tipos');
         
-        // Verificar si hay tipos inesperados (como "nuevo" o "CREACION")
+        // Verificar si hay tipos inesperados (como "CREACION")
         const tiposInesperados = data.filter(tipo => 
-          tipo.nombre === 'nuevo' || 
           tipo.nombre === 'CREACION' || 
-          !['estrategico', 'misional', 'apoyo', 'evaluacion'].includes(tipo.nombre)
+          !['estrategico', 'misional', 'apoyo', 'evaluacion', 'nuevo'].includes(tipo.nombre)
         );
         
         if (tiposInesperados.length > 0) {

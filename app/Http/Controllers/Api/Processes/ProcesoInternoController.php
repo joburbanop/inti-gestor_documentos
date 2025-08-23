@@ -14,29 +14,30 @@ class ProcesoInternoController extends Controller
 {
     /**
      * Display a listing of the resource.
+     * Retorna procesos internos estándar (carpetas que son iguales para todos)
      */
     public function index()
     {
         try {
-            $procesos = Cache::remember('procesos_internos_unicos', 3600, function () {
-                return ProcesoInterno::select('nombre', 'descripcion', 'icono')
+            $procesos = Cache::remember('procesos_internos_estandar', 3600, function () {
+                return ProcesoInterno::whereNull('proceso_general_id') // Solo procesos internos estándar
                     ->activos()
-                    ->groupBy('nombre', 'descripcion', 'icono')
                     ->orderBy('nombre')
                     ->get()
-                    ->map(function($item, $index) {
+                    ->map(function($proceso) {
                         return [
-                            'id' => $index + 1,
-                            'nombre' => $item->nombre,
-                            'descripcion' => $item->descripcion,
-                            'icono' => $item->icono
+                            'id' => $proceso->id,
+                            'nombre' => $proceso->nombre,
+                            'descripcion' => $proceso->descripcion,
+                            'icono' => $proceso->icono
                         ];
                     });
             });
 
             return response()->json([
                 'success' => true,
-                'data' => $procesos
+                'data' => $procesos,
+                'message' => 'Procesos internos estándar obtenidos exitosamente'
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -83,7 +84,51 @@ class ProcesoInternoController extends Controller
     }
 
     /**
-     * Crear un nuevo proceso interno
+     * Obtener documentos de un proceso interno estándar
+     */
+    public function documentos(int $id): JsonResponse
+    {
+        try {
+            $procesoInterno = ProcesoInterno::whereNull('proceso_general_id')
+                ->activos()
+                ->findOrFail($id);
+            
+            $documentos = $procesoInterno->documentos()
+                ->with(['tipoProceso', 'procesoGeneral', 'subidoPor'])
+                ->orderBy('created_at', 'desc')
+                ->paginate(20);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'proceso_interno' => [
+                        'id' => $procesoInterno->id,
+                        'nombre' => $procesoInterno->nombre,
+                        'descripcion' => $procesoInterno->descripcion,
+                        'icono' => $procesoInterno->icono
+                    ],
+                    'documentos' => $documentos->items(),
+                    'pagination' => [
+                        'current_page' => $documentos->currentPage(),
+                        'last_page' => $documentos->lastPage(),
+                        'per_page' => $documentos->perPage(),
+                        'total' => $documentos->total(),
+                    ]
+                ],
+                'message' => 'Documentos del proceso interno obtenidos exitosamente'
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener los documentos del proceso interno',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+
+    /**
+     * Crear un nuevo proceso interno estándar
      */
     public function store(Request $request): JsonResponse
     {
@@ -91,12 +136,9 @@ class ProcesoInternoController extends Controller
             $validator = Validator::make($request->all(), [
                 'nombre' => 'required|string|max:255',
                 'descripcion' => 'nullable|string',
-                'proceso_general_id' => 'required|exists:procesos_generales,id',
                 'icono' => 'nullable|string|max:50'
             ], [
-                'nombre.required' => 'El nombre es obligatorio',
-                'proceso_general_id.required' => 'El proceso general es obligatorio',
-                'proceso_general_id.exists' => 'El proceso general seleccionado no existe'
+                'nombre.required' => 'El nombre es obligatorio'
             ]);
 
             if ($validator->fails()) {
@@ -110,19 +152,19 @@ class ProcesoInternoController extends Controller
             $proceso = ProcesoInterno::create([
                 'nombre' => $request->nombre,
                 'descripcion' => $request->descripcion,
-                'proceso_general_id' => $request->proceso_general_id,
+                'proceso_general_id' => null, // NULL = proceso interno estándar
                 'icono' => $request->icono ?? 'folder',
                 'activo' => true
             ]);
 
             // Limpiar cache
+            Cache::forget('procesos_internos_estandar');
             Cache::forget('procesos_internos');
-            Cache::forget("procesos_internos_proceso_general_{$request->proceso_general_id}");
 
             return response()->json([
                 'success' => true,
-                'data' => $proceso->load('procesoGeneral:id,nombre'),
-                'message' => 'Proceso interno creado exitosamente'
+                'data' => $proceso,
+                'message' => 'Proceso interno estándar creado exitosamente'
             ], 201);
 
         } catch (\Exception $e) {

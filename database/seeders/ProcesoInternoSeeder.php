@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\ProcesoGeneral;
 use App\Models\ProcesoInterno;
 use Illuminate\Database\Seeder;
 
@@ -13,10 +12,8 @@ class ProcesoInternoSeeder extends Seeder
      */
     public function run(): void
     {
-        // Obtener los procesos generales
-        $procesosGenerales = ProcesoGeneral::all()->keyBy('nombre');
-
-        // Carpetas estándar que se aplican a todos los procesos generales
+        // Carpetas estándar que son iguales para todos los documentos
+        // Son independientes de Tipo de Proceso y Proceso General
         $carpetasEstandar = [
             [
                 'nombre' => 'Formatos',
@@ -40,23 +37,22 @@ class ProcesoInternoSeeder extends Seeder
             ]
         ];
 
-        // Crear carpetas (procesos internos) para cada proceso general
-        foreach ($procesosGenerales as $procesoGeneral) {
-            foreach ($carpetasEstandar as $carpeta) {
-                ProcesoInterno::updateOrCreate(
-                    [
-                        'nombre' => $carpeta['nombre'],
-                        'proceso_general_id' => $procesoGeneral->id
-                    ],
-                    [
-                        'nombre' => $carpeta['nombre'],
-                        'descripcion' => $carpeta['descripcion'],
-                        'icono' => $carpeta['icono'],
-                        'proceso_general_id' => $procesoGeneral->id,
-                        'activo' => true
-                    ]
-                );
-            }
+        // Crear procesos internos estándar (sin proceso_general_id)
+        // Estos son las mismas carpetas para todos los documentos
+        foreach ($carpetasEstandar as $carpeta) {
+            ProcesoInterno::updateOrCreate(
+                [
+                    'nombre' => $carpeta['nombre'],
+                    'proceso_general_id' => null // NULL = carpeta estándar para todos
+                ],
+                [
+                    'nombre' => $carpeta['nombre'],
+                    'descripcion' => $carpeta['descripcion'],
+                    'icono' => $carpeta['icono'],
+                    'proceso_general_id' => null,
+                    'activo' => true
+                ]
+            );
         }
     }
 }

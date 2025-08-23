@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Documento;
 use App\Models\ProcesoGeneral;
 use App\Models\ProcesoInterno;
+use App\Http\Requests\Document\StoreDocumentRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -332,7 +333,7 @@ class DocumentoController extends Controller
     /**
      * Crear un nuevo documento
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreDocumentRequest $request): JsonResponse
     {
         // Configurar límites de PHP dinámicamente para esta petición
         if (function_exists('ini_set')) {
@@ -351,68 +352,6 @@ class DocumentoController extends Controller
                 'has_archivo' => $request->hasFile('archivo'),
                 'archivo_size' => $request->file('archivo') ? $request->file('archivo')->getSize() : 'no file'
             ]);
-
-            $validator = Validator::make($request->all(), [
-                'titulo' => 'required|string|max:255',
-                'descripcion' => 'nullable|string',
-                'archivo' => 'required|file|max:51200', // 50MB máximo
-                'tipo_proceso_id' => 'required|exists:tipos_procesos,id',
-                'proceso_general_id' => 'required|exists:procesos_generales,id',
-                'proceso_interno_id' => 'required|exists:procesos_internos,id',
-                'confidencialidad' => 'nullable|string|in:Publico,Interno'
-            ], [
-                'titulo.required' => 'El título es obligatorio',
-                'archivo.required' => 'El archivo es obligatorio',
-                'archivo.max' => 'El archivo no puede ser mayor a 50MB',
-                'tipo_proceso_id.required' => 'El tipo de proceso es obligatorio',
-                'proceso_general_id.required' => 'El proceso general es obligatorio',
-                'proceso_interno_id.required' => 'El proceso interno es obligatorio'
-            ]);
-
-            if ($validator->fails()) {
-                // Log de errores de validación
-                \Log::error('❌ [DocumentoController] Errores de validación:', [
-                    'errors' => $validator->errors()->toArray()
-                ]);
-                
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Error de validación',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            // Verificar que el proceso interno pertenece al proceso general
-            $procesoInterno = ProcesoInterno::find($request->proceso_interno_id);
-            if (!$procesoInterno) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'El proceso interno seleccionado no existe'
-                ], 422);
-            }
-
-            if ($procesoInterno->proceso_general_id != $request->proceso_general_id) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'El proceso interno no pertenece al proceso general seleccionado'
-                ], 422);
-            }
-
-            // Verificar que el proceso general pertenece al tipo de proceso
-            $procesoGeneral = ProcesoGeneral::find($request->proceso_general_id);
-            if (!$procesoGeneral) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'El proceso general seleccionado no existe'
-                ], 422);
-            }
-
-            if ($procesoGeneral->tipo_proceso_id != $request->tipo_proceso_id) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'El proceso general no pertenece al tipo de proceso seleccionado'
-                ], 422);
-            }
 
             $archivo = $request->file('archivo');
             $nombreArchivo = time() . '_' . Str::random(10) . '.' . $archivo->getClientOriginalExtension();
@@ -871,10 +810,6 @@ class DocumentoController extends Controller
                     'proceso_interno' => [
                         'id' => optional($documento->procesoInterno)->id,
                         'nombre' => optional($documento->procesoInterno)->nombre,
-                    ],
-                    'subido_por' => [
-                        'id' => $documento->subidoPor->id,
-                        'name' => $documento->subidoPor->name,
                     ]
                 ];
             });

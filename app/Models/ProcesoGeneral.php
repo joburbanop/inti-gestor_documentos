@@ -72,11 +72,11 @@ class ProcesoGeneral extends Model
     }
 
     /**
-     * Relación con documentos (a través de procesos internos)
+     * Relación con documentos
      */
-    public function documentos(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    public function documentos(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasManyThrough(Documento::class, ProcesoInterno::class, 'proceso_general_id', 'proceso_interno_id');
+        return $this->hasMany(Documento::class, 'proceso_general_id');
     }
 
     /**

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useProcesosInternos } from '../../hooks/useProcesosInternos';
 import { useAuth } from '../../contexts/AuthContext';
 import { EditIcon, DeleteIcon, PlusIcon } from '../icons/CrudIcons';
@@ -152,14 +153,20 @@ const ProcesosInternosPage = () => {
                   </div>
                   <div className={styles.cardActions}>
                     <button
-                      onClick={() => handleEditProceso(proceso)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditProceso(proceso);
+                      }}
                       className={documentStyles.editButton}
                       title="Editar proceso interno"
                     >
                       <EditIcon className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleDeleteProceso(proceso)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteProceso(proceso);
+                      }}
                       className={documentStyles.deleteButton}
                       title="Eliminar proceso interno"
                     >
@@ -167,7 +174,11 @@ const ProcesosInternosPage = () => {
                     </button>
                   </div>
                 </div>
-                <div className={styles.cardContent}>
+                <Link 
+                  to={`/procesos-internos/${proceso.id}`}
+                  className={styles.cardContent}
+                  style={{ textDecoration: 'none', color: 'inherit' }}
+                >
                   <h3 className={styles.cardTitle}>{proceso.titulo}</h3>
                   <p className={styles.cardDescription}>{proceso.descripcion}</p>
                   <div className={styles.cardMeta}>
@@ -178,7 +189,7 @@ const ProcesosInternosPage = () => {
                       {proceso.activo ? 'Activo' : 'Inactivo'}
                     </span>
                   </div>
-                </div>
+                </Link>
               </div>
             ))}
           </div>

@@ -5,6 +5,7 @@ import React from 'react'; import { Routes, Route, Navigate } from 'react-router
 import ProcesoTipoPage from './procesos/ProcesoTipoPage';
 import ProcesoTipoDetail from './procesos/ProcesoTipoDetail';
 import ProcesosInternosPage from './procesos/ProcesosInternosPage';
+import ProcesoInternoDetail from './procesos/ProcesoInternoDetail';
  import Documentos from './Documentos';
  import DocumentoPreview from './documentos/DocumentoPreview';
  import Administracion from './Administracion';
@@ -312,6 +313,7 @@ import ProcesosInternosPage from './procesos/ProcesosInternosPage';
         <Route path="/procesos/:tipo" element={<ProcesoTipoPage />} />
         <Route path="/procesos/:tipo/:id" element={<ProcesoTipoDetail />} />
         <Route path="/procesos-internos" element={<ProcesosInternosPage />} />
+        <Route path="/procesos-internos/:id" element={<ProcesoInternoDetail />} />
         <Route path="/apoyo" element={<ProcesosApoyoPage />} />
         <Route path="/evaluacion" element={<ProcesosEvaluacion />} />
  <Route path="/identidad" element={<OrgStructure />} />
